@@ -31,6 +31,17 @@ object FoxGoCallFallbackNotifier {
         }
     }
 
+    fun cancel(context: Context, source: String) {
+        try {
+            val appContext = context.applicationContext
+            val manager = appContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            manager.cancel(NOTIFICATION_ID)
+            Log.i(TAG, "fallback cancelado source=$source")
+        } catch (exception: Exception) {
+            Log.e(TAG, "falha ao cancelar fallback source=$source", exception)
+        }
+    }
+
     private fun buildNotification(context: Context, data: Map<String, Any?>): Notification {
         val orderId = data["orderId"]?.toString().orEmpty()
         val callId = data["callId"]?.toString().orEmpty()

@@ -104,7 +104,7 @@ class NewCallOverlayManager(
             overlayView = view
             overlayCreatedAtMs = SystemClock.elapsedRealtime()
             startAlarm()
-            Log.i(TAG, "sucesso do addView callId=$newCallId")
+            Log.i(TAG, "FoxGoOverlayWindow addView sucesso callId=$newCallId")
             scheduleAttachmentVerification(newCallId, view)
             true
         } catch (securityException: SecurityException) {
@@ -194,7 +194,7 @@ class NewCallOverlayManager(
                 return@postDelayed
             }
             val attached = Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT || view.isAttachedToWindow
-            Log.i(TAG, "verificação atrasada de attachment callId=$callId attached=$attached atrasoMs=$attachmentGraceMs")
+            Log.i(TAG, "FoxGoOverlayWindow attached após delay $attached callId=$callId atrasoMs=$attachmentGraceMs")
             if (!attached) {
                 Log.w(TAG, "overlay não anexou após atraso; limpando estado callId=$callId")
                 clearOverlayState(resetData = false)

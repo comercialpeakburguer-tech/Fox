@@ -63,14 +63,8 @@ class GlobalCallRouteHelper {
       return true;
     }
 
-    final fallbackEmitted = await emitFallback(payload, source: source);
-    if(fallbackEmitted) {
-      markVisualHandled(payload['orderId']?.toString(), result: 'fallback_emitido');
-      return true;
-    }
-
-    _lastRouteResult = 'falhou_overlay_e_fallback';
-    debugPrint('FoxGoCallRoute sem dedupe: overlay e fallback falharam source=$source orderId=${payload['orderId']} callId=${payload['callId']}');
+    _lastRouteResult = 'overlay_pendente_confirmacao_nativa';
+    debugPrint('FoxGoCallRoute fallback delegado ao nativo source=$source orderId=${payload['orderId']} callId=${payload['callId']}');
     return false;
   }
 

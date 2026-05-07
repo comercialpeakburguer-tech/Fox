@@ -8,6 +8,8 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.media.AudioAttributes
 import android.net.Uri
 import android.os.IBinder
@@ -17,6 +19,7 @@ import android.util.Log
 class NewCallOverlayService : Service() {
     private var overlayManager: NewCallOverlayManager? = null
     private var lastPayload: Map<String, Any?> = emptyMap()
+    private val mainHandler = Handler(Looper.getMainLooper())
 
     override fun onCreate() {
         super.onCreate()
@@ -67,9 +70,7 @@ class NewCallOverlayService : Service() {
             return
         }
 
-        val fallback = buildFallbackNotification(lastPayload, overlayAllowed = true)
-        startForeground(NOTIFICATION_ID, fallback)
-        Log.i(FALLBACK_TAG, "fallback notification emitida motivo=overlay_em_tentativa callId=${lastPayload["callId"]} orderId=${lastPayload["orderId"]}")
+        startForeground(NOTIFICATION_ID, buildServiceNotification(lastPayload))
         val manager = overlayManager
         if (manager == null) {
             isShowing = false
@@ -78,13 +79,29 @@ class NewCallOverlayService : Service() {
             return
         }
         val shown = if (manager.isShowing()) manager.update(lastPayload) else manager.show(lastPayload)
-        isShowing = shown && manager.isShowing()
-        if (!isShowing) {
-            Log.w(FALLBACK_TAG, "overlay não confirmou visibilidade real; emitindo fallback heads-up acionável callId=${lastPayload["callId"]} orderId=${lastPayload["orderId"]}")
-            emitHeadsUpFallback(lastPayload, "overlay_nao_visivel")
-        } else {
-            Log.i(TAG, "overlay visível confirmado após add/update callId=${lastPayload["callId"]} orderId=${lastPayload["orderId"]}")
+        scheduleOverlayVisibilityCheck(shown, lastPayload)
+    }
+
+    private fun scheduleOverlayVisibilityCheck(started: Boolean, data: Map<String, Any?>) {
+        mainHandler.removeCallbacksAndMessages(null)
+        if (!started) {
+            isShowing = false
+            Log.w(FALLBACK_TAG, "FoxGoCallFallback emitido porque overlay_nao_visivel callId=${data["callId"]} orderId=${data["orderId"]}")
+            emitHeadsUpFallback(data, "overlay_nao_visivel")
+            return
         }
+        mainHandler.postDelayed({
+            val visible = overlayManager?.isShowing() == true
+            isShowing = visible
+            Log.i(TAG, "FoxGoOverlayWindow attached após delay $visible callId=${data["callId"]} orderId=${data["orderId"]}")
+            if (visible) {
+                FoxGoCallFallbackNotifier.cancel(this, source = "overlay_visivel")
+                Log.i(FALLBACK_TAG, "FoxGoCallFallback cancelado/evitado porque overlay_visivel callId=${data["callId"]} orderId=${data["orderId"]}")
+            } else {
+                Log.w(FALLBACK_TAG, "FoxGoCallFallback emitido porque overlay_nao_visivel callId=${data["callId"]} orderId=${data["orderId"]}")
+                emitHeadsUpFallback(data, "overlay_nao_visivel")
+            }
+        }, OVERLAY_CONFIRMATION_DELAY_MS)
     }
 
     private fun emitHeadsUpFallback(data: Map<String, Any?>, reason: String): Boolean {
@@ -96,6 +113,7 @@ class NewCallOverlayService : Service() {
     }
 
     private fun dismissOverlay() {
+        mainHandler.removeCallbacksAndMessages(null)
         overlayManager?.dismiss(notify = false)
         isShowing = false
         stopForeground(STOP_FOREGROUND_REMOVE)
@@ -182,6 +200,27 @@ class NewCallOverlayService : Service() {
         }
     }
 
+    private fun buildServiceNotification(data: Map<String, Any?>): Notification {
+        ensureServiceChannel()
+        val orderId = data["orderId"]?.toString().orEmpty()
+        val text = if (orderId.isNotEmpty()) "Preparando chamada #$orderId" else "Preparando nova chamada"
+        val openIntent = Intent(this, MainActivity::class.java).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            putExtra(EXTRA_OPEN_ORDER_REQUEST, true)
+            if (orderId.isNotEmpty()) putExtra(EXTRA_ORDER_ID, orderId)
+        }
+        val pendingIntent = PendingIntent.getActivity(this, 3111, openIntent, PendingIntent.FLAG_UPDATE_CURRENT or immutableFlag())
+        return Notification.Builder(this, SERVICE_CHANNEL_ID)
+            .setSmallIcon(R.drawable.notification_icon)
+            .setContentTitle("Fox GO chamada em andamento")
+            .setContentText(text)
+            .setContentIntent(pendingIntent)
+            .setOngoing(true)
+            .setAutoCancel(false)
+            .setOnlyAlertOnce(true)
+            .build()
+    }
+
     private fun actionIntent(serviceAction: String, overlayAction: String, data: Map<String, Any?>): Intent {
         Log.i(FALLBACK_TAG, "PendingIntent action=$serviceAction overlayAction=$overlayAction requestCode=${if (serviceAction == ACTION_ACCEPT) 3102 else 3103} orderId=${data["orderId"]} callId=${data["callId"]}")
         return Intent(this, NewCallOverlayService::class.java).apply {
@@ -243,6 +282,21 @@ class NewCallOverlayService : Service() {
         }
     }
 
+    private fun ensureServiceChannel() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+        val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        if (manager.getNotificationChannel(SERVICE_CHANNEL_ID) == null) {
+            manager.createNotificationChannel(
+                NotificationChannel(SERVICE_CHANNEL_ID, "Fox GO overlay service", NotificationManager.IMPORTANCE_LOW).apply {
+                    description = "Notificação técnica do serviço de overlay"
+                    setSound(null, null)
+                    enableVibration(false)
+                    setShowBadge(false)
+                }
+            )
+        }
+    }
+
     private fun callSoundUri(): Uri = Uri.parse("android.resource://$packageName/${R.raw.notification}")
 
     private fun Intent.putExtraValue(key: String, value: Any?) {
@@ -265,7 +319,9 @@ class NewCallOverlayService : Service() {
         private const val FALLBACK_TAG = "FoxGoCallFallback"
         private const val CALL_ACTION_TAG = "FoxGoCallAction"
         private const val CHANNEL_ID = "foxgo_order_overlay_v2"
+        private const val SERVICE_CHANNEL_ID = "foxgo_overlay_service_v1"
         private const val NOTIFICATION_ID = 3100
+        private const val OVERLAY_CONFIRMATION_DELAY_MS = 700L
         const val ACTION_SHOW = "com.foxgo.entregador.overlay.SHOW"
         const val ACTION_UPDATE = "com.foxgo.entregador.overlay.UPDATE"
         const val ACTION_DISMISS = "com.foxgo.entregador.overlay.DISMISS"
