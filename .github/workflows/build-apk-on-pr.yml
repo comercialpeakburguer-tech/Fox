@@ -9,16 +9,22 @@ on:
 jobs:
   build-apk:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Delivery Man App
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Validate Android project files
+      - name: Validate Flutter project files
         run: |
-          if [ ! -f "gradlew" ]; then
-            echo "Arquivo gradlew não encontrado na raiz do repositório."
-            echo "Adicione o projeto Android (com Gradle Wrapper) para habilitar a build automática do APK."
+          if [ ! -f "pubspec.yaml" ]; then
+            echo "pubspec.yaml não encontrado em 'Delivery Man App'."
+            exit 1
+          fi
+          if [ ! -d "android" ]; then
+            echo "Pasta android não encontrada em 'Delivery Man App'."
             exit 1
           fi
 
@@ -28,15 +34,21 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Make gradlew executable
-        run: chmod +x ./gradlew
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
 
       - name: Build Debug APK
-        run: ./gradlew assembleDebug
+        run: flutter build apk --debug
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: debug-apk
-          path: '**/build/outputs/apk/**/*.apk'
+          path: Delivery Man App/build/app/outputs/flutter-apk/*.apk
           if-no-files-found: error
