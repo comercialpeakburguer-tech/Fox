@@ -26,6 +26,8 @@ import 'package:sixam_mart_delivery/features/forgot_password/screens/verificatio
 import 'package:sixam_mart_delivery/features/html/screens/html_viewer_screen.dart';
 import 'package:sixam_mart_delivery/features/language/screens/language_screen.dart';
 import 'package:sixam_mart_delivery/features/notification/screens/notification_screen.dart';
+import 'package:sixam_mart_delivery/features/permission/screens/permission_center_screen.dart';
+import 'package:sixam_mart_delivery/features/permission/screens/permission_onboarding_screen.dart';
 import 'package:sixam_mart_delivery/features/delivery_module/order/screens/order_details_screen.dart';
 import 'package:sixam_mart_delivery/features/delivery_module/order/screens/running_order_screen.dart';
 import 'package:sixam_mart_delivery/features/profile/screens/update_profile_screen.dart';
@@ -65,6 +67,8 @@ class RouteHelper {
   static const String myEarningFilter = '/my-earning-filter';
   static const String dmRegistrationSuccess = '/dm-registration-success';
   static const String editWithdrawMethod = '/edit-withdraw-method';
+  static const String permissionOnboarding = '/permission-onboarding';
+  static const String permissionCenter = '/permission-center';
 
   static String getInitialRoute({bool? fromOrderDetails}) => '$initial?from_order_details=${fromOrderDetails.toString()}';
   static String getSplashRoute(NotificationBodyModel? body) {
@@ -122,6 +126,9 @@ class RouteHelper {
   static String getMyEarningRoute() => myEarning;
   static String getMyEarningFilterRoute() => myEarningFilter;
   static String getDmRegistrationSuccessRoute() => dmRegistrationSuccess;
+  static String getPermissionOnboardingRoute({bool fromLogin = false}) => '$permissionOnboarding?from_login=${fromLogin.toString()}';
+  static String getPermissionCenterRoute() => permissionCenter;
+
   static String getEditWithdrawMethodRoute({required Methods method}) {
     String method0 = base64Encode(utf8.encode(jsonEncode(method.toJson())));
     return '$editWithdrawMethod?method=$method0';
@@ -198,6 +205,8 @@ class RouteHelper {
     GetPage(name: myEarning, page: () => const MyEarningScreen()),
     GetPage(name: myEarningFilter, page: () => const MyEarningFilterScreen()),
     GetPage(name: dmRegistrationSuccess, page: () => const DmRegistrationSuccessScreen()),
+    GetPage(name: permissionOnboarding, page: () => PermissionOnboardingScreen(fromLogin: Get.parameters['from_login'] == 'true')),
+    GetPage(name: permissionCenter, page: () => const PermissionCenterScreen()),
     GetPage(name: editWithdrawMethod, page: () {
       Methods method = Methods.fromJson(jsonDecode(utf8.decode(base64Url.decode(Get.parameters['method']!.replaceAll(' ', '+')))));
       return EditWithdrawMethodScreen(method: method);

@@ -3,7 +3,7 @@ import 'package:sixam_mart_delivery/features/delivery_module/order/controllers/o
 import 'package:sixam_mart_delivery/features/profile/controllers/profile_controller.dart';
 import 'package:sixam_mart_delivery/util/dimensions.dart';
 import 'package:sixam_mart_delivery/common/widgets/custom_app_bar_widget.dart';
-import 'package:sixam_mart_delivery/features/delivery_module/order/widgets/order_requset_widget.dart';
+import 'package:sixam_mart_delivery/features/delivery_module/order/widgets/fox_go_order_request_card_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -55,7 +55,7 @@ class OrderRequestScreenState extends State<OrderRequestScreen> {
             padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
             physics: const AlwaysScrollableScrollPhysics(),
             itemBuilder: (context, index) {
-              return OrderRequestWidget(orderModel: orderController.latestOrderList![index], index: index, onTap: widget.onTap);
+              return FoxGoOrderRequestCardWidget(orderModel: orderController.latestOrderList![index], index: index, onTap: widget.onTap);
             },
           ),
         ) : Center(child: Text('no_order_request_available'.tr)) : const Center(child: CircularProgressIndicator());

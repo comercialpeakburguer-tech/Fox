@@ -1,6 +1,7 @@
 import 'package:country_code_picker/country_code_picker.dart';
 import 'package:sixam_mart_delivery/features/auth/controllers/auth_controller.dart';
 import 'package:sixam_mart_delivery/features/profile/controllers/profile_controller.dart';
+import 'package:sixam_mart_delivery/features/permission/controllers/permission_flow_controller.dart';
 import 'package:sixam_mart_delivery/features/splash/controllers/splash_controller.dart';
 import 'package:sixam_mart_delivery/helper/custom_validator_helper.dart';
 import 'package:sixam_mart_delivery/helper/route_helper.dart';
@@ -176,7 +177,12 @@ class _SignInScreenState extends State<SignInScreen> {
             authController.clearUserNumberAndPassword();
           }
           await Get.find<ProfileController>().getProfile();
-          Get.offAllNamed(RouteHelper.getInitialRoute());
+          final bool permissionsOk = await Get.find<PermissionFlowController>().ensureCriticalPermissions(openFlow: false, fromLogin: true);
+          if (permissionsOk) {
+            Get.offAllNamed(RouteHelper.getInitialRoute());
+          } else {
+            await Get.find<PermissionFlowController>().openPermissionFlow(fromLogin: true, replaceRoute: true);
+          }
         }else {
           showCustomSnackBar(status.message);
         }

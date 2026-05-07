@@ -1,6 +1,4 @@
 import 'package:flutter/cupertino.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:sixam_mart_delivery/common/widgets/custom_bottom_sheet_widget.dart';
 import 'package:sixam_mart_delivery/common/widgets/custom_button_widget.dart';
 import 'package:sixam_mart_delivery/common/widgets/custom_confirmation_bottom_sheet.dart';
@@ -10,9 +8,8 @@ import 'package:sixam_mart_delivery/features/language/controllers/language_contr
 import 'package:sixam_mart_delivery/features/language/widgets/language_bottom_sheet_widget.dart';
 import 'package:sixam_mart_delivery/features/delivery_module/order/controllers/order_controller.dart';
 import 'package:sixam_mart_delivery/features/profile/controllers/profile_controller.dart';
-import 'package:sixam_mart_delivery/features/profile/widgets/notification_status_change_bottom_sheet.dart';
+import 'package:sixam_mart_delivery/features/permission/controllers/permission_flow_controller.dart';
 import 'package:sixam_mart_delivery/features/profile/widgets/profile_level_details_widget.dart';
-import 'package:sixam_mart_delivery/features/profile/screens/call_permission_status_screen.dart';
 import 'package:sixam_mart_delivery/features/refer_and_earn/screens/refer_and_earn_screen.dart';
 import 'package:sixam_mart_delivery/features/ride_module/add_vehicle/screens/vehicle_details_screen.dart';
 import 'package:sixam_mart_delivery/features/ride_module/help_and_support/screens/help_and_support_screen.dart';
@@ -23,6 +20,7 @@ import 'package:sixam_mart_delivery/features/ride_module/safety/screen/safety_po
 import 'package:sixam_mart_delivery/features/splash/controllers/splash_controller.dart';
 import 'package:sixam_mart_delivery/common/controllers/theme_controller.dart';
 import 'package:sixam_mart_delivery/helper/pusher_helper.dart';
+import 'package:sixam_mart_delivery/helper/fox_go_online_service_helper.dart';
 import 'package:sixam_mart_delivery/helper/route_helper.dart';
 import 'package:sixam_mart_delivery/util/app_constants.dart';
 import 'package:sixam_mart_delivery/util/dimensions.dart';
@@ -45,52 +43,20 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  late final AppLifecycleListener _listener;
-
   bool isRideActive = AppConstants.appMode == AppMode.ride;
 
   @override
   void initState() {
     super.initState();
 
-    _listener = AppLifecycleListener(
-      onStateChange: _onStateChanged,
-    );
     Get.find<ProfileController>().getProfile();
     if(isRideActive){
       Get.find<ProfileController>().getProfileLevelInfo();
     }
   }
 
-  void _onStateChanged(AppLifecycleState state) {
-    switch (state) {
-      case AppLifecycleState.detached:
-        break;
-      case AppLifecycleState.resumed:
-        checkBatteryPermission();
-        break;
-      case AppLifecycleState.inactive:
-        break;
-      case AppLifecycleState.hidden:
-        break;
-      case AppLifecycleState.paused:
-        break;
-    }
-  }
-
-  void checkBatteryPermission() async {
-    Future.delayed(const Duration(milliseconds: 400), () async {
-      if(await Permission.ignoreBatteryOptimizations.status.isDenied) {
-        Get.find<ProfileController>().setBackgroundNotificationActive(false);
-      } else {
-        Get.find<ProfileController>().setBackgroundNotificationActive(true);
-      }
-    });
-  }
-
   @override
   dispose() {
-    _listener.dispose();
     super.dispose();
   }
 
@@ -287,10 +253,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       ),
                                     );
                                   }else {
-                                    LocationPermission permission = await Geolocator.checkPermission();
-                                    if(permission == LocationPermission.denied || permission == LocationPermission.deniedForever || (GetPlatform.isIOS ? false : permission == LocationPermission.whileInUse)) {
-                                      _checkPermission(() => profileController.updateActiveStatus());
-                                    }else {
+                                    final bool permissionsOk = await Get.find<PermissionFlowController>().ensureCriticalPermissions(openFlow: true);
+                                    if (permissionsOk) {
                                       profileController.updateActiveStatus();
                                     }
                                   }
@@ -311,53 +275,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
               }),
               const SizedBox(height: Dimensions.paddingSizeSmall),
 
-              GetBuilder<AuthController>(builder: (authController) {
-                return ProfileButtonWidget(
-                  iconImage: Images.settingIcon,
-                  title: 'system_notification'.tr,
-                  isButtonActive: authController.notification, onTap: () {
-                  showCustomBottomSheet(child: const NotificationStatusChangeBottomSheet());
-                  },
-                );
-              }),
+              ProfileButtonWidget(
+                icon: Icons.verified_user_outlined,
+                title: 'Permissões do app',
+                onTap: () => Get.find<PermissionFlowController>().openCentral(),
+              ),
               const SizedBox(height: Dimensions.paddingSizeSmall),
-
-              GetPlatform.isAndroid ? InkWell(
-                onTap: () {
-                  showBgNotificationBottomSheet(profileController.backgroundNotification);
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: Dimensions.paddingSizeSmall,
-                    vertical: Dimensions.paddingSizeExtraSmall,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).cardColor,
-                    borderRadius: BorderRadius.circular(5),
-                    boxShadow: [BoxShadow(color: Colors.grey[Get.isDarkMode ? 850 : 200]!, spreadRadius: 1, blurRadius: 5)],
-                  ),
-                  child: Row(children: [
-
-                    Image.asset(Images.notificationBall, height: 25, width: 25, color: Theme.of(context).disabledColor),
-                    const SizedBox(width: Dimensions.paddingSizeSmall),
-
-                    Expanded(child: Text('background_notification'.tr, style: robotoRegular)),
-
-                    Transform.scale(
-                      scale: 0.7,
-                      child: CupertinoSwitch(
-                        value: profileController.backgroundNotification,
-                        activeTrackColor: Theme.of(context).primaryColor,
-                        inactiveTrackColor: Theme.of(context).primaryColor.withValues(alpha: 0.5),
-                        onChanged: (bool isActive) {
-                          showBgNotificationBottomSheet(profileController.backgroundNotification);
-                        },
-                      ),
-                    ),
-                  ]),
-                ),
-              ) : SizedBox(),
-              SizedBox(height: GetPlatform.isAndroid ? Dimensions.paddingSizeSmall : 0),
 
               if(profileController.profileModel?.vehicle != null && isRideActive) Padding(
                 padding: const EdgeInsets.only(bottom: Dimensions.paddingSizeSmall),
@@ -400,10 +323,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 }),
               ),
 
-              
-              ProfileButtonWidget(icon: Icons.verified_user_outlined, title: 'Permissões da nova chamada', onTap: () {
-                Get.to(() => const CallPermissionStatusScreen());
-              }),
               ProfileButtonWidget(iconImage: Images.support, title: 'help_and_support'.tr, onTap: () {
                 Get.to(()=> const HelpAndSupportScreen());
               }),
@@ -478,6 +397,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Get.back();
                 Get.dialog(ConfirmationDialogWidget(icon: Images.support, description: 'are_you_sure_to_logout'.tr, isLogOut: true, onYesPressed: () {
                   PusherHelper().pusherDisconnectPusher();
+                  FoxGoOnlineServiceHelper.stop();
                   Get.find<AuthController>().clearSharedData();
                   Get.find<ProfileController>().stopLocationRecord();
                   Get.offAllNamed(RouteHelper.getSignInRoute());
@@ -495,96 +415,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ))),
         );
       }),
-    );
-  }
-
-  void showBgNotificationBottomSheet(bool allow) {
-    Get.bottomSheet(Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: const BorderRadius.only(topLeft: Radius.circular(Dimensions.radiusExtraLarge), topRight: Radius.circular(Dimensions.radiusExtraLarge)),
-      ),
-      padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
-      child: SafeArea(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-            
-          Container(
-            height: 5, width: 50,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
-              color: Theme.of(context).disabledColor,
-            ),
-          ),
-          const SizedBox(height: Dimensions.paddingSizeLarge),
-            
-          Text(
-            '${!allow ? 'allow'.tr : 'disable'.tr} ${AppConstants.appName} ${!allow ? 'to_run_notification_in_background'.tr : 'from_running_notification_in_background'.tr}',
-            textAlign: TextAlign.center,
-            style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge),
-          ),
-            
-          Text(
-            allow ? '(${AppConstants.appName} -> Battery -> Select Optimized or any Recommended)' : 'Or (${AppConstants.appName} ->  Battery -> No restriction)',
-            textAlign: TextAlign.center,
-            style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).primaryColor),
-          ),
-          const SizedBox(height: Dimensions.paddingSizeLarge),
-            
-          _buildInfoText("you_will_be_able_to_get_order_notification_even_if_you_are_not_in_the_app".tr),
-          _buildInfoText("${AppConstants.appName} ${!allow ? 'will_run_notification_service_in_the_background_always'.tr : 'will_not_run_notification_service_in_the_background_always'.tr}"),
-          _buildInfoText(!allow ? "notification_will_always_send_alert_from_the_background".tr : 'notification_will_not_always_send_alert_from_the_background'.tr),
-          const SizedBox(height: 20.0),
-            
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text("cancel".tr, style: robotoMedium),
-              ),
-              const SizedBox(width: Dimensions.paddingSizeSmall),
-            
-              ElevatedButton(
-                onPressed: () async {
-                  if(await Permission.ignoreBatteryOptimizations.status.isGranted) {
-                    openAppSettings();
-                  } else {
-                    await Permission.ignoreBatteryOptimizations.request();
-                  }
-                  Get.back();
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).primaryColor,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
-                ),
-                child: Text(
-                  "okay".tr,
-                  style: robotoMedium.copyWith(color: Theme.of(context).cardColor),
-                ),
-              ),
-            ],
-          ),
-        ]),
-      ),
-    ), isScrollControlled: true).then((value) {
-      checkBatteryPermission();
-    });
-  }
-
-  Widget _buildInfoText(String text) {
-    return Container(
-      padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
-      margin: const EdgeInsets.only(bottom: Dimensions.paddingSizeSmall),
-      decoration: BoxDecoration(
-        color: Theme.of(context).disabledColor.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(8.0),
-      ),
-      child: Text(
-        text,
-        style: robotoRegular,
-      ),
     );
   }
 
@@ -608,32 +438,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _checkPermission(Function callback) async {
-    LocationPermission permission = await Geolocator.requestPermission();
-    permission = await Geolocator.checkPermission();
-
-    while(Get.isDialogOpen == true) {
-      Get.back();
-    }
-
-    if(permission == LocationPermission.denied) {
-      Get.dialog(LocationAccessDialog(onConfirm: () async {
-        Get.back();
-        final perm = await Geolocator.requestPermission();
-        if(perm == LocationPermission.deniedForever) await Geolocator.openAppSettings();
-        if(GetPlatform.isAndroid) _checkPermission(callback);
-      }));
-    }else if(permission == LocationPermission.deniedForever || (GetPlatform.isIOS ? false : permission == LocationPermission.whileInUse)) {
-      Get.dialog(LocationAccessDialog(onConfirm: () async {
-        Get.back();
-        await Geolocator.openAppSettings();
-        Future.delayed(const Duration(seconds: 3), () {
-          if(GetPlatform.isAndroid) _checkPermission(callback);
-        });
-      },
-      ));
-    }else {
-      callback();
-    }
+    final bool permissionsOk = await Get.find<PermissionFlowController>().ensureCriticalPermissions(openFlow: true);
+    if (permissionsOk) callback();
   }
 
 }

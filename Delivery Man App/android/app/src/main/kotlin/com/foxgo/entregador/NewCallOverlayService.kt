@@ -1,0 +1,281 @@
+package com.foxgo.entregador
+
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.app.Service
+import android.content.Context
+import android.content.Intent
+import android.os.Build
+import android.media.AudioAttributes
+import android.net.Uri
+import android.os.IBinder
+import android.provider.Settings
+import android.util.Log
+
+class NewCallOverlayService : Service() {
+    private var overlayManager: NewCallOverlayManager? = null
+    private var lastPayload: Map<String, Any?> = emptyMap()
+
+    override fun onCreate() {
+        super.onCreate()
+        overlayManager = NewCallOverlayManager(applicationContext) { action, data ->
+            dispatchCallAction(action, data, source = "overlay")
+        }
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        Log.i(TAG, "NewCallOverlayService.onStartCommand action=${intent?.action} startId=$startId")
+        when (intent?.action) {
+            ACTION_DISMISS -> {
+                dismissOverlay()
+                stopSelf()
+                return START_NOT_STICKY
+            }
+            ACTION_ACCEPT -> {
+                dispatchCallAction("onNewCallAccept", payloadFromIntent(intent), source = "notification")
+                return START_NOT_STICKY
+            }
+            ACTION_REJECT -> {
+                dispatchCallAction("onNewCallReject", payloadFromIntent(intent), source = "notification")
+                return START_NOT_STICKY
+            }
+            ACTION_UPDATE -> showOrUpdateOverlay(intent)
+            else -> showOrUpdateOverlay(intent)
+        }
+        return START_NOT_STICKY
+    }
+
+    override fun onDestroy() {
+        dismissOverlay()
+        overlayManager = null
+        super.onDestroy()
+    }
+
+    override fun onBind(intent: Intent?): IBinder? = null
+
+    private fun showOrUpdateOverlay(intent: Intent?) {
+        val payload = payloadFromIntent(intent)
+        if (payload.isNotEmpty()) lastPayload = lastPayload + payload
+
+        val canDraw = Settings.canDrawOverlays(this)
+        Log.i(TAG, "Settings.canDrawOverlays=$canDraw no momento da chamada callId=${lastPayload["callId"]} orderId=${lastPayload["orderId"]}")
+        if (!canDraw) {
+            Log.w(FALLBACK_TAG, "overlay indisponível; exibindo fallback heads-up")
+            emitHeadsUpFallback(lastPayload, "overlay_sem_permissao")
+            return
+        }
+
+        val fallback = buildFallbackNotification(lastPayload, overlayAllowed = true)
+        startForeground(NOTIFICATION_ID, fallback)
+        Log.i(FALLBACK_TAG, "fallback notification emitida motivo=overlay_em_tentativa callId=${lastPayload["callId"]} orderId=${lastPayload["orderId"]}")
+        val manager = overlayManager
+        if (manager == null) {
+            isShowing = false
+            Log.w(FALLBACK_TAG, "overlayManager nulo; emitindo fallback heads-up callId=${lastPayload["callId"]} orderId=${lastPayload["orderId"]}")
+            emitHeadsUpFallback(lastPayload, "overlay_manager_nulo")
+            return
+        }
+        val shown = if (manager.isShowing()) manager.update(lastPayload) else manager.show(lastPayload)
+        isShowing = shown && manager.isShowing()
+        if (!isShowing) {
+            Log.w(FALLBACK_TAG, "overlay não confirmou visibilidade real; emitindo fallback heads-up acionável callId=${lastPayload["callId"]} orderId=${lastPayload["orderId"]}")
+            emitHeadsUpFallback(lastPayload, "overlay_nao_visivel")
+        } else {
+            Log.i(TAG, "overlay visível confirmado após add/update callId=${lastPayload["callId"]} orderId=${lastPayload["orderId"]}")
+        }
+    }
+
+    private fun emitHeadsUpFallback(data: Map<String, Any?>, reason: String): Boolean {
+        val serviceFallback = buildFallbackNotification(data, overlayAllowed = reason != "overlay_sem_permissao")
+        startForeground(NOTIFICATION_ID, serviceFallback)
+        val emitted = FoxGoCallFallbackNotifier.show(this, data, source = "overlay-service-$reason")
+        Log.i(FALLBACK_TAG, "fallback heads-up resultado=$emitted motivo=$reason callId=${data["callId"]} orderId=${data["orderId"]}")
+        return emitted
+    }
+
+    private fun dismissOverlay() {
+        overlayManager?.dismiss(notify = false)
+        isShowing = false
+        stopForeground(STOP_FOREGROUND_REMOVE)
+    }
+
+    private fun payloadFromIntent(intent: Intent?): Map<String, Any?> {
+        if (intent == null) return emptyMap()
+        val extras = intent.extras ?: return emptyMap()
+        return extras.keySet().associateWith { key -> extras.get(key) }
+    }
+
+    private fun buildFallbackNotification(data: Map<String, Any?>, overlayAllowed: Boolean): Notification {
+        ensureChannel()
+        val orderId = data["orderId"]?.toString().orEmpty()
+        val title = if (overlayAllowed) "Nova entrega disponível" else "Permita aparecer sobre outros apps"
+        val text = if (overlayAllowed) {
+            if (orderId.isNotEmpty()) "Toque para abrir o pedido #$orderId" else "Toque para abrir solicitações"
+        } else {
+            "Toque para abrir o app e atender pela tela de solicitações"
+        }
+        val openIntent = Intent(this, MainActivity::class.java).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            putExtra(EXTRA_OPEN_ORDER_REQUEST, true)
+            if (orderId.isNotEmpty()) putExtra(EXTRA_ORDER_ID, orderId)
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            this,
+            3101,
+            openIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or immutableFlag(),
+        )
+        val acceptIntent = actionIntent(ACTION_ACCEPT, "onNewCallAccept", data)
+        val rejectIntent = actionIntent(ACTION_REJECT, "onNewCallReject", data)
+        val acceptPendingIntent = PendingIntent.getService(
+            this,
+            3102,
+            acceptIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or immutableFlag(),
+        )
+        val rejectPendingIntent = PendingIntent.getService(
+            this,
+            3103,
+            rejectIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or immutableFlag(),
+        )
+
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            Notification.Builder(this, CHANNEL_ID)
+                .setSmallIcon(R.drawable.notification_icon)
+                .setContentTitle(title)
+                .setContentText(text)
+                .setContentIntent(pendingIntent)
+                .setOngoing(true)
+                .setAutoCancel(false)
+                .setPriority(Notification.PRIORITY_MAX)
+                .setCategory(Notification.CATEGORY_CALL)
+                .setVisibility(Notification.VISIBILITY_PUBLIC)
+                .setOnlyAlertOnce(false)
+                .setFullScreenIntent(pendingIntent, true)
+                .setSound(callSoundUri())
+                .setVibrate(longArrayOf(0, 500, 250, 500))
+                .addAction(R.drawable.notification_icon, "Aceitar", acceptPendingIntent)
+                .addAction(R.drawable.notification_icon, "Recusar", rejectPendingIntent)
+                .build()
+        } else {
+            @Suppress("DEPRECATION")
+            Notification.Builder(this)
+                .setSmallIcon(R.drawable.notification_icon)
+                .setContentTitle(title)
+                .setContentText(text)
+                .setContentIntent(pendingIntent)
+                .setOngoing(true)
+                .setAutoCancel(false)
+                .setPriority(Notification.PRIORITY_MAX)
+                .setCategory(Notification.CATEGORY_CALL)
+                .setVisibility(Notification.VISIBILITY_PUBLIC)
+                .setOnlyAlertOnce(false)
+                .setFullScreenIntent(pendingIntent, true)
+                .setSound(callSoundUri())
+                .setVibrate(longArrayOf(0, 500, 250, 500))
+                .addAction(R.drawable.notification_icon, "Aceitar", acceptPendingIntent)
+                .addAction(R.drawable.notification_icon, "Recusar", rejectPendingIntent)
+                .build()
+        }
+    }
+
+    private fun actionIntent(serviceAction: String, overlayAction: String, data: Map<String, Any?>): Intent {
+        Log.i(FALLBACK_TAG, "PendingIntent action=$serviceAction overlayAction=$overlayAction requestCode=${if (serviceAction == ACTION_ACCEPT) 3102 else 3103} orderId=${data["orderId"]} callId=${data["callId"]}")
+        return Intent(this, NewCallOverlayService::class.java).apply {
+            action = serviceAction
+            putExtra(EXTRA_OPEN_ORDER_REQUEST, true)
+            putExtra(EXTRA_OVERLAY_ACTION, overlayAction)
+            data.forEach { (key, value) -> putExtraValue(key, value) }
+        }
+    }
+
+    private fun dispatchCallAction(action: String, data: Map<String, Any?>, source: String) {
+        val payload = lastPayload + data
+        if (payload.isNotEmpty()) lastPayload = payload
+        val orderId = detectOrderId(payload)
+        Log.i(CALL_ACTION_TAG, "action=$action source=$source payload=$payload orderId=$orderId callId=${payload["callId"]}")
+        if (orderId == null) {
+            Log.w(CALL_ACTION_TAG, "action=$action sem orderId detectável; abrindo app sem crash source=$source payload=$payload")
+        }
+        val intent = Intent(this, MainActivity::class.java).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            putExtra(EXTRA_OVERLAY_ACTION, action)
+            putExtra(EXTRA_OPEN_ORDER_REQUEST, true)
+            orderId?.let { putExtra(EXTRA_ORDER_ID, it) }
+            payload["callId"]?.toString()?.let { putExtra(EXTRA_CALL_ID, it) }
+            payload.forEach { (key, value) -> putExtraValue(key, value) }
+        }
+        try {
+            Log.i(CALL_ACTION_TAG, "abrindo app para entregar ação ao Flutter callbackDisponivel=desconhecido source=$source orderId=$orderId")
+            startActivity(intent)
+            Log.i(CALL_ACTION_TAG, "ação pendente enviada para MainActivity source=$source orderId=$orderId")
+            dismissOverlay()
+        } catch (exception: Exception) {
+            Log.e(CALL_ACTION_TAG, "erro ao abrir app/entregar ação; mantendo service/action pendente source=$source action=$action orderId=$orderId", exception)
+        }
+    }
+
+    private fun detectOrderId(data: Map<String, Any?>): String? {
+        return listOf("orderId", "order_id", "id", "callId")
+            .mapNotNull { key -> data[key]?.toString()?.takeIf { value -> value.isNotBlank() } }
+            .firstOrNull()
+    }
+
+    private fun ensureChannel() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+        val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        if (manager.getNotificationChannel(CHANNEL_ID) == null) {
+            manager.createNotificationChannel(
+                NotificationChannel(CHANNEL_ID, "Fox GO chamadas", NotificationManager.IMPORTANCE_MAX).apply {
+                    description = "Fallback acionável para novas solicitações"
+                    setSound(callSoundUri(), AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                        .build())
+                    enableVibration(true)
+                    vibrationPattern = longArrayOf(0, 500, 250, 500)
+                    lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+                }
+            )
+        }
+    }
+
+    private fun callSoundUri(): Uri = Uri.parse("android.resource://$packageName/${R.raw.notification}")
+
+    private fun Intent.putExtraValue(key: String, value: Any?) {
+        when (value) {
+            null -> return
+            is String -> putExtra(key, value)
+            is Boolean -> putExtra(key, value)
+            is Int -> putExtra(key, value)
+            is Long -> putExtra(key, value)
+            is Double -> putExtra(key, value)
+            is Float -> putExtra(key, value)
+            else -> putExtra(key, value.toString())
+        }
+    }
+
+    private fun immutableFlag(): Int = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_IMMUTABLE else 0
+
+    companion object {
+        private const val TAG = "FoxGoOverlayService"
+        private const val FALLBACK_TAG = "FoxGoCallFallback"
+        private const val CALL_ACTION_TAG = "FoxGoCallAction"
+        private const val CHANNEL_ID = "foxgo_order_overlay_v2"
+        private const val NOTIFICATION_ID = 3100
+        const val ACTION_SHOW = "com.foxgo.entregador.overlay.SHOW"
+        const val ACTION_UPDATE = "com.foxgo.entregador.overlay.UPDATE"
+        const val ACTION_DISMISS = "com.foxgo.entregador.overlay.DISMISS"
+        const val ACTION_ACCEPT = "com.foxgo.entregador.overlay.ACCEPT"
+        const val ACTION_REJECT = "com.foxgo.entregador.overlay.REJECT"
+        const val EXTRA_OPEN_ORDER_REQUEST = "open_order_request"
+        const val EXTRA_OVERLAY_ACTION = "overlay_action"
+        const val EXTRA_ORDER_ID = "orderId"
+        const val EXTRA_CALL_ID = "callId"
+        var isShowing: Boolean = false
+            private set
+    }
+}

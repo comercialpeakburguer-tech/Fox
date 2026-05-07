@@ -52,7 +52,9 @@ Future<void> main() async {
     if (GetPlatform.isMobile) {
       final RemoteMessage? remoteMessage = await FirebaseMessaging.instance.getInitialMessage();
       if(remoteMessage != null){
+        debugPrint('FoxGoFlutterFCM entrou getInitialMessage keys=${remoteMessage.data.keys.toList()} data=${remoteMessage.data}');
         body = NotificationHelper.convertNotification(remoteMessage.data);
+        await NotificationHelper.routeNewCallMessage(remoteMessage, source: 'getInitialMessage');
       }
       await NotificationHelper.initialize(flutterLocalNotificationsPlugin);
       FirebaseMessaging.onBackgroundMessage(myBackgroundMessageHandler);

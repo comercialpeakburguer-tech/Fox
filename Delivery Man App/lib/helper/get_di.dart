@@ -52,6 +52,7 @@ import 'package:sixam_mart_delivery/features/delivery_module/order/domain/reposi
 import 'package:sixam_mart_delivery/features/delivery_module/order/domain/services/order_service.dart';
 import 'package:sixam_mart_delivery/features/delivery_module/order/domain/services/order_service_interface.dart';
 import 'package:sixam_mart_delivery/features/profile/controllers/profile_controller.dart';
+import 'package:sixam_mart_delivery/features/permission/controllers/permission_flow_controller.dart';
 import 'package:sixam_mart_delivery/features/profile/domain/repositories/profile_repository.dart';
 import 'package:sixam_mart_delivery/features/profile/domain/repositories/profile_repository_interface.dart';
 import 'package:sixam_mart_delivery/features/profile/domain/services/profile_service.dart';
@@ -258,6 +259,7 @@ Future<Map<String, Map<String, String>>> init() async {
   Get.lazyPut(() => SplashController(splashServiceInterface: Get.find()));
   Get.lazyPut(() => NotificationController(notificationServiceInterface: Get.find()));
   Get.lazyPut(() => ProfileController(profileServiceInterface: Get.find()));
+  Get.lazyPut(() => PermissionFlowController());
   Get.lazyPut(() => AddressController(addressServiceInterface: Get.find()));
   Get.lazyPut(() => AuthController(authServiceInterface: Get.find()));
   Get.lazyPut(() => OrderController(orderServiceInterface: Get.find()));

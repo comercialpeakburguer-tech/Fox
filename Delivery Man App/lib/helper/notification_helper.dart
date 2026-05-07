@@ -33,27 +33,98 @@ import 'package:sixam_mart_delivery/features/ride_module/ride_order/screens/ongo
 import 'package:sixam_mart_delivery/features/ride_module/safety/controllers/safety_alert_controller.dart';
 import 'package:sixam_mart_delivery/helper/ride_helper.dart';
 import 'package:sixam_mart_delivery/helper/new_call_overlay_helper.dart';
+import 'package:sixam_mart_delivery/helper/order_request_overlay_helper.dart';
+import 'package:sixam_mart_delivery/helper/get_di.dart' as di;
+import 'package:sixam_mart_delivery/helper/global_call_route_helper.dart';
 import 'package:sixam_mart_delivery/features/ride_module/ride_order/screens/ride_details_screen.dart';
 
 
 
 
 class NotificationHelper {
+  static String? _lastForegroundOrderRequestId;
+  static DateTime? _lastForegroundOrderRequestAt;
+
+  static bool _isFoodOrderPayload(Map<String, dynamic> data) {
+    final raw = [
+      data['module_type'],
+      data['moduleType'],
+      data['order_type'],
+      data['orderType'],
+      data['business_model'],
+    ].where((value) => value != null).join('|').toLowerCase();
+
+    if(raw.contains('parcel') || raw.contains('pharmacy') || raw.contains('grocery') || raw.contains('market') || raw.contains('ride') || raw.contains('taxi')) {
+      return false;
+    }
+
+    return raw.isEmpty || raw.contains('food') || raw.contains('restaurant') || raw.contains('comida');
+  }
+
+  static bool _shouldRouteForegroundOrderRequest(String? orderId) {
+    final now = DateTime.now();
+    if(orderId != null && orderId.isNotEmpty && _lastForegroundOrderRequestId == orderId && _lastForegroundOrderRequestAt != null
+        && now.difference(_lastForegroundOrderRequestAt!).inSeconds < 8) {
+      return false;
+    }
+    _lastForegroundOrderRequestId = orderId;
+    _lastForegroundOrderRequestAt = now;
+    return true;
+  }
+
+  static Future<void> _openOrRefreshOrderRequest({String? orderId}) async {
+    if(!_shouldRouteForegroundOrderRequest(orderId)) {
+      debugPrint('FoxGoCallRoute dedupe orderId=$orderId');
+      return;
+    }
+    await OrderRequestOverlayHelper.refreshRequests(orderId: orderId);
+  }
+
+  static Future<bool> routeNewCallMessage(RemoteMessage message, {required String source}) async {
+    return routeNewCallData(message.data, source: source);
+  }
+
+  static Future<bool> routeNewCallData(Map<String, dynamic> data, {required String source}) async {
+    final type = _payloadType(data);
+    final orderId = _payloadOrderId(data);
+    debugPrint('FoxGoCallRoute source=$source keys=${data.keys.toList()} type=$type orderId=$orderId action=${data['action']} data=$data');
+
+    if(!_isNewCallCandidate(data)) {
+      debugPrint('FoxGoCallRoute payload ignorado source=$source type=$type action=${data['action']} orderId=$orderId');
+      return false;
+    }
+
+    if(!GlobalCallRouteHelper.shouldRoute(orderId?.toString())) {
+      debugPrint('FoxGoCallRoute dedupe source=$source orderId=$orderId');
+      return true;
+    }
+
+    Map<String, dynamic> payload = _buildOverlayPayloadFromMessage(data);
+    try {
+      payload = await _enrichOverlayPayloadWithExistingOrderData(payload);
+    } catch (error) {
+      debugPrint('FoxGoCallRoute enrich falhou source=$source orderId=$orderId error=$error');
+    }
+
+    final overlayStarted = await GlobalCallRouteHelper.routePayload(payload, source: source);
+
+    if(!overlayStarted && GlobalCallRouteHelper.isAppForeground) {
+      debugPrint('FoxGoDashboardRoute overlay/fallback não confirmou visual; abrindo card Flutter foreground orderId=$orderId');
+      await OrderRequestOverlayHelper.refreshRequests(orderId: orderId?.toString(), routeGlobal: false);
+    }
+
+    return true;
+  }
+
 
   static Future<void> initialize(FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin) async {
     var androidInitialize = const AndroidInitializationSettings('notification_icon');
     var iOSInitialize = const DarwinInitializationSettings();
     var initializationsSettings = InitializationSettings(android: androidInitialize, iOS: iOSInitialize);
-    flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation < AndroidFlutterLocalNotificationsPlugin>()!.requestNotificationsPermission();
 
     NewCallOverlayHelper.setCallbacks(
-      accept: (payload) {
-        // Nesta etapa, mantemos o fluxo existente sem alterar regra de negócio.
-        Get.to(()=> OrderRequestScreen(onTap: (){}));
-      },
-      reject: (payload) async {
-        await NewCallOverlayHelper.dismiss();
-      },
+      accept: (payload) => OrderRequestOverlayHelper.acceptFromOverlayPayload(payload),
+      reject: (payload) => OrderRequestOverlayHelper.rejectFromOverlayPayload(payload),
       dismissed: (payload) {},
     );
 
@@ -81,6 +152,7 @@ class NotificationHelper {
     });
 
     FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
+      debugPrint("FoxGoFlutterFCM entrou FirebaseMessaging.onMessage keys=${message.data.keys.toList()} type=${_payloadType(message.data)} orderId=${_payloadOrderId(message.data)} data=${message.data}");
       if (kDebugMode) {
         print("onMessage message type:${message.data['type']}");
         print("onMessage message:${message.data}");
@@ -122,41 +194,15 @@ class NotificationHelper {
         }
 
 
-      if(type == 'new_order' || type == 'order_request') {
+      if(_isNewCallCandidate(message.data)) {
         final profile = Get.find<ProfileController>().profileModel;
         final isOnline = profile != null && profile.active == 1;
+        debugPrint('FoxGoCallRoute foreground online=$isOnline type=$type orderId=${message.data['order_id']}');
         if(isOnline) {
-          final String rawType = (message.data['module_type'] ?? message.data['type'] ?? '').toString();
-          final String? orderId = message.data['order_id']?.toString();
-          final overlayPayload = {
-            'callId': orderId ?? message.data['ride_request_id']?.toString() ?? DateTime.now().millisecondsSinceEpoch.toString(),
-            'orderId': orderId,
-            'rideId': message.data['ride_request_id']?.toString(),
-            'rawType': rawType,
-            'type': message.data['type']?.toString(),
-            'moduleType': message.data['module_type']?.toString(),
-            'title': message.data['title']?.toString(),
-            'originName': message.data['store_name']?.toString() ?? 'Aguardando detalhes',
-            'pickupAddress': message.data['pickup_address']?.toString() ?? 'Aguardando endereço de retirada',
-            'destinationAddress': message.data['destination_address']?.toString() ?? 'Aguardando destino',
-            'earning': message.data['earning']?.toString() ?? 'A confirmar',
-            'distance': message.data['distance']?.toString() ?? 'A confirmar',
-            'paymentMethod': message.data['payment_method']?.toString() ?? 'A confirmar',
-            'isRide': message.data['is_ride']?.toString() == '1' || rawType.toLowerCase().contains('ride'),
-          };
-          try {
-            final isShowing = await NewCallOverlayHelper.isShowing();
-            if(isShowing) {
-              await NewCallOverlayHelper.update(overlayPayload);
-            } else {
-              await NewCallOverlayHelper.show(overlayPayload);
-            }
-          } catch (_) {
-            // Sem permissão de overlay ou limitação do SO: mantém fluxo atual sem quebrar.
-          }
+          await routeNewCallMessage(message, source: 'foreground-global');
         }
       }
-        if (type != 'assign' && type != 'new_order' && type != 'order_request') {
+        if(!_isNewCallCandidate(message.data)) {
           NotificationHelper.showNotification(message, flutterLocalNotificationsPlugin);
           Get.find<OrderController>().getRunningOrders(1, status: 'all');
           Get.find<OrderController>().getOrderCount(Get.find<OrderController>().orderType);
@@ -278,12 +324,14 @@ class NotificationHelper {
 
     });
 
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) async {
       if (kDebugMode) {
         print("onOpenApp message type:${message.data['type']}");
+        debugPrint("FoxGoFlutterFCM entrou onMessageOpenedApp keys=${message.data.keys.toList()} type=${_payloadType(message.data)} orderId=${_payloadOrderId(message.data)} data=${message.data}");
       }
       try{
         if(message.data.isNotEmpty){
+          await routeNewCallMessage(message, source: 'onMessageOpenedApp');
           NotificationBodyModel notificationBody = convertNotification(message.data)!;
 
           final Map<NotificationType, Function> notificationActions = {
@@ -726,8 +774,9 @@ class NotificationHelper {
         return NotificationBodyModel(notificationType: NotificationType.unassign);
       case 'order_status':
         return NotificationBodyModel(orderId: int.parse(orderId), notificationType: NotificationType.order);
+      case 'new_order':
       case 'order_request':
-        return NotificationBodyModel(orderId: int.parse(orderId), notificationType: NotificationType.order_request);
+        return NotificationBodyModel(orderId: int.tryParse(orderId?.toString() ?? ''), notificationType: NotificationType.order_request);
       case 'block':
         return NotificationBodyModel(notificationType: NotificationType.block);
       case 'unblock':
@@ -761,31 +810,127 @@ class NotificationHelper {
 
 
 Map<String, dynamic> _buildOverlayPayloadFromMessage(Map<String, dynamic> data) {
-  final String rawType = (data['module_type'] ?? data['type'] ?? '').toString();
-  final String? orderId = data['order_id']?.toString();
-  final String? rideId = data['ride_request_id']?.toString();
+  final String rawType = (data['module_type'] ?? data['moduleType'] ?? _payloadType(data) ?? '').toString();
+  final String? orderId = _payloadOrderId(data)?.toString();
+  final String? rideId = (data['ride_request_id'] ?? data['rideRequestId'] ?? data['trip_id'])?.toString();
   return {
     'callId': orderId ?? rideId ?? DateTime.now().millisecondsSinceEpoch.toString(),
     'orderId': orderId,
     'rideId': rideId,
     'rawType': rawType,
-    'type': data['type']?.toString(),
+    'type': _payloadType(data),
     'moduleType': data['module_type']?.toString(),
     'title': data['title']?.toString(),
-    'originName': data['store_name']?.toString() ?? 'Aguardando detalhes',
-    'pickupAddress': data['pickup_address']?.toString() ?? 'Aguardando endereço de retirada',
-    'destinationAddress': data['destination_address']?.toString() ?? 'Aguardando destino',
-    'earning': data['earning']?.toString() ?? 'A confirmar',
-    'distance': data['distance']?.toString() ?? 'A confirmar',
-    'paymentMethod': data['payment_method']?.toString() ?? 'A confirmar',
+    'originName': data['store_name']?.toString() ?? data['storeName']?.toString() ?? '',
+    'pickupAddress': data['pickup_address']?.toString() ?? data['store_address']?.toString() ?? '',
+    'destinationAddress': data['destination_address']?.toString() ?? data['delivery_address']?.toString() ?? '',
+    'earning': data['earning']?.toString() ?? data['order_amount']?.toString() ?? '',
+    'distance': data['distance']?.toString() ?? '',
+    'paymentMethod': data['payment_method']?.toString() ?? '',
     'isRide': data['is_ride']?.toString() == '1' || rawType.toLowerCase().contains('ride'),
+    'isFood': NotificationHelper._isFoodOrderPayload(data),
+    'itemsSummary': _extractItemsSummaryFromPayload(data),
   };
 }
 
+Future<Map<String, dynamic>> _enrichOverlayPayloadWithExistingOrderData(Map<String, dynamic> payload) async {
+  final String? orderId = payload['orderId']?.toString();
+  if(orderId == null || orderId.isEmpty) return payload;
+
+  try {
+    if(!Get.isRegistered<OrderController>()) {
+      await di.init();
+    }
+
+    final orderController = Get.find<OrderController>();
+    await orderController.getLatestOrders();
+    final orders = orderController.latestOrderList ?? [];
+    dynamic order;
+    for(final item in orders) {
+      if(item.id?.toString() == orderId) {
+        order = item;
+        break;
+      }
+    }
+    if(order == null) return payload;
+
+    final enriched = Map<String, dynamic>.from(payload);
+    enriched['rawType'] = order.moduleType ?? order.orderType ?? enriched['rawType'];
+    enriched['moduleType'] = order.moduleType ?? enriched['moduleType'];
+    enriched['originName'] = order.storeName ?? enriched['originName'];
+    enriched['pickupAddress'] = order.storeAddress ?? enriched['pickupAddress'];
+    enriched['destinationAddress'] = order.deliveryAddress?.address ?? enriched['destinationAddress'];
+    enriched['paymentMethod'] = order.paymentMethod ?? enriched['paymentMethod'];
+    enriched['earning'] = order.orderAmount?.toString() ?? enriched['earning'];
+    enriched['isFood'] = NotificationHelper._isFoodOrderPayload(enriched);
+
+    if(enriched['isFood'] == true) {
+      final details = await orderController.orderServiceInterface.getOrderDetails(order.id);
+      if(details != null && details.isNotEmpty) {
+        enriched['itemsSummary'] = details.asMap().entries.map((entry) {
+          final detail = entry.value;
+          final String name = detail.itemDetails?.name?.toString() ?? 'Item do pedido';
+          final String quantity = detail.quantity?.toString() ?? '1';
+          return 'Item ${entry.key + 1}: $name (x$quantity)';
+        }).join('\n');
+      }
+    }
+
+    return enriched;
+  } catch (_) {
+    return payload;
+  }
+}
+
+String? _extractItemsSummaryFromPayload(Map<String, dynamic> data) {
+  final dynamic rawItems = data['items'] ?? data['order_items'] ?? data['order_details'];
+  if(rawItems == null) return null;
+
+  dynamic parsed = rawItems;
+  if(rawItems is String) {
+    if(rawItems.trim().isEmpty) return null;
+    try {
+      parsed = jsonDecode(rawItems);
+    } catch (_) {
+      return rawItems;
+    }
+  }
+
+  if(parsed is! List) return null;
+
+  final lines = <String>[];
+  for(int index = 0; index < parsed.length; index++) {
+    final item = parsed[index];
+    if(item is! Map) continue;
+    final dynamic itemDetails = item['item_details'] ?? item['itemDetails'];
+    final String name = (item['name'] ?? (itemDetails is Map ? itemDetails['name'] : null) ?? 'Item do pedido').toString();
+    final String quantity = (item['quantity'] ?? item['qty'] ?? 1).toString();
+    lines.add('Item ${index + 1}: $name (x$quantity)');
+  }
+
+  return lines.isEmpty ? null : lines.join('\n');
+}
+
+String? _payloadType(Map<String, dynamic> data) {
+  return (data['type'] ?? data['message_type'] ?? data['notification_type'] ?? data['body_loc_key'])?.toString();
+}
+
+String? _payloadOrderId(Map<String, dynamic> data) {
+  return (data['order_id'] ?? data['orderId'] ?? data['title_loc_key'] ?? data['id'])?.toString();
+}
+
 bool _isNewCallCandidate(Map<String, dynamic> data) {
-  final String type = (data['type'] ?? '').toString();
-  final String action = (data['action'] ?? '').toString();
-  return type == 'new_order' || type == 'order_request' || type == 'assign' || action == 'driver_new_ride_request';
+  final String type = (_payloadType(data) ?? '').toLowerCase();
+  final String action = (data['action'] ?? '').toString().toLowerCase();
+  final String titleBody = '${data['title'] ?? ''} ${data['body'] ?? ''}'.toLowerCase();
+  return type == 'new_order'
+      || type == 'order_request'
+      || type == 'assign'
+      || type == 'latest_orders'
+      || action == 'driver_new_ride_request'
+      || action.contains('new_order')
+      || action.contains('order_request')
+      || _payloadOrderId(data) != null && (titleBody.contains('nova ordem') || titleBody.contains('novo pedido') || titleBody.contains('new order') || titleBody.contains('order request'));
 }
 
 final AudioPlayer _audioPlayer = AudioPlayer();
@@ -795,6 +940,7 @@ final AudioPlayer _audioPlayer = AudioPlayer();
 Future<void> myBackgroundMessageHandler(RemoteMessage message) async {
   WidgetsFlutterBinding.ensureInitialized();
   customPrint("onBackground: ${message.data}");
+  debugPrint("FoxGoFlutterFCM entrou onBackgroundMessage keys=${message.data.keys.toList()} type=${_payloadType(message.data)} orderId=${_payloadOrderId(message.data)} action=${message.data['action']} data=${message.data}");
 
   final notificationBody = NotificationHelper.convertNotification(message.data);
 
@@ -806,18 +952,26 @@ Future<void> myBackgroundMessageHandler(RemoteMessage message) async {
   }
 
   if(_isNewCallCandidate(message.data)) {
+    bool overlayStarted = false;
     try {
-      final payload = _buildOverlayPayloadFromMessage(message.data);
+      final payload = await _enrichOverlayPayloadWithExistingOrderData(_buildOverlayPayloadFromMessage(message.data));
       if(payload['callId'] == null || payload['callId'].toString().isEmpty) return;
+      debugPrint("FoxGoCallRoute background tentando overlay callId=${payload['callId']} orderId=${payload['orderId']}");
       final isShowing = await NewCallOverlayHelper.isShowing();
-      if(isShowing) {
-        await NewCallOverlayHelper.update(payload);
-      } else {
-        await NewCallOverlayHelper.show(payload);
-      }
-    } catch (_) {
-      // Limitação conhecida: nem todos os devices permitem render overlay direto do isolate de background.
-      // Fallback permanece no foreground service/notificação atual para não perder a chamada.
+      overlayStarted = isShowing ? await NewCallOverlayHelper.update(payload) : await NewCallOverlayHelper.show(payload);
+      debugPrint("FoxGoCallRoute background overlayStarted=$overlayStarted callId=${payload['callId']}");
+    } catch (error) {
+      debugPrint('FoxGoCallRoute background overlay erro=$error');
+      overlayStarted = false;
+    }
+
+    if(!overlayStarted) {
+      debugPrint('FoxGoCallFallback background solicitando foreground fallback orderId=${message.data['order_id']}');
+      // Se o Android/isolate não permitir iniciar o overlay nativo, mantém uma
+      // notificação acionável que abre direto na tela order-request existente.
+      FlutterForegroundTask.initCommunicationPort();
+      await _initService();
+      await _startService(message.data['order_id']?.toString(), NotificationType.order_request);
     }
   }
 }

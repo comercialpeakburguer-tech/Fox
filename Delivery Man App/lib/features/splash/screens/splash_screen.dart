@@ -3,6 +3,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:sixam_mart_delivery/features/auth/controllers/auth_controller.dart';
 import 'package:sixam_mart_delivery/features/dashboard/screens/dashboard_screen.dart';
 import 'package:sixam_mart_delivery/features/profile/controllers/profile_controller.dart';
+import 'package:sixam_mart_delivery/features/permission/controllers/permission_flow_controller.dart';
 import 'package:sixam_mart_delivery/features/splash/controllers/splash_controller.dart';
 import 'package:sixam_mart_delivery/features/notification/domain/models/notification_body_model.dart';
 import 'package:sixam_mart_delivery/helper/notification_helper.dart';
@@ -129,11 +130,7 @@ class SplashScreenState extends State<SplashScreen> {
             Get.offNamed(RouteHelper.getUpdateRoute(needsUpdate));
           }else{
             if(widget.body != null) {
-              if(widget.body!.notificationType == NotificationType.ride_request){
-                NotificationHelper.notificationToRoute(widget.body!, formSplash: true);
-              }else{
-                await _handleDeliveryNotificationRouting(widget.body);
-              }
+              await _handleNotificationRoutingWithPermissionGate(widget.body);
             }else{
               await _handleDefaultRouting();
             }
@@ -158,6 +155,28 @@ class SplashScreenState extends State<SplashScreen> {
       return Get.find<SplashController>().configModel!.appMinimumVersionIos;
     }
     return 0;
+  }
+
+
+  Future<void> _handleNotificationRoutingWithPermissionGate(NotificationBodyModel? notificationBody) async {
+    if (!Get.find<AuthController>().isLoggedIn()) {
+      Get.offNamed(RouteHelper.getSignInRoute());
+      return;
+    }
+
+    Get.find<AuthController>().updateToken();
+    await Get.find<ProfileController>().getProfile();
+    final bool permissionsOk = await Get.find<PermissionFlowController>().ensureCriticalPermissions(openFlow: false);
+    if (!permissionsOk) {
+      await Get.find<PermissionFlowController>().openPermissionFlow(fromLogin: true, replaceRoute: true);
+      return;
+    }
+
+    if (notificationBody?.notificationType == NotificationType.ride_request) {
+      NotificationHelper.notificationToRoute(notificationBody!, formSplash: true);
+    } else {
+      await _handleDeliveryNotificationRouting(notificationBody);
+    }
   }
 
   Future<void> _handleDeliveryNotificationRouting(NotificationBodyModel? notificationBody) async {
@@ -188,7 +207,12 @@ class SplashScreenState extends State<SplashScreen> {
     if (Get.find<AuthController>().isLoggedIn()) {
       Get.find<AuthController>().updateToken();
       await Get.find<ProfileController>().getProfile();
-      Get.offNamed(RouteHelper.getInitialRoute());
+      final bool permissionsOk = await Get.find<PermissionFlowController>().ensureCriticalPermissions(openFlow: false);
+      if (permissionsOk) {
+        Get.offNamed(RouteHelper.getInitialRoute());
+      } else {
+        await Get.find<PermissionFlowController>().openPermissionFlow(fromLogin: true, replaceRoute: true);
+      }
     } else {
       Get.offNamed(RouteHelper.getSignInRoute());
     }

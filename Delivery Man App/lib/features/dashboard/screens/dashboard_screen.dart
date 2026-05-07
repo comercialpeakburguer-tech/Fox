@@ -8,6 +8,7 @@ import 'package:sixam_mart_delivery/features/ride_module/ride_order/screens/pend
 import 'package:sixam_mart_delivery/features/ride_module/ride_order/screens/ride_order_screen.dart';
 import 'package:sixam_mart_delivery/helper/notification_helper.dart';
 import 'package:sixam_mart_delivery/helper/new_call_overlay_helper.dart';
+import 'package:sixam_mart_delivery/helper/order_request_overlay_helper.dart';
 import 'package:sixam_mart_delivery/helper/route_helper.dart';
 import 'package:sixam_mart_delivery/main.dart';
 import 'package:sixam_mart_delivery/util/app_constants.dart';
@@ -66,38 +67,28 @@ class DashboardScreenState extends State<DashboardScreen> {
     Get.find<OrderController>().getLatestOrders();
 
     NewCallOverlayHelper.setCallbacks(
-      accept: (_) => _navigateRequestPage(),
-      reject: (_) => Get.find<OrderController>().getLatestOrders(),
+      accept: (payload) => OrderRequestOverlayHelper.acceptFromOverlayPayload(payload),
+      reject: (payload) => OrderRequestOverlayHelper.rejectFromOverlayPayload(payload),
       dismissed: (_) {},
     );
     
     _stream = FirebaseMessaging.onMessage.listen((RemoteMessage message) {
 
-      String? type = message.data['body_loc_key'] ?? message.data['type'];
-      String? orderID = message.data['title_loc_key'] ?? message.data['order_id'];
+      String? type = message.data['body_loc_key'] ?? message.data['type'] ?? message.data['message_type'] ?? message.data['notification_type'];
+      String? orderID = message.data['title_loc_key'] ?? message.data['order_id'] ?? message.data['orderId'];
+      debugPrint('FoxGoDashboardRoute entrou Dashboard listener keys=${message.data.keys.toList()} type=$type orderId=$orderID');
       bool isParcel = (message.data['order_type'] == 'parcel_order');
       bool isPrescription = (message.data['order_type'] == 'prescription');
       if(type != 'assign' && type != 'new_order' && type != 'message' && type != 'order_request' && type != 'order_status') {
         NotificationHelper.showNotification(message, flutterLocalNotificationsPlugin);
       }
-      if(type == 'new_order' || type == 'order_request') {
+      if(type == 'new_order' || type == 'order_request' || type == 'latest_orders') {
         Get.find<OrderController>().getRunningOrders(Get.find<OrderController>().offset, status: 'all');
         Get.find<OrderController>().getOrderCount(Get.find<OrderController>().orderType);
         Get.find<OrderController>().getLatestOrders();
-        NewCallOverlayHelper.show({
-          'callId': message.data['order_id']?.toString(),
-          'orderId': message.data['order_id']?.toString(),
-          'rawType': message.data['order_type']?.toString() ?? message.data['type']?.toString() ?? 'delivery',
-          'type': message.data['order_type']?.toString() ?? 'delivery',
-          'title': 'Nova entrega disponível',
-          'originName': message.data['store_name']?.toString() ?? '',
-          'pickupAddress': message.data['store_address']?.toString() ?? '',
-          'destinationAddress': message.data['delivery_address']?.toString() ?? '',
-          'earning': message.data['earning']?.toString() ?? '',
-          'distance': message.data['distance']?.toString() ?? '',
-          'paymentMethod': message.data['payment_method']?.toString() ?? '',
-        }).catchError((_) => false);
-        Get.dialog(NewRequestDialogWidget(isRequest: true, onTap: () => _navigateRequestPage(), orderId: int.parse(message.data['order_id'].toString()), hideItemCount: isParcel || isPrescription));
+
+        // Roteia em camada global para o overlay nativo/fallback, sem depender da Home montada.
+        NotificationHelper.routeNewCallMessage(message, source: 'dashboard-listener');
       }else if(type == 'assign' && orderID != null && orderID.isNotEmpty) {
         Get.find<OrderController>().getRunningOrders(Get.find<OrderController>().offset, status: 'all');
         Get.find<OrderController>().getOrderCount(Get.find<OrderController>().orderType);

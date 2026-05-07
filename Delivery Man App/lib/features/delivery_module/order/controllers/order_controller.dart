@@ -17,6 +17,7 @@ import 'package:sixam_mart_delivery/util/app_constants.dart';
 import 'package:sixam_mart_delivery/common/widgets/custom_snackbar_widget.dart';
 import 'package:get/get.dart';
 import 'package:sixam_mart_delivery/features/delivery_module/order/domain/services/order_service_interface.dart';
+import 'package:sixam_mart_delivery/helper/global_call_route_helper.dart';
 
 class OrderController extends GetxController implements GetxService {
   final OrderServiceInterface orderServiceInterface;
@@ -241,6 +242,12 @@ class OrderController extends GetxController implements GetxService {
       _latestOrderList = [];
       List<int?> ignoredIdList = orderServiceInterface.prepareIgnoreIdList(_ignoredRequests);
       _latestOrderList!.addAll(orderServiceInterface.processLatestOrders(latestOrderList, ignoredIdList));
+      if(_latestOrderList!.isNotEmpty) {
+        debugPrint('FoxGoOrderRefresh getLatestOrders nova chamada count=${_latestOrderList!.length} firstOrderId=${_latestOrderList!.first.id}');
+        GlobalCallRouteHelper.routeOrderModel(_latestOrderList!.first, source: 'getLatestOrders/latest_orders');
+      } else {
+        debugPrint('FoxGoOrderRefresh getLatestOrders sem chamadas pendentes');
+      }
     }
     update();
   }
@@ -306,7 +313,12 @@ class OrderController extends GetxController implements GetxService {
     ResponseModel responseModel = await orderServiceInterface.acceptOrder(orderID);
     Get.back();
     if(responseModel.isSuccess) {
-      _latestOrderList!.removeAt(index);
+      if(_latestOrderList != null && index >= 0 && index < _latestOrderList!.length) {
+        _latestOrderList!.removeAt(index);
+      } else {
+        _latestOrderList?.removeWhere((order) => order.id == orderID);
+      }
+      _currentOrderList ??= [];
       _currentOrderList!.add(orderModel);
     }else {
       showCustomSnackBar(responseModel.message, isError: true);
@@ -326,6 +338,20 @@ class OrderController extends GetxController implements GetxService {
     _latestOrderList!.removeAt(index);
     orderServiceInterface.setIgnoreList(_ignoredRequests);
     update();
+  }
+
+  bool ignoreOrderById(int? orderId) {
+    if(orderId == null || _latestOrderList == null) {
+      return false;
+    }
+
+    final int index = _latestOrderList!.indexWhere((order) => order.id == orderId);
+    if(index < 0) {
+      return false;
+    }
+
+    ignoreOrder(index);
+    return true;
   }
 
   void removeFromIgnoreList() {
