@@ -1,0 +1,54 @@
+name: Build APK on PR
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches: [main, master]
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Delivery Man App
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate Flutter project files
+        run: |
+          if [ ! -f "pubspec.yaml" ]; then
+            echo "pubspec.yaml não encontrado em 'Delivery Man App'."
+            exit 1
+          fi
+          if [ ! -d "android" ]; then
+            echo "Pasta android não encontrada em 'Delivery Man App'."
+            exit 1
+          fi
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build Debug APK
+        run: flutter build apk --debug
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-apk
+          path: Delivery Man App/build/app/outputs/flutter-apk/*.apk
+          if-no-files-found: error
