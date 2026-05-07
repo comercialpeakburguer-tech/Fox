@@ -6,6 +6,9 @@ import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
+import android.os.SystemClock
 import android.provider.Settings
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -24,6 +27,9 @@ class NewCallOverlayManager(
     private var mediaPlayer: MediaPlayer? = null
     private var currentCallId: String? = null
     private var currentData: Map<String, Any?> = emptyMap()
+    private var overlayCreatedAtMs: Long = 0L
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private val attachmentGraceMs = 500L
 
     fun canDrawOverlays(): Boolean = Settings.canDrawOverlays(context)
 
@@ -31,8 +37,13 @@ class NewCallOverlayManager(
         val view = overlayView ?: return false
         val attached = Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT || view.isAttachedToWindow
         if (!attached) {
-            Log.w(TAG, "overlayView sem anexação detectada; limpando estado preso callId=$currentCallId")
-            clearOverlayState()
+            val elapsedMs = SystemClock.elapsedRealtime() - overlayCreatedAtMs
+            if (elapsedMs < attachmentGraceMs) {
+                Log.i(TAG, "overlayView ainda no período de tolerância de anexação (${elapsedMs}ms/${attachmentGraceMs}ms) callId=$currentCallId")
+                return true
+            }
+            Log.w(TAG, "overlayView sem anexação após tolerância; limpando estado preso callId=$currentCallId elapsedMs=$elapsedMs")
+            clearOverlayState(resetData = false)
             return false
         }
         return true
@@ -91,8 +102,10 @@ class NewCallOverlayManager(
         return try {
             windowManager.addView(view, params)
             overlayView = view
+            overlayCreatedAtMs = SystemClock.elapsedRealtime()
             startAlarm()
             Log.i(TAG, "sucesso do addView callId=$newCallId")
+            scheduleAttachmentVerification(newCallId, view)
             true
         } catch (securityException: SecurityException) {
             Log.e(TAG, "erro do addView: SecurityException callId=$newCallId", securityException)
@@ -164,10 +177,31 @@ class NewCallOverlayManager(
         }
     }
 
-    private fun clearOverlayState() {
+    private fun clearOverlayState(resetData: Boolean = true) {
         stopAlarm()
+        mainHandler.removeCallbacksAndMessages(null)
         overlayView = null
         currentCallId = null
+        overlayCreatedAtMs = 0L
+        if (resetData) currentData = emptyMap()
+    }
+
+    private fun scheduleAttachmentVerification(callId: String, view: View) {
+        mainHandler.postDelayed({
+            val activeView = overlayView
+            if (activeView !== view) {
+                Log.i(TAG, "verificação atrasada ignorada: overlay já mudou callId=$callId")
+                return@postDelayed
+            }
+            val attached = Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT || view.isAttachedToWindow
+            Log.i(TAG, "verificação atrasada de attachment callId=$callId attached=$attached atrasoMs=$attachmentGraceMs")
+            if (!attached) {
+                Log.w(TAG, "overlay não anexou após atraso; limpando estado callId=$callId")
+                clearOverlayState(resetData = false)
+            } else {
+                Log.i(TAG, "overlay mantido após verificação atrasada callId=$callId")
+            }
+        }, attachmentGraceMs)
     }
 
     private fun startAlarm() {

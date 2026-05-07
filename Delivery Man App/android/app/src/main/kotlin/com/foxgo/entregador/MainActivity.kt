@@ -261,8 +261,10 @@ class MainActivity : FlutterActivity() {
             this.action = action
             data.forEach { (key, value) -> putExtraValue(key, value) }
         }
-        android.util.Log.i("FoxGoOverlayService", "startService/startForegroundService chamado action=$action extras=${data.keys}")
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        val shouldUseForegroundService = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+            action != NewCallOverlayService.ACTION_DISMISS
+        android.util.Log.i("FoxGoOverlayService", "startService/startForegroundService chamado action=$action extras=${data.keys} foreground=$shouldUseForegroundService")
+        if (shouldUseForegroundService) {
             startForegroundService(intent)
         } else {
             startService(intent)
