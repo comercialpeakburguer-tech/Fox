@@ -1,0 +1,42 @@
+name: Build APK on PR
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches: [main, master]
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate Android project files
+        run: |
+          if [ ! -f "gradlew" ]; then
+            echo "Arquivo gradlew não encontrado na raiz do repositório."
+            echo "Adicione o projeto Android (com Gradle Wrapper) para habilitar a build automática do APK."
+            exit 1
+          fi
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-apk
+          path: '**/build/outputs/apk/**/*.apk'
+          if-no-files-found: error
