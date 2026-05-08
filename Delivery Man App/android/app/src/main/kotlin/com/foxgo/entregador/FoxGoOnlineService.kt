@@ -14,6 +14,7 @@ import android.os.Looper
 import android.util.Log
 import org.json.JSONArray
 import org.json.JSONObject
+import org.json.JSONTokener
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -191,10 +192,16 @@ class FoxGoOnlineService : Service() {
     }
 
     private fun extractOrders(body: String): JSONArray {
-        val root = JSONObject(body)
-        return when (val data = root.opt("data")) {
-            is JSONArray -> data
-            is JSONObject -> data.optJSONArray("orders") ?: JSONArray()
+        val normalizedBody = body.trim()
+        if (normalizedBody.isEmpty()) return JSONArray()
+
+        return when (val root = JSONTokener(normalizedBody).nextValue()) {
+            is JSONArray -> root
+            is JSONObject -> when (val data = root.opt("data")) {
+                is JSONArray -> data
+                is JSONObject -> data.optJSONArray("orders") ?: JSONArray()
+                else -> JSONArray()
+            }
             else -> JSONArray()
         }
     }
