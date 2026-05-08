@@ -12,15 +12,43 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.util.Log
+import org.json.JSONArray
+import org.json.JSONObject
+import java.net.HttpURLConnection
+import java.net.URL
 
 class FoxGoOnlineService : Service() {
     private val handler = Handler(Looper.getMainLooper())
+    @Volatile
+    private var isPolling = false
+    private var lastRoutedOrderId: String? = null
+    private var lastRoutedAtMs: Long = 0L
     private val republishRunnable = object : Runnable {
         override fun run() {
             if (isRunning) {
                 republishOnlineNotification("watchdog")
                 handler.postDelayed(this, REPUBLISH_INTERVAL_MS)
             }
+        }
+    }
+    private val latestOrdersRunnable = object : Runnable {
+        override fun run() {
+            if (!isRunning) return
+            if (isPolling) {
+                scheduleLatestOrdersPolling()
+                return
+            }
+            isPolling = true
+            Thread {
+                try {
+                    refreshLatestOrdersWatchdog()
+                } finally {
+                    isPolling = false
+                    if (isRunning) {
+                        handler.post { scheduleLatestOrdersPolling() }
+                    }
+                }
+            }.start()
         }
     }
     override fun onCreate() {
@@ -43,6 +71,7 @@ class FoxGoOnlineService : Service() {
                 Log.i(TAG, "service online parado")
                 isRunning = false
                 handler.removeCallbacks(republishRunnable)
+                handler.removeCallbacks(latestOrdersRunnable)
                 stopForeground(STOP_FOREGROUND_REMOVE)
                 stopSelf()
                 START_NOT_STICKY
@@ -54,7 +83,9 @@ class FoxGoOnlineService : Service() {
                     startForeground(NOTIFICATION_ID, buildOnlineNotification())
                     isRunning = true
                     handler.removeCallbacks(republishRunnable)
+                    handler.removeCallbacks(latestOrdersRunnable)
                     handler.postDelayed(republishRunnable, REPUBLISH_INTERVAL_MS)
+                    scheduleLatestOrdersPolling(initial = true)
                     Log.i(TAG, "service online iniciado com sucesso; notificationId=$NOTIFICATION_ID channel=$CHANNEL_ID")
                     START_STICKY
                 } catch (securityException: SecurityException) {
@@ -75,8 +106,114 @@ class FoxGoOnlineService : Service() {
     override fun onDestroy() {
         Log.i(TAG, "service online parado")
         handler.removeCallbacks(republishRunnable)
+        handler.removeCallbacks(latestOrdersRunnable)
         isRunning = false
         super.onDestroy()
+    }
+
+    private fun scheduleLatestOrdersPolling(initial: Boolean = false) {
+        val delay = if (initial) POLL_INITIAL_DELAY_MS else POLL_INTERVAL_MS
+        handler.postDelayed(latestOrdersRunnable, delay)
+    }
+
+    private fun refreshLatestOrdersWatchdog() {
+        Log.i(REFRESH_TAG, "source=online-service-watchdog inicio")
+        val prefs = getSharedPreferences(FLUTTER_SHARED_PREFS, Context.MODE_PRIVATE)
+        val token = prefs.getString("flutter.$TOKEN_KEY", null).orEmpty().trim()
+        Log.i(REFRESH_TAG, "tokenPresente=${token.isNotEmpty()}")
+        if (token.isEmpty()) return
+
+        val baseUrl = BASE_URL
+        if (baseUrl.isBlank()) return
+        if (NewCallOverlayService.isShowing) return
+
+        val endpoint = "$baseUrl$LATEST_ORDERS_PATH$token"
+        val connection = (URL(endpoint).openConnection() as HttpURLConnection).apply {
+            requestMethod = "GET"
+            connectTimeout = REQUEST_TIMEOUT_MS
+            readTimeout = REQUEST_TIMEOUT_MS
+            setRequestProperty("Accept", "application/json")
+            val language = prefs.getString("flutter.$LANGUAGE_KEY", DEFAULT_LANGUAGE).orEmpty().ifBlank { DEFAULT_LANGUAGE }
+            val zoneId = prefs.getString("flutter.$ZONE_ID_KEY", "null").orEmpty().ifBlank { "null" }
+            setRequestProperty("X-localization", language)
+            setRequestProperty("zoneId", zoneId)
+            setRequestProperty("Authorization", "Bearer $token")
+        }
+
+        try {
+            val statusCode = connection.responseCode
+            Log.i(REFRESH_TAG, "statusCode=$statusCode")
+            if (statusCode !in 200..299) return
+
+            val body = connection.inputStream.bufferedReader().use { it.readText() }
+            val dataArray = extractOrders(body)
+            Log.i(REFRESH_TAG, "pedidosEncontrados=${dataArray.length()}")
+            if (dataArray.length() == 0) return
+            val order = dataArray.optJSONObject(0) ?: return
+            val orderId = detectOrderId(order)
+            if (orderId.isEmpty()) return
+            Log.i(REFRESH_TAG, "orderId=$orderId")
+            if (shouldSkipByDedupe(orderId)) return
+
+            val payload = buildOverlayPayloadFromOrder(order, orderId)
+            val action = if (NewCallOverlayService.isShowing) NewCallOverlayService.ACTION_UPDATE else NewCallOverlayService.ACTION_SHOW
+            val intent = Intent(this, NewCallOverlayService::class.java).apply {
+                this.action = action
+                payload.forEach { (key, value) -> putExtra(key, value) }
+            }
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                startForegroundService(intent)
+            } else {
+                startService(intent)
+            }
+            lastRoutedOrderId = orderId
+            lastRoutedAtMs = System.currentTimeMillis()
+            Log.i(REFRESH_TAG, "overlay acionado")
+        } catch (exception: Exception) {
+            Log.e(REFRESH_TAG, "erro=${exception.message}", exception)
+        } finally {
+            connection.disconnect()
+        }
+    }
+
+    private fun shouldSkipByDedupe(orderId: String): Boolean {
+        val lastId = lastRoutedOrderId
+        val now = System.currentTimeMillis()
+        if (lastId == orderId && (now - lastRoutedAtMs) < DEDUPE_TTL_MS) {
+            Log.i(REFRESH_TAG, "dedupeBloqueado orderId=$orderId")
+            return true
+        }
+        return false
+    }
+
+    private fun detectOrderId(order: JSONObject): String {
+        return order.optString("id").ifEmpty { order.optString("order_id") }.ifEmpty { order.optString("orderId") }
+    }
+
+    private fun extractOrders(body: String): JSONArray {
+        val root = JSONObject(body)
+        return when (val data = root.opt("data")) {
+            is JSONArray -> data
+            is JSONObject -> data.optJSONArray("orders") ?: JSONArray()
+            else -> JSONArray()
+        }
+    }
+
+    private fun buildOverlayPayloadFromOrder(order: JSONObject, orderId: String): Map<String, String> {
+        val moduleType = order.optString("module_type").ifBlank { order.optString("moduleType") }.ifBlank { "latest_orders" }
+        return mapOf(
+            "callId" to orderId,
+            "orderId" to orderId,
+            "type" to "latest_orders",
+            "rawType" to moduleType,
+            "moduleType" to moduleType,
+            "originName" to order.optString("store_name").ifBlank { order.optString("store") },
+            "pickupAddress" to order.optString("pickup_address"),
+            "destinationAddress" to order.optString("destination_address"),
+            "earning" to order.optString("delivery_charge").ifBlank { order.optString("earning") },
+            "distance" to order.optString("distance"),
+            "paymentMethod" to order.optString("payment_method"),
+        )
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -165,6 +302,18 @@ class FoxGoOnlineService : Service() {
         private const val ACTION_STOP = "com.foxgo.entregador.online.STOP"
         private const val ACTION_REPUBLISH = "com.foxgo.entregador.online.REPUBLISH"
         private const val REPUBLISH_INTERVAL_MS = 30_000L
+        private const val POLL_INITIAL_DELAY_MS = 5_000L
+        private const val POLL_INTERVAL_MS = 15_000L
+        private const val DEDUPE_TTL_MS = 30_000L
+        private const val REQUEST_TIMEOUT_MS = 8_000
+        private const val REFRESH_TAG = "FoxGoOrderRefresh"
+        private const val BASE_URL = "https://admin.foxgodelivery.com.br"
+        private const val LATEST_ORDERS_PATH = "/api/v1/delivery-man/latest-orders?token="
+        private const val FLUTTER_SHARED_PREFS = "FlutterSharedPreferences"
+        private const val TOKEN_KEY = "sixam_mart_delivery_token"
+        private const val LANGUAGE_KEY = "foxgo_delivery_language_code"
+        private const val ZONE_ID_KEY = "cache_zone_id"
+        private const val DEFAULT_LANGUAGE = "pt"
 
         @Volatile
         var isRunning: Boolean = false
