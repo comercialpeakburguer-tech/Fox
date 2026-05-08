@@ -11,6 +11,7 @@ import 'package:sixam_mart_delivery/features/permission/controllers/permission_f
 import 'package:sixam_mart_delivery/helper/pusher_helper.dart';
 import 'package:sixam_mart_delivery/helper/deliveryman_availability_helper.dart';
 import 'package:sixam_mart_delivery/helper/fox_go_online_service_helper.dart';
+import 'package:sixam_mart_delivery/helper/order_request_overlay_helper.dart';
 import 'package:sixam_mart_delivery/helper/route_helper.dart';
 import 'package:sixam_mart_delivery/common/widgets/custom_snackbar_widget.dart';
 import 'package:geolocator/geolocator.dart';
@@ -69,6 +70,12 @@ class ProfileController extends GetxController implements GetxService {
           }
           await DeliverymanAvailabilityHelper.setOnline();
           startLocationRecord();
+          try {
+            debugPrint('FoxGoOrderRefresh source=online-start online=true refresh iniciado');
+            await OrderRequestOverlayHelper.refreshRequests(source: 'online-start', routeGlobal: true);
+          } catch (error, stackTrace) {
+            debugPrint('FoxGoOrderRefresh source=online-start erro=$error\n$stackTrace');
+          }
         } else {
           await FoxGoOnlineServiceHelper.stop();
           await DeliverymanAvailabilityHelper.setOffline();
@@ -132,6 +139,12 @@ class ProfileController extends GetxController implements GetxService {
           }
           await DeliverymanAvailabilityHelper.setOnline();
           startLocationRecord();
+          try {
+            debugPrint('FoxGoOrderRefresh source=online-start online=true refresh iniciado');
+            await OrderRequestOverlayHelper.refreshRequests(source: 'online-start', routeGlobal: true);
+          } catch (error, stackTrace) {
+            debugPrint('FoxGoOrderRefresh source=online-start erro=$error\n$stackTrace');
+          }
         } else {
           await FoxGoOnlineServiceHelper.stop();
           await DeliverymanAvailabilityHelper.setOffline();

@@ -12,8 +12,9 @@ class OrderRequestOverlayHelper {
   static bool _showingIncomingCard = false;
   static String? _showingOrderId;
 
-  static Future<void> refreshRequests({String? orderId, bool showCard = true, bool routeGlobal = true}) async {
+  static Future<void> refreshRequests({String? orderId, bool showCard = true, bool routeGlobal = true, String source = 'manual'}) async {
     final orderController = Get.find<OrderController>();
+    debugPrint('FoxGoOrderRefresh source=$source refresh iniciado routeGlobal=$routeGlobal showCard=$showCard orderId=$orderId');
     await orderController.getLatestOrders();
     orderController.getOrderCount(orderController.orderType);
     orderController.getRunningOrders(1, status: 'all');
@@ -21,10 +22,15 @@ class OrderRequestOverlayHelper {
     if(!showCard) return;
 
     final order = _findOrder(orderController, orderId);
-    if(order == null) return;
+    if(order == null) {
+      debugPrint('FoxGoOrderRefresh source=$source pedidos encontrados=0 routeGlobal=$routeGlobal');
+      return;
+    }
+    debugPrint('FoxGoOrderRefresh source=$source pedidos encontrados=${orderController.latestOrderList?.length ?? 0} orderId=${order.id} routeGlobal=$routeGlobal');
     if(routeGlobal) {
-      debugPrint('FoxGoOrderRefresh refreshRequests com nova chamada orderId=${order.id}');
-      final overlayStarted = await GlobalCallRouteHelper.routeOrderModel(order, source: 'OrderRequestOverlayHelper.refreshRequests');
+      debugPrint('FoxGoOrderRefresh source=$source routeGlobal chamado orderId=${order.id}');
+      final overlayStarted = await GlobalCallRouteHelper.routeOrderModel(order, source: 'OrderRequestOverlayHelper.refreshRequests/$source');
+      debugPrint('FoxGoCallRoute source=$source overlay chamado orderId=${order.id} dedupe ${overlayStarted ? 'aceitou' : 'bloqueou'}');
       if(overlayStarted) return;
       if(!GlobalCallRouteHelper.isAppForeground) return;
     }
