@@ -9,10 +9,10 @@ import android.util.Log
 object FoxGoCallRouter {
     private const val TAG = "FoxGoCallRoute"
 
-    fun isCallPayload(data: Map<String, String>): Boolean {
+    fun isCallPayload(data: Map<String, String>, notificationTitle: String? = null, notificationBody: String? = null): Boolean {
         val type = payloadType(data).lowercase()
         val action = data["action"].orEmpty().lowercase()
-        val titleBody = listOfNotNull(data["title"], data["body"]).joinToString(" ").lowercase()
+        val titleBody = listOfNotNull(data["title"], data["body"], notificationTitle, notificationBody).joinToString(" ").lowercase()
         return type == "new_order"
             || type == "order_request"
             || type == "assign"
@@ -23,19 +23,19 @@ object FoxGoCallRouter {
             || (payloadOrderId(data).isNotEmpty() && (titleBody.contains("nova ordem") || titleBody.contains("novo pedido") || titleBody.contains("new order") || titleBody.contains("order request")))
     }
 
-    fun route(context: Context, data: Map<String, String>, source: String): Boolean {
+    fun route(context: Context, data: Map<String, String>, source: String, notificationTitle: String? = null, notificationBody: String? = null): Boolean {
         Log.i(TAG, "entrada source=$source keys=${data.keys} type=${payloadType(data)} action=${data["action"]} orderId=${payloadOrderId(data)}")
-        if (!isCallPayload(data)) {
-            Log.i(TAG, "payload ignorado source=$source keys=${data.keys} type=${payloadType(data)} action=${data["action"]}")
+        if (!isCallPayload(data, notificationTitle, notificationBody)) {
+            Log.i(TAG, "payload ignorado source=$source keys=${data.keys} type=${payloadType(data)} action=${data["action"]} notificationTitle=$notificationTitle notificationBody=$notificationBody")
             return false
         }
 
-        val payload = buildOverlayPayload(data)
+        val payload = buildOverlayPayload(data, notificationTitle, notificationBody)
         val callId = payload["callId"]?.toString().orEmpty()
         val orderId = payload["orderId"]?.toString().orEmpty()
         Log.i(TAG, "detectou new_order/order_request source=$source type=${payloadType(data)} action=${data["action"]} callId=$callId orderId=$orderId")
         if (callId.isEmpty()) {
-            Log.w(TAG, "payload sem callId; emitindo fallback source=$source data=$data")
+            Log.w(TAG, "payload incompleto sem callId; emitindo fallback source=$source data=$data notificationTitle=$notificationTitle notificationBody=$notificationBody. Recomendar backend enviar data payload completo.")
             return FoxGoCallFallbackNotifier.show(context, payload, source = "$source-sem-callId")
         }
 
@@ -67,7 +67,7 @@ object FoxGoCallRouter {
         }
     }
 
-    private fun buildOverlayPayload(data: Map<String, String>): Map<String, Any?> {
+    private fun buildOverlayPayload(data: Map<String, String>, notificationTitle: String? = null, notificationBody: String? = null): Map<String, Any?> {
         val orderId = payloadOrderId(data).ifEmpty { null }
         val rideId = data["ride_request_id"] ?: data["rideRequestId"] ?: data["trip_id"]
         val rawType = data["module_type"] ?: data["moduleType"] ?: payloadType(data)
@@ -78,7 +78,7 @@ object FoxGoCallRouter {
             "rawType" to rawType,
             "type" to payloadType(data),
             "moduleType" to (data["module_type"] ?: data["moduleType"]),
-            "title" to data["title"],
+            "title" to (data["title"] ?: notificationTitle),
             "originName" to (data["store_name"] ?: data["storeName"] ?: ""),
             "pickupAddress" to (data["pickup_address"] ?: data["store_address"] ?: ""),
             "destinationAddress" to (data["destination_address"] ?: data["delivery_address"] ?: ""),

@@ -933,6 +933,39 @@ bool _isNewCallCandidate(Map<String, dynamic> data) {
       || _payloadOrderId(data) != null && (titleBody.contains('nova ordem') || titleBody.contains('novo pedido') || titleBody.contains('new order') || titleBody.contains('order request'));
 }
 
+
+
+bool _isSuspiciousIncompleteOrderPayload(RemoteMessage message) {
+  final data = message.data;
+  final title = (message.notification?.title ?? data['title'] ?? '').toString().toLowerCase();
+  final body = (message.notification?.body ?? data['body'] ?? '').toString().toLowerCase();
+  final joinedText = '$title $body';
+  final hasOrderHint = joinedText.contains('new order')
+      || joinedText.contains('nova entrega')
+      || joinedText.contains('novo pedido')
+      || joinedText.contains('order request');
+  if(hasOrderHint) return true;
+
+  final keys = data.keys.map((key) => key.toLowerCase()).toList();
+  final hasOrderKeyHint = keys.any((key) => key.contains('order') || key.contains('latest_orders') || key.contains('request'));
+  final hasOrderValueHint = data.values.any((value) {
+    final text = value.toString().toLowerCase();
+    return text.contains('new_order') || text.contains('order_request') || text.contains('latest_orders');
+  });
+
+  if(_isNewCallCandidate(data)) return false;
+  return hasOrderKeyHint || hasOrderValueHint;
+}
+
+Future<void> _triggerBackgroundOrderRefresh({required String source, String? reason}) async {
+  try {
+    debugPrint('FoxGoOrderRefresh source=$source refresh iniciado reason=${reason ?? 'unknown'}');
+    await OrderRequestOverlayHelper.refreshRequests(source: source, routeGlobal: true);
+  } catch (error, stackTrace) {
+    debugPrint('FoxGoOrderRefresh source=$source erro=$error\n$stackTrace');
+  }
+}
+
 final AudioPlayer _audioPlayer = AudioPlayer();
 
 /// Background FCM message handler
@@ -940,7 +973,7 @@ final AudioPlayer _audioPlayer = AudioPlayer();
 Future<void> myBackgroundMessageHandler(RemoteMessage message) async {
   WidgetsFlutterBinding.ensureInitialized();
   customPrint("onBackground: ${message.data}");
-  debugPrint("FoxGoFlutterFCM entrou onBackgroundMessage keys=${message.data.keys.toList()} type=${_payloadType(message.data)} orderId=${_payloadOrderId(message.data)} action=${message.data['action']} data=${message.data}");
+  debugPrint("FoxGoFlutterFCM entrou onBackgroundMessage keys=${message.data.keys.toList()} type=${_payloadType(message.data)} orderId=${_payloadOrderId(message.data)} action=${message.data['action']} notificationTitle=${message.notification?.title} notificationBody=${message.notification?.body} data=${message.data}");
 
   final notificationBody = NotificationHelper.convertNotification(message.data);
 
@@ -951,28 +984,37 @@ Future<void> myBackgroundMessageHandler(RemoteMessage message) async {
     await _startService(notificationBody.orderId?.toString(), notificationBody.notificationType!);
   }
 
-  if(_isNewCallCandidate(message.data)) {
+  final isCandidate = _isNewCallCandidate(message.data);
+  final isSuspicious = _isSuspiciousIncompleteOrderPayload(message);
+  debugPrint('FoxGoFlutterFCM background candidato=$isCandidate suspeito=$isSuspicious motivo=${isCandidate ? 'payload-novo-pedido' : (isSuspicious ? 'payload-incompleto' : 'nao-candidato')}');
+
+  if(isCandidate) {
     bool overlayStarted = false;
     try {
       final payload = await _enrichOverlayPayloadWithExistingOrderData(_buildOverlayPayloadFromMessage(message.data));
-      if(payload['callId'] == null || payload['callId'].toString().isEmpty) return;
+      if(payload['callId'] == null || payload['callId'].toString().isEmpty) {
+        debugPrint('FoxGoCallRoute payload incompleto sem callId; tentando latest_orders fallback');
+        await _triggerBackgroundOrderRefresh(source: 'fcm-background-fallback', reason: 'candidate-sem-callid');
+        return;
+      }
       debugPrint("FoxGoCallRoute background tentando overlay callId=${payload['callId']} orderId=${payload['orderId']}");
       final isShowing = await NewCallOverlayHelper.isShowing();
       overlayStarted = isShowing ? await NewCallOverlayHelper.update(payload) : await NewCallOverlayHelper.show(payload);
       debugPrint("FoxGoCallRoute background overlayStarted=$overlayStarted callId=${payload['callId']}");
-    } catch (error) {
-      debugPrint('FoxGoCallRoute background overlay erro=$error');
+    } catch (error, stackTrace) {
+      debugPrint('FoxGoCallRoute background overlay erro=$error\n$stackTrace');
       overlayStarted = false;
     }
 
     if(!overlayStarted) {
       debugPrint('FoxGoCallFallback background solicitando foreground fallback orderId=${message.data['order_id']}');
-      // Se o Android/isolate não permitir iniciar o overlay nativo, mantém uma
-      // notificação acionável que abre direto na tela order-request existente.
+      await _triggerBackgroundOrderRefresh(source: 'fcm-background-fallback', reason: 'overlay-nao-subiu');
       FlutterForegroundTask.initCommunicationPort();
       await _initService();
       await _startService(message.data['order_id']?.toString(), NotificationType.order_request);
     }
+  } else if (isSuspicious) {
+    await _triggerBackgroundOrderRefresh(source: 'fcm-background-fallback', reason: 'payload-suspeito-incompleto');
   }
 }
 
