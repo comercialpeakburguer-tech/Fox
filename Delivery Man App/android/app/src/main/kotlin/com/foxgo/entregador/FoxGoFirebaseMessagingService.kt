@@ -7,7 +7,16 @@ import io.flutter.plugins.firebase.messaging.FlutterFirebaseMessagingService
 class FoxGoFirebaseMessagingService : FlutterFirebaseMessagingService() {
     override fun onMessageReceived(message: RemoteMessage) {
         Log.i("FoxGoFCM", "native FCM entrou onMessageReceived keys=${message.data.keys} type=${message.data["type"]} messageType=${message.data["message_type"]} notificationType=${message.data["notification_type"]} orderId=${message.data["order_id"] ?: message.data["orderId"]} action=${message.data["action"]} data=${message.data}")
-        FoxGoCallRouter.route(applicationContext, message.data, source = "native-fcm")
+        val notificationTitle = message.notification?.title
+        val notificationBody = message.notification?.body
+        Log.i("FoxGoFCM", "native FCM notification title=$notificationTitle body=$notificationBody")
+        FoxGoCallRouter.route(
+            applicationContext,
+            message.data,
+            source = "native-fcm",
+            notificationTitle = notificationTitle,
+            notificationBody = notificationBody,
+        )
         super.onMessageReceived(message)
     }
 
