@@ -54,7 +54,7 @@ Future<void> main() async {
       if(remoteMessage != null){
         debugPrint('FoxGoFlutterFCM entrou getInitialMessage keys=${remoteMessage.data.keys.toList()} data=${remoteMessage.data}');
         body = NotificationHelper.convertNotification(remoteMessage.data);
-        await NotificationHelper.routeNewCallMessage(remoteMessage, source: 'getInitialMessage');
+        await NotificationHelper.routeNewCallMessage(remoteMessage, source: 'fcm-background-refresh');
       }
       await NotificationHelper.initialize(flutterLocalNotificationsPlugin);
       FirebaseMessaging.onBackgroundMessage(myBackgroundMessageHandler);

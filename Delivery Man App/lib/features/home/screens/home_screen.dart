@@ -14,6 +14,7 @@ import 'package:sixam_mart_delivery/features/notification/controllers/notificati
 import 'package:sixam_mart_delivery/features/permission/controllers/permission_flow_controller.dart';
 import 'package:sixam_mart_delivery/features/delivery_module/order/controllers/order_controller.dart';
 import 'package:sixam_mart_delivery/features/profile/controllers/profile_controller.dart';
+import 'package:sixam_mart_delivery/helper/order_request_overlay_helper.dart';
 import 'package:sixam_mart_delivery/features/ride_module/ride_order/controllers/ride_controller.dart';
 import 'package:sixam_mart_delivery/features/ride_module/trip/controllers/trip_controller.dart';
 import 'package:sixam_mart_delivery/features/splash/controllers/splash_controller.dart';
@@ -94,6 +95,7 @@ class _HomeScreenState extends State<HomeScreen> {
         break;
       case AppLifecycleState.resumed:
         checkPermission();
+        _refreshOnResume();
         break;
       case AppLifecycleState.inactive:
         break;
@@ -101,6 +103,20 @@ class _HomeScreenState extends State<HomeScreen> {
         break;
       case AppLifecycleState.paused:
         break;
+    }
+  }
+
+
+  Future<void> _refreshOnResume() async {
+    try {
+      final auth = Get.find<AuthController>();
+      final profile = Get.find<ProfileController>().profileModel;
+      final isOnline = auth.isLoggedIn() && profile != null && profile.active == 1;
+      debugPrint('FoxGoOrderRefresh source=app-resumed online=$isOnline');
+      if(!isOnline) return;
+      await OrderRequestOverlayHelper.refreshRequests(source: 'app-resumed', routeGlobal: true);
+    } catch (error, stackTrace) {
+      debugPrint('FoxGoOrderRefresh source=app-resumed erro=$error\n$stackTrace');
     }
   }
 
