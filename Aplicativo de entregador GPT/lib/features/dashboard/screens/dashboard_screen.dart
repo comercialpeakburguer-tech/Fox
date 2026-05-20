@@ -123,7 +123,7 @@ class DashboardScreenState extends State<DashboardScreen> {
       }else if(type == 'assign' && orderID != null && orderID.isNotEmpty) {
         // Fox GO APP-28A-R3: evita popup duplicado no fluxo assign.
         // Mantém a atualização de pedidos e deixa o detalhe abrir pelo fluxo padrão/notificação.
-        Get.find<OrderController>().getCurrentOrders();
+        Get.find<OrderController>().getLatestOrders();
       }else if(type == 'block') {
         Get.find<AuthController>().clearSharedData();
         Get.find<ProfileController>().stopLocationRecord();
