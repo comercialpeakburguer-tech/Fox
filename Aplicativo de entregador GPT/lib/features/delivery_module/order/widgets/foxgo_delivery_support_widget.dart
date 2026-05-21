@@ -14,6 +14,7 @@ import 'package:sixam_mart_delivery/util/dimensions.dart';
 import 'package:sixam_mart_delivery/util/styles.dart';
 
 class FoxGoDeliverySupportWidget extends StatelessWidget {
+  static final Map<int, DateTime> _pickupStartedAtByOrderId = <int, DateTime>{};
   final OrderModel order;
   final bool parcel;
 
@@ -26,11 +27,8 @@ class FoxGoDeliverySupportWidget extends StatelessWidget {
   bool get _isPickupStage => order.orderStatus?.toLowerCase() == AppConstants.handover;
 
   DateTime? get _pickupStartedAt {
-    final String? value = order.handover;
-    if (value == null || value.trim().isEmpty) {
-      return null;
-    }
-    return DateTime.tryParse(value);
+    final int key = order.id ?? 0;
+    return _pickupStartedAtByOrderId.putIfAbsent(key, () => DateTime.now());
   }
 
   int get _pickupWaitedMinutes {

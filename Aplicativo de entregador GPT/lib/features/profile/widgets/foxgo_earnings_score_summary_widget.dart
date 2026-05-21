@@ -190,7 +190,7 @@ class _MetricCard extends StatelessWidget {
     final Color primary = Theme.of(context).primaryColor;
 
     return Container(
-      minHeight: 104,
+      constraints: const BoxConstraints(minHeight: 104),
       padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
       decoration: BoxDecoration(
         color: primary.withValues(alpha: 0.07),
