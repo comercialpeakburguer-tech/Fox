@@ -4,6 +4,7 @@ import 'package:sixam_mart_delivery/features/language/controllers/language_contr
 import 'package:sixam_mart_delivery/features/notification/controllers/notification_controller.dart';
 import 'package:sixam_mart_delivery/features/delivery_module/order/controllers/order_controller.dart';
 import 'package:sixam_mart_delivery/features/delivery_module/order/widgets/bottom_view/delivery_confirmation_section.dart';
+import 'package:sixam_mart_delivery/features/delivery_module/order/widgets/foxgo_customer_no_show_timer_widget.dart';
 import 'package:sixam_mart_delivery/features/profile/controllers/profile_controller.dart';
 import 'package:sixam_mart_delivery/features/splash/controllers/splash_controller.dart';
 import 'package:sixam_mart_delivery/features/delivery_module/order/domain/models/order_model.dart';
@@ -48,10 +49,16 @@ class RegularOrderBottomView extends StatelessWidget {
         return _buildOrderPickupSlider(orderController, controllerOrderModel, total);
 
       case RegularOrderState.readyToDeliver:
-        return _buildOrderDeliverySlider(orderController, controllerOrderModel);
+        return Column(mainAxisSize: MainAxisSize.min, children: [
+          FoxGoCustomerNoShowTimerWidget(order: controllerOrderModel, parcel: false),
+          _buildOrderDeliverySlider(orderController, controllerOrderModel),
+        ]);
 
       case RegularOrderState.completeDelivery:
-        return _buildCompleteDeliveryButton(orderController, controllerOrderModel);
+        return Column(mainAxisSize: MainAxisSize.min, children: [
+          FoxGoCustomerNoShowTimerWidget(order: controllerOrderModel, parcel: false),
+          _buildCompleteDeliveryButton(orderController, controllerOrderModel),
+        ]);
 
       default:
         return const SizedBox();
@@ -89,7 +96,6 @@ class RegularOrderBottomView extends StatelessWidget {
     }
   }
 
-  // Fox GO waiting status: visual profissional para quando o entregador já chegou/está aguardando retirada.
   Widget _buildOrderWaitingStatus(OrderModel order) {
     final context = Get.context!;
     final isParcel = order.orderType == 'parcel';
@@ -212,9 +218,7 @@ class RegularOrderBottomView extends StatelessWidget {
     return 'Food';
   }
 
-  // Regular order confirmation actions
   Widget _buildOrderConfirmationActions(OrderController orderController, OrderModel controllerOrderModel) {
-
     final deliverymanConfModel = Get.find<SplashController>().configModel!.orderConfirmationModel == 'deliveryman';
     final cancelPermission = Get.find<SplashController>().configModel!.canceledByDeliveryman ?? false;
 
@@ -226,14 +230,9 @@ class RegularOrderBottomView extends StatelessWidget {
         boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
       ),
       child: Row(children: [
-        cancelPermission ? Expanded(
-          child: _buildOrderCancelButton(orderController),
-        ) : SizedBox(),
+        cancelPermission ? Expanded(child: _buildOrderCancelButton(orderController)) : SizedBox(),
         SizedBox(width: cancelPermission ? Dimensions.paddingSizeSmall : 0),
-
-        deliverymanConfModel ? Expanded(
-          child: _buildOrderConfirmButton(orderController, controllerOrderModel),
-        ) : SizedBox(),
+        deliverymanConfModel ? Expanded(child: _buildOrderConfirmButton(orderController, controllerOrderModel)) : SizedBox(),
       ]),
     );
   }
@@ -265,9 +264,7 @@ class RegularOrderBottomView extends StatelessWidget {
     );
   }
 
-  // Regular order pickup slider
   Widget _buildOrderPickupSlider(OrderController orderController, OrderModel controllerOrderModel, double total) {
-
     bool partialPay = controllerOrderModel.paymentMethod == 'partial_payment' && (controllerOrderModel.payments?.isNotEmpty ?? false) && controllerOrderModel.payments![1].paymentMethod == 'cash_on_delivery';
     double partialAmount = partialPay ? (controllerOrderModel.payments?[1].amount ?? 0) : 0;
     bool showCollectCashAmount = controllerOrderModel.paymentMethod == "cash_on_delivery" || partialPay ;
@@ -291,17 +288,10 @@ class RegularOrderBottomView extends StatelessWidget {
               Text(PriceConverterHelper.convertPrice(partialPay ? partialAmount : total), style: robotoBold),
             ]),
           ) : SizedBox(),
-
           SizedBox(height: Dimensions.paddingSizeSmall),
           SliderButton(
             action: () => _handleOrderPickup(orderController, controllerOrderModel),
-            label: Text(
-              'swipe_to_pick_up_order'.tr,
-              style: robotoMedium.copyWith(
-                fontSize: Dimensions.fontSizeLarge,
-                color: Theme.of(Get.context!).primaryColor,
-              ),
-            ),
+            label: Text('swipe_to_pick_up_order'.tr, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge, color: Theme.of(Get.context!).primaryColor)),
             dismissThresholds: 0.5,
             dismissible: false,
             shimmer: true,
@@ -321,7 +311,6 @@ class RegularOrderBottomView extends StatelessWidget {
     );
   }
 
-  // Regular order delivery slider
   Widget _buildOrderDeliverySlider(OrderController orderController, OrderModel controllerOrderModel) {
     return Container(
       width: double.infinity,
@@ -332,13 +321,7 @@ class RegularOrderBottomView extends StatelessWidget {
       ),
       child: SliderButton(
         action: () => _handleOrderDelivery(orderController, controllerOrderModel),
-        label: Text(
-          'swipe_to_deliver_order'.tr,
-          style: robotoMedium.copyWith(
-            fontSize: Dimensions.fontSizeLarge,
-            color: Theme.of(Get.context!).primaryColor,
-          ),
-        ),
+        label: Text('swipe_to_deliver_order'.tr, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge, color: Theme.of(Get.context!).primaryColor)),
         dismissThresholds: 0.5,
         dismissible: false,
         shimmer: true,
@@ -356,7 +339,6 @@ class RegularOrderBottomView extends StatelessWidget {
     );
   }
 
-  // Complete delivery button (when image confirmation is required)
   Widget _buildCompleteDeliveryButton(OrderController orderController, OrderModel controllerOrderModel) {
     return Container(
       width: double.infinity,
@@ -367,10 +349,8 @@ class RegularOrderBottomView extends StatelessWidget {
       ),
       child: Column(
         children: [
-          if (showDeliveryConfirmImage)
-            DeliveryConfirmationSection(),
+          if (showDeliveryConfirmImage) DeliveryConfirmationSection(),
           SizedBox(height: showDeliveryConfirmImage ? Dimensions.paddingSizeSmall : 0),
-
           CustomButtonWidget(
             buttonText: 'complete_delivery'.tr,
             onPressed: () => _handleCompleteDelivery(orderController, controllerOrderModel),
@@ -380,7 +360,6 @@ class RegularOrderBottomView extends StatelessWidget {
     );
   }
 
-  // Regular order action handlers
   void _handleOrderConfirmation(OrderController orderController, OrderModel order) {
     Get.dialog(
       ConfirmationDialogWidget(
@@ -398,23 +377,13 @@ class RegularOrderBottomView extends StatelessWidget {
     final cod = order.paymentMethod == 'cash_on_delivery';
 
     if (orderVerificationActive || cod) {
-      orderController.updateOrderStatus(
-        order,
-        AppConstants.confirmed,
-        back: fromLocationScreen ? false : true,
-        gotoDashboard: fromLocationScreen ? true : false,
-      );
+      orderController.updateOrderStatus(order, AppConstants.confirmed, back: fromLocationScreen ? false : true, gotoDashboard: fromLocationScreen ? true : false);
     }
   }
 
   void _handleOrderPickup(OrderController orderController, OrderModel order) {
     if (Get.find<ProfileController>().profileModel!.active == 1) {
-      orderController.updateOrderStatus(
-        order,
-        AppConstants.pickedUp,
-        back: fromLocationScreen ? false : true,
-        gotoDashboard: fromLocationScreen ? true : false,
-      );
+      orderController.updateOrderStatus(order, AppConstants.pickedUp, back: fromLocationScreen ? false : true, gotoDashboard: fromLocationScreen ? true : false);
     } else {
       showCustomSnackBar('make_yourself_online_first'.tr);
     }
@@ -426,21 +395,11 @@ class RegularOrderBottomView extends StatelessWidget {
 
     if (orderVerificationActive || cod) {
       Get.bottomSheet(
-        VerifyDeliverySheetWidget(
-          currentOrderModel: order,
-          verify: orderVerificationActive,
-          orderAmount: order.orderAmount,
-          cod: cod,
-        ),
+        VerifyDeliverySheetWidget(currentOrderModel: order, verify: orderVerificationActive, orderAmount: order.orderAmount, cod: cod),
         isScrollControlled: true,
       );
     } else {
-      orderController.updateOrderStatus(
-        order,
-        AppConstants.delivered,
-        back: fromLocationScreen ? false : true,
-        gotoDashboard: fromLocationScreen ? true : false,
-      );
+      orderController.updateOrderStatus(order, AppConstants.delivered, back: fromLocationScreen ? false : true, gotoDashboard: fromLocationScreen ? true : false);
     }
   }
 
@@ -451,7 +410,6 @@ class RegularOrderBottomView extends StatelessWidget {
 
     if (orderVerificationActive) {
       Get.find<NotificationController>().sendDeliveredNotification(order.id);
-
       Get.bottomSheet(
         VerifyDeliverySheetWidget(
           currentOrderModel: order,
@@ -491,12 +449,7 @@ class RegularOrderBottomView extends StatelessWidget {
 
   Widget _buildSliderIcon() {
     return Center(
-      child: Icon(
-        Get.find<LocalizationController>().isLtr ? Icons.double_arrow_sharp : Icons.keyboard_arrow_left,
-        color: Colors.white,
-        size: 20.0,
-      ),
+      child: Icon(Get.find<LocalizationController>().isLtr ? Icons.double_arrow_sharp : Icons.keyboard_arrow_left, color: Colors.white, size: 20.0),
     );
   }
-
 }
