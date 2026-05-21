@@ -2,10 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart_delivery/features/chat/domain/models/conversation_model.dart';
 import 'package:sixam_mart_delivery/features/delivery_module/order/domain/models/order_model.dart';
-import 'package:sixam_mart_delivery/features/notification/domain/models/notification_body_model.dart';
-import 'package:sixam_mart_delivery/helper/route_helper.dart';
+import 'package:sixam_mart_delivery/features/support/widgets/foxgo_support_center_sheet.dart';
 import 'package:sixam_mart_delivery/util/app_constants.dart';
 import 'package:sixam_mart_delivery/util/dimensions.dart';
 import 'package:sixam_mart_delivery/util/styles.dart';
@@ -74,26 +72,10 @@ class _FoxGoCustomerNoShowTimerWidgetState extends State<FoxGoCustomerNoShowTime
 
   void _openSupport() {
     if (!_finished) return;
-
-    final notificationBody = NotificationBodyModel(
+    FoxGoSupportCenterSheet.show(
       orderId: widget.order.id,
-      adminId: 0,
-      type: AppConstants.admin,
+      initialReason: _isParcel ? 'Destinatário não localizado após 5 minutos' : 'Cliente não localizado após 5 minutos',
     );
-
-    Get.toNamed(RouteHelper.getChatRoute(
-      notificationBody: notificationBody,
-      user: User(
-        id: 0,
-        fName: 'Suporte Fox GO',
-        lName: '',
-        imageFullUrl: '',
-        phone: '',
-      ),
-      conversationId: null,
-      fromNotification: false,
-      fromSupport: true,
-    ));
   }
 
   String _formatRemaining() {
@@ -187,7 +169,7 @@ class _FoxGoCustomerNoShowTimerWidgetState extends State<FoxGoCustomerNoShowTime
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               ),
-              child: Text('Cliente não apareceu', style: robotoBold.copyWith(color: Colors.white, fontSize: Dimensions.fontSizeDefault)),
+              child: Text(_isParcel ? 'Destinatário não apareceu' : 'Cliente não apareceu', style: robotoBold.copyWith(color: Colors.white, fontSize: Dimensions.fontSizeDefault)),
             ),
           ),
         if (_started && !_finished)
