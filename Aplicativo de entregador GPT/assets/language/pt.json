@@ -1018,5 +1018,15 @@
   "foxgo_no_show_start_timer": "Iniciar espera de 5 minutos",
   "foxgo_no_show_support_locked": "Suporte liberado após o contador",
   "foxgo_no_show_open_support": "Falar com suporte",
-  "foxgo_no_show_keep_delivery_available": "Se o cliente aparecer, finalize a entrega normalmente pelo botão de entrega abaixo."
+  "foxgo_no_show_keep_delivery_available": "Se o cliente aparecer, finalize a entrega normalmente pelo botão de entrega abaixo.",
+  "foxgo_home_menu": "Menu",
+  "foxgo_home_requests": "Solicitações",
+  "foxgo_home_messages": "Mensagens",
+  "foxgo_home_my_location": "Minha localização",
+  "foxgo_home_earnings_panel": "Ganhos e atividade",
+  "foxgo_home_online_ready": "Você está online e disponível para receber chamadas.",
+  "foxgo_home_offline_hint": "Fique online para começar a receber chamadas.",
+  "foxgo_home_waiting_location": "Aguardando localização em tempo real.",
+  "foxgo_home_go_online": "Ficar online",
+  "foxgo_home_online_button": "Online"
 }
