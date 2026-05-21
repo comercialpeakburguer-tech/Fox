@@ -3,6 +3,7 @@ import 'package:sixam_mart_delivery/common/widgets/slider_button_widget.dart';
 import 'package:sixam_mart_delivery/features/language/controllers/language_controller.dart';
 import 'package:sixam_mart_delivery/features/delivery_module/order/controllers/order_controller.dart';
 import 'package:sixam_mart_delivery/features/delivery_module/order/widgets/bottom_view/delivery_confirmation_section.dart';
+import 'package:sixam_mart_delivery/features/delivery_module/order/widgets/foxgo_customer_no_show_timer_widget.dart';
 import 'package:sixam_mart_delivery/features/delivery_module/order/widgets/parcel_cancelation/cancellation_reason_bottom_sheet.dart';
 import 'package:sixam_mart_delivery/features/delivery_module/order/widgets/parcel_cancelation/collect_money_bottom_sheet.dart';
 import 'package:sixam_mart_delivery/features/delivery_module/order/widgets/parcel_cancelation/parcel_return_date_time_bottom_sheet.dart';
@@ -34,30 +35,25 @@ class ParcelBottomView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     final bool isShowableStatus = ['accepted', 'confirmed', 'handover'].contains(controllerOrderModel.orderStatus);
     final bool hasValidPayer = controllerOrderModel.chargePayer == 'sender' || controllerOrderModel.chargePayer == 'receiver';
-
     final bool showPaymentInfo = isShowableStatus && hasValidPayer;
-
     final parcelState = _getParcelState(controllerOrderModel);
 
     switch (parcelState) {
       case ParcelState.waitingToAccept:
         return _buildParcelWaitingStatus();
-
       case ParcelState.readyToConfirm:
         return _buildParcelConfirmationActions(context, orderController, controllerOrderModel, showPaymentInfo);
-
       case ParcelState.readyToPickup:
         return _buildParcelPickupSlider(context, orderController, controllerOrderModel, showPaymentInfo);
-
       case ParcelState.readyToDeliver:
-        return _buildParcelDeliverySlider(orderController, controllerOrderModel);
-
+        return Column(mainAxisSize: MainAxisSize.min, children: [
+          FoxGoCustomerNoShowTimerWidget(order: controllerOrderModel, parcel: true),
+          _buildParcelDeliverySlider(orderController, controllerOrderModel),
+        ]);
       case ParcelState.readyToReturn:
-      return _buildParcelReturnOption(controllerOrderModel);
-
+        return _buildParcelReturnOption(controllerOrderModel);
       default:
         return const SizedBox();
     }
@@ -65,7 +61,6 @@ class ParcelBottomView extends StatelessWidget {
 
   ParcelState _getParcelState(OrderModel order) {
     final status = order.orderStatus;
-
     switch (status) {
       case AppConstants.accepted || AppConstants.confirmed:
         return ParcelState.readyToConfirm;
@@ -80,7 +75,6 @@ class ParcelBottomView extends StatelessWidget {
     }
   }
 
-  // Parcel waiting status
   Widget _buildParcelWaitingStatus() {
     return Container(
       width: double.infinity,
@@ -93,143 +87,80 @@ class ParcelBottomView extends StatelessWidget {
     );
   }
 
-  // Parcel confirmation actions (Cancel/Confirm buttons)
   Widget _buildParcelConfirmationActions(BuildContext context, OrderController orderController, OrderModel controllerOrderModel, bool showPaymentInfo) {
     final cancelPermission = Get.find<SplashController>().configModel!.canceledByDeliveryman ?? false;
-
     return Container(
       padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
-      decoration: BoxDecoration(
-        color: Theme.of(Get.context!).cardColor,
-        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
-      ),
-      child: Column( mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          showPaymentInfo ? Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Padding(
-              padding: const EdgeInsets.only(top: 2),
-              child: Image.asset(Images.coinIcon, width: 15, height: 15),
-            ),
-            SizedBox(width: Dimensions.paddingSizeExtraSmall),
-            Expanded(child: Column( crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                Text('amount_collect_from_customer'.tr, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall)),
-                (controllerOrderModel.paymentMethod != 'cash_on_delivery' && controllerOrderModel.paymentMethod != 'offline_payment') && controllerOrderModel.paymentStatus == 'paid' ? Text('already_paid_digitally'.tr, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).disabledColor)) : SizedBox.shrink(),
-              ],
-            )),
-            Text(
-              (controllerOrderModel.paymentMethod != 'cash_on_delivery' &&controllerOrderModel.paymentMethod != 'offline_payment') && controllerOrderModel.paymentStatus == 'paid' ? '0.0' : PriceConverterHelper.convertPrice(total),
-              style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeDefault),
-            ),
-          ]) : SizedBox.shrink(),
-          showPaymentInfo ? SizedBox(height: Dimensions.paddingSizeExtraSmall) : SizedBox.shrink(),
-          Row(children: [
-            (cancelPermission && ((controllerOrderModel.isGuest! && controllerOrderModel.orderStatus == 'pending')
-                || (!controllerOrderModel.isGuest!))) ? Expanded(child: _buildParcelCancelButton(controllerOrderModel))
-                : SizedBox(),
-            SizedBox(width: (cancelPermission && ((controllerOrderModel.isGuest! && controllerOrderModel.orderStatus == 'pending') || (!controllerOrderModel.isGuest!))) ? Dimensions.paddingSizeSmall : 0),
-
-            Expanded(
-              child: _buildParcelConfirmButton(orderController, controllerOrderModel),
-            ),
-          ]),
-        ],
-      ),
+      decoration: BoxDecoration(color: Theme.of(Get.context!).cardColor, boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)]),
+      child: Column(mainAxisAlignment: MainAxisAlignment.start, children: [
+        showPaymentInfo ? Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Padding(padding: const EdgeInsets.only(top: 2), child: Image.asset(Images.coinIcon, width: 15, height: 15)),
+          SizedBox(width: Dimensions.paddingSizeExtraSmall),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.start, children: [
+            Text('amount_collect_from_customer'.tr, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall)),
+            (controllerOrderModel.paymentMethod != 'cash_on_delivery' && controllerOrderModel.paymentMethod != 'offline_payment') && controllerOrderModel.paymentStatus == 'paid' ? Text('already_paid_digitally'.tr, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).disabledColor)) : SizedBox.shrink(),
+          ])),
+          Text((controllerOrderModel.paymentMethod != 'cash_on_delivery' && controllerOrderModel.paymentMethod != 'offline_payment') && controllerOrderModel.paymentStatus == 'paid' ? '0.0' : PriceConverterHelper.convertPrice(total), style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeDefault)),
+        ]) : SizedBox.shrink(),
+        showPaymentInfo ? SizedBox(height: Dimensions.paddingSizeExtraSmall) : SizedBox.shrink(),
+        Row(children: [
+          (cancelPermission && ((controllerOrderModel.isGuest! && controllerOrderModel.orderStatus == 'pending') || (!controllerOrderModel.isGuest!))) ? Expanded(child: _buildParcelCancelButton(controllerOrderModel)) : SizedBox(),
+          SizedBox(width: (cancelPermission && ((controllerOrderModel.isGuest! && controllerOrderModel.orderStatus == 'pending') || (!controllerOrderModel.isGuest!))) ? Dimensions.paddingSizeSmall : 0),
+          Expanded(child: _buildParcelConfirmButton(orderController, controllerOrderModel)),
+        ]),
+      ]),
     );
   }
 
   Widget _buildParcelCancelButton(OrderModel order) {
-    return CustomButtonWidget(
-      buttonText: 'cancel'.tr,
-      isBorder: true, transparent: true,
-      fontColor: Theme.of(Get.context!).textTheme.bodyLarge!.color,
-      onPressed: () => _handleParcelCancellation(order),
-    );
+    return CustomButtonWidget(buttonText: 'cancel'.tr, isBorder: true, transparent: true, fontColor: Theme.of(Get.context!).textTheme.bodyLarge!.color, onPressed: () => _handleParcelCancellation(order));
   }
 
   Widget _buildParcelConfirmButton(OrderController orderController, OrderModel order) {
-    return CustomButtonWidget(
-      buttonText: 'confirm'.tr,
-      onPressed: () => _handleParcelConfirmation(orderController, order),
-    );
+    return CustomButtonWidget(buttonText: 'confirm'.tr, onPressed: () => _handleParcelConfirmation(orderController, order));
   }
 
-  // Parcel pickup slider
   Widget _buildParcelPickupSlider(BuildContext context, OrderController orderController, OrderModel controllerOrderModel, bool showPaymentInfo) {
     return Container(
       padding: const EdgeInsets.only(left: Dimensions.paddingSizeDefault, top: Dimensions.paddingSizeDefault, right: Dimensions.paddingSizeDefault, bottom: Dimensions.paddingSizeExtraSmall),
-      decoration: BoxDecoration(
-        color: Theme.of(Get.context!).cardColor,
-        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
-      ),
+      decoration: BoxDecoration(color: Theme.of(Get.context!).cardColor, boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)]),
       child: Column(mainAxisAlignment: MainAxisAlignment.start, children: [
         showPaymentInfo ? Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 2),
-            child: Image.asset(Images.coinIcon, width: 15, height: 15),
-          ),
+          Padding(padding: const EdgeInsets.only(top: 2), child: Image.asset(Images.coinIcon, width: 15, height: 15)),
           SizedBox(width: Dimensions.paddingSizeExtraSmall),
-          Expanded(child: Column( crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              Text('amount_collect_from_customer'.tr, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall)),
-              (controllerOrderModel.paymentMethod != 'cash_on_delivery' && controllerOrderModel.paymentMethod != 'offline_payment') && controllerOrderModel.paymentStatus == 'paid' ? Text('already_paid_digitally'.tr, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).disabledColor)) : SizedBox.shrink(),
-            ],
-          )),
-          Text(
-            (controllerOrderModel.paymentMethod != 'cash_on_delivery' && controllerOrderModel.paymentMethod != 'offline_payment') && controllerOrderModel.paymentStatus == 'paid' ? '0.0' : PriceConverterHelper.convertPrice(total),
-            style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeDefault),
-          ),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.start, children: [
+            Text('amount_collect_from_customer'.tr, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall)),
+            (controllerOrderModel.paymentMethod != 'cash_on_delivery' && controllerOrderModel.paymentMethod != 'offline_payment') && controllerOrderModel.paymentStatus == 'paid' ? Text('already_paid_digitally'.tr, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).disabledColor)) : SizedBox.shrink(),
+          ])),
+          Text((controllerOrderModel.paymentMethod != 'cash_on_delivery' && controllerOrderModel.paymentMethod != 'offline_payment') && controllerOrderModel.paymentStatus == 'paid' ? '0.0' : PriceConverterHelper.convertPrice(total), style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeDefault)),
         ]) : SizedBox.shrink(),
         showPaymentInfo ? SizedBox(height: Dimensions.paddingSizeExtraSmall) : SizedBox.shrink(),
         SliderButton(
           action: () => _handleParcelPickup(orderController, controllerOrderModel),
-          label: Text(
-            'swipe_to_pick_up_parcel'.tr,
-            style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge, color: Theme.of(Get.context!).primaryColor),
-          ),
-          dismissThresholds: 0.5, dismissible: false,
-          shimmer: true, width: 1170, height: 60, buttonSize: 50, radius: 10,
-          icon: _buildSliderIcon(),
-          isLtr: Get.find<LocalizationController>().isLtr,
-          boxShadow: const BoxShadow(blurRadius: 0),
-          buttonColor: Theme.of(Get.context!).primaryColor,
-          backgroundColor: Theme.of(Get.context!).primaryColor.withValues(alpha: 0.1),
-          baseColor: Theme.of(Get.context!).primaryColor,
+          label: Text('swipe_to_pick_up_parcel'.tr, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge, color: Theme.of(Get.context!).primaryColor)),
+          dismissThresholds: 0.5, dismissible: false, shimmer: true, width: 1170, height: 60, buttonSize: 50, radius: 10,
+          icon: _buildSliderIcon(), isLtr: Get.find<LocalizationController>().isLtr, boxShadow: const BoxShadow(blurRadius: 0), buttonColor: Theme.of(Get.context!).primaryColor,
+          backgroundColor: Theme.of(Get.context!).primaryColor.withValues(alpha: 0.1), baseColor: Theme.of(Get.context!).primaryColor,
         ),
-
         (controllerOrderModel.isGuest! && controllerOrderModel.orderStatus == 'pending') || (!controllerOrderModel.isGuest!) ? _buildParcelCancelOption(controllerOrderModel) : SizedBox(height: 15),
       ]),
     );
   }
 
-  // Parcel delivery slider
   Widget _buildParcelDeliverySlider(OrderController orderController, OrderModel controllerOrderModel) {
     return Container(
       padding: const EdgeInsets.only(left: Dimensions.paddingSizeDefault, top: Dimensions.paddingSizeDefault, right: Dimensions.paddingSizeDefault, bottom: Dimensions.paddingSizeExtraSmall),
-      decoration: BoxDecoration(
-        color: Theme.of(Get.context!).cardColor,
-        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
-      ),
+      decoration: BoxDecoration(color: Theme.of(Get.context!).cardColor, boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)]),
       child: Column(children: [
         if (showDeliveryConfirmImage) DeliveryConfirmationSection(),
         SizedBox(height: showDeliveryConfirmImage ? Dimensions.paddingSizeSmall : 0),
-
         SliderButton(
           action: () => _handleParcelDelivery(orderController, controllerOrderModel),
-          label: Text(
-            'swipe_to_deliver_parcel'.tr,
-            style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge, color: Theme.of(Get.context!).primaryColor),
-          ),
-          dismissThresholds: 0.5, dismissible: false,
-          shimmer: true, width: 1170, height: 60, buttonSize: 50, radius: 10,
-          icon: _buildSliderIcon(),
-          isLtr: Get.find<LocalizationController>().isLtr,
-          boxShadow: const BoxShadow(blurRadius: 0),
-          buttonColor: Theme.of(Get.context!).primaryColor,
-          backgroundColor: Theme.of(Get.context!).primaryColor.withValues(alpha: 0.1),
-          baseColor: Theme.of(Get.context!).primaryColor,
+          label: Text('swipe_to_deliver_parcel'.tr, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge, color: Theme.of(Get.context!).primaryColor)),
+          dismissThresholds: 0.5, dismissible: false, shimmer: true, width: 1170, height: 60, buttonSize: 50, radius: 10,
+          icon: _buildSliderIcon(), isLtr: Get.find<LocalizationController>().isLtr, boxShadow: const BoxShadow(blurRadius: 0), buttonColor: Theme.of(Get.context!).primaryColor,
+          backgroundColor: Theme.of(Get.context!).primaryColor.withValues(alpha: 0.1), baseColor: Theme.of(Get.context!).primaryColor,
         ),
-
         (controllerOrderModel.isGuest! && controllerOrderModel.orderStatus == 'pending') || (!controllerOrderModel.isGuest!) ? _buildParcelCancelOption(controllerOrderModel) : SizedBox(height: 15),
       ]),
     );
@@ -240,113 +171,48 @@ class ParcelBottomView extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeLarge),
       child: InkWell(
         onTap: () {
-          showCustomBottomSheet(
-            child: CancellationReasonBottomSheet(
-              isBeforePickup: _isBeforePickup(order),
-              orderId: order.id!,
-            ),
-          );
+          showCustomBottomSheet(child: CancellationReasonBottomSheet(isBeforePickup: _isBeforePickup(order), orderId: order.id!));
         },
-        child: Center(
-          child: Text(
-            'cancel_delivery'.tr,
-            style: robotoBold.copyWith(
-              fontSize: Dimensions.fontSizeLarge,
-              decoration: TextDecoration.underline,
-            ),
-          ),
-        ),
+        child: Center(child: Text('cancel_delivery'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge, decoration: TextDecoration.underline))),
       ),
     );
   }
 
-  // Parcel return action
   Widget _buildParcelReturnOption(OrderModel order) {
     return !(order.parcelCancellation?.beforePickup == 1) ? Container(
       padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
-      decoration: BoxDecoration(
-        color: Theme.of(Get.context!).cardColor,
-        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
-      ),
+      decoration: BoxDecoration(color: Theme.of(Get.context!).cardColor, boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)]),
       child: order.parcelCancellation?.setReturnDate == 0 ? CustomButtonWidget(
         buttonText: 'set_return_date_and_time'.tr,
         onPressed: () {
-          showCustomBottomSheet(
-            child: ParcelReturnDateTimeBottomSheet(orderId: orderId, canceledDateTime: orderController.orderModel!.canceled!),
-          );
+          showCustomBottomSheet(child: ParcelReturnDateTimeBottomSheet(orderId: orderId, canceledDateTime: orderController.orderModel!.canceled!));
         },
       ) : SliderButton(
-        label: Text(
-          'parcel_returned'.tr,
-          style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge, color: Theme.of(Get.context!).primaryColor),
-        ),
-        dismissThresholds: 0.5, dismissible: false,
-        shimmer: true, width: 1170, height: 60, buttonSize: 50, radius: 10,
-        icon: _buildSliderIcon(),
-        isLtr: Get.find<LocalizationController>().isLtr,
-        boxShadow: const BoxShadow(blurRadius: 0),
-        buttonColor: Theme.of(Get.context!).primaryColor,
-        backgroundColor: Theme.of(Get.context!).primaryColor.withValues(alpha: 0.1),
-        baseColor: Theme.of(Get.context!).primaryColor,
-        action: () {
-          showCustomBottomSheet(
-            child: CollectMoneyBottomSheet(orderId: orderId),
-          );
-        },
+        label: Text('parcel_returned'.tr, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge, color: Theme.of(Get.context!).primaryColor)),
+        dismissThresholds: 0.5, dismissible: false, shimmer: true, width: 1170, height: 60, buttonSize: 50, radius: 10,
+        icon: _buildSliderIcon(), isLtr: Get.find<LocalizationController>().isLtr, boxShadow: const BoxShadow(blurRadius: 0), buttonColor: Theme.of(Get.context!).primaryColor,
+        backgroundColor: Theme.of(Get.context!).primaryColor.withValues(alpha: 0.1), baseColor: Theme.of(Get.context!).primaryColor,
+        action: () { showCustomBottomSheet(child: CollectMoneyBottomSheet(orderId: orderId)); },
       ),
     ) : SizedBox();
   }
 
-// Parcel action handlers
   void _handleParcelCancellation(OrderModel order) {
-    showCustomBottomSheet(
-      child: CancellationReasonBottomSheet(
-        isBeforePickup: _isBeforePickup(order),
-        orderId: order.id!,
-      ),
-    );
+    showCustomBottomSheet(child: CancellationReasonBottomSheet(isBeforePickup: _isBeforePickup(order), orderId: order.id!));
   }
 
   void _handleParcelConfirmation(OrderController orderController, OrderModel order) {
-    Get.dialog(
-      ConfirmationDialogWidget(
-        icon: Images.warning,
-        title: 'are_you_sure_to_confirm'.tr,
-        description: 'you_want_to_confirm_this_delivery'.tr,
-        onYesPressed: () => _processParcelConfirmation(orderController, order),
-      ),
-      barrierDismissible: false,
-    );
+    Get.dialog(ConfirmationDialogWidget(icon: Images.warning, title: 'are_you_sure_to_confirm'.tr, description: 'you_want_to_confirm_this_delivery'.tr, onYesPressed: () => _processParcelConfirmation(orderController, order)), barrierDismissible: false);
   }
 
   void _processParcelConfirmation(OrderController orderController, OrderModel order) {
-    final cod = order.paymentMethod == 'cash_on_delivery';
-
-    if (cod && order.chargePayer != 'sender') {
-      orderController.updateOrderStatus(order, AppConstants.handover);
-    } else if (cod && order.chargePayer == 'sender') {
-      orderController.updateOrderStatus(order, AppConstants.handover);
-    } else {
-      orderController.updateOrderStatus(order, AppConstants.handover);
-    }
+    orderController.updateOrderStatus(order, AppConstants.handover);
   }
 
   void _handleParcelPickup(OrderController orderController, OrderModel order) {
     final cod = order.paymentMethod == 'cash_on_delivery';
-
     if (order.chargePayer == 'sender' && cod) {
-      Get.bottomSheet(
-        VerifyDeliverySheetWidget(
-          currentOrderModel: order,
-          verify: false,
-          isSetOtp: false,
-          orderAmount: order.orderAmount,
-          cod: cod,
-          isSenderPay: true,
-          isParcel: true,
-        ),
-        isScrollControlled: true,
-      );
+      Get.bottomSheet(VerifyDeliverySheetWidget(currentOrderModel: order, verify: false, isSetOtp: false, orderAmount: order.orderAmount, cod: cod, isSenderPay: true, isParcel: true), isScrollControlled: true);
     } else {
       if (Get.find<ProfileController>().profileModel!.active == 1) {
         orderController.updateOrderStatus(order, AppConstants.pickedUp);
@@ -369,57 +235,24 @@ class ParcelBottomView extends StatelessWidget {
     } else if(order.chargePayer != 'sender') {
       _showParcelVerifyDeliverySheet(order, orderVerificationActive, cod, false);
     } else {
-      orderController.updateOrderStatus(
-        order,
-        AppConstants.delivered,
-        back: fromLocationScreen ? false : true,
-        gotoDashboard: fromLocationScreen ? true : false,
-      );
+      orderController.updateOrderStatus(order, AppConstants.delivered, back: fromLocationScreen ? false : true, gotoDashboard: fromLocationScreen ? true : false);
     }
   }
 
   void _showParcelVerifyDeliverySheet(OrderModel order, bool verify, bool cod, bool? isSenderPay) {
-    Get.bottomSheet(
-      VerifyDeliverySheetWidget(
-        currentOrderModel: order,
-        verify: verify,
-        orderAmount: order.orderAmount,
-        cod: cod,
-        isSenderPay: isSenderPay ?? false,
-        isParcel: true,
-      ),
-      isScrollControlled: true,
-    ).then((value) {
+    Get.bottomSheet(VerifyDeliverySheetWidget(currentOrderModel: order, verify: verify, orderAmount: order.orderAmount, cod: cod, isSenderPay: isSenderPay ?? false, isParcel: true), isScrollControlled: true).then((value) {
       if (value == 'show_price_view') {
-        Get.bottomSheet(
-          VerifyDeliverySheetWidget(
-            currentOrderModel: order,
-            verify: false,
-            isSetOtp: false,
-            orderAmount: order.orderAmount,
-            cod: cod,
-            isSenderPay: isSenderPay ?? false,
-            isParcel: true,
-          ),
-          isScrollControlled: true,
-        );
+        Get.bottomSheet(VerifyDeliverySheetWidget(currentOrderModel: order, verify: false, isSetOtp: false, orderAmount: order.orderAmount, cod: cod, isSenderPay: isSenderPay ?? false, isParcel: true), isScrollControlled: true);
       }
     });
   }
 
   Widget _buildSliderIcon() {
-    return Center(
-      child: Icon(
-        Get.find<LocalizationController>().isLtr ? Icons.double_arrow_sharp : Icons.keyboard_arrow_left,
-        color: Colors.white,
-        size: 20.0,
-      ),
-    );
+    return Center(child: Icon(Get.find<LocalizationController>().isLtr ? Icons.double_arrow_sharp : Icons.keyboard_arrow_left, color: Colors.white, size: 20.0));
   }
 
   bool _isBeforePickup(OrderModel order) {
     final status = order.orderStatus;
     return status == AppConstants.processing || status == AppConstants.accepted || status == AppConstants.confirmed || status == AppConstants.handover;
   }
-
 }
