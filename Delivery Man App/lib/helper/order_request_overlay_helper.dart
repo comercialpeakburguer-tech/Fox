@@ -14,15 +14,23 @@ class OrderRequestOverlayHelper {
   static String? _lastDismissedOrderId;
   static DateTime? _lastDismissedAt;
   static final Set<String> _handledOrderIds = <String>{};
+  static bool _suppressAutoCard = false;
+
+  static bool get suppressAutoCard => _suppressAutoCard;
+
+  static void setSuppressAutoCard(bool value) {
+    _suppressAutoCard = value;
+    debugPrint('FoxGoIncomingCard suppressAutoCard=$value');
+  }
 
   static Future<void> refreshRequests({String? orderId, bool showCard = true, bool routeGlobal = true, String source = 'manual'}) async {
     final orderController = Get.find<OrderController>();
-    debugPrint('FoxGoOrderRefresh source=$source refresh iniciado routeGlobal=$routeGlobal showCard=$showCard orderId=$orderId');
-    await orderController.getLatestOrders();
+    debugPrint('FoxGoOrderRefresh source=$source refresh iniciado routeGlobal=$routeGlobal showCard=$showCard orderId=$orderId suppress=$_suppressAutoCard');
+    await orderController.getLatestOrders(routeCall: routeGlobal && !_suppressAutoCard);
     orderController.getOrderCount(orderController.orderType);
     orderController.getRunningOrders(1, status: 'all');
 
-    if(!showCard) return;
+    if(!showCard || _suppressAutoCard) return;
 
     final order = _findOrder(orderController, orderId);
     if(order == null) {
@@ -52,7 +60,7 @@ class OrderRequestOverlayHelper {
 
   static void showIncomingCard({required OrderModel order, required int index}) {
     final nextOrderId = order.id?.toString();
-    if(_wasRecentlyHandled(nextOrderId)) return;
+    if(_suppressAutoCard || _wasRecentlyHandled(nextOrderId)) return;
     if(_showingIncomingCard) {
       debugPrint('FoxGoIncomingCard bloqueou dialog duplicado atual=$_showingOrderId novo=$nextOrderId');
       return;
@@ -102,7 +110,7 @@ class OrderRequestOverlayHelper {
 
       _markHandled(orderId?.toString());
       await NewCallOverlayHelper.dismiss();
-      await orderController.getLatestOrders();
+      await orderController.getLatestOrders(routeCall: false);
 
       final index = orderController.latestOrderList?.indexWhere((order) => order.id == orderId) ?? -1;
       if(index < 0) {
@@ -124,7 +132,7 @@ class OrderRequestOverlayHelper {
           Get.dialog(FoxGoAcceptedOrderCardWidget(orderModel: order), barrierDismissible: false);
         }
       } else {
-        await orderController.getLatestOrders();
+        await orderController.getLatestOrders(routeCall: false);
       }
     } catch(error, stackTrace) {
       debugPrint('FoxGoCallAction erro em acceptFromOverlayPayload: $error\n$stackTrace');
@@ -148,13 +156,13 @@ class OrderRequestOverlayHelper {
       await NewCallOverlayHelper.dismiss();
       bool ignored = orderController.ignoreOrderById(orderId);
       if(!ignored) {
-        await orderController.getLatestOrders();
+        await orderController.getLatestOrders(routeCall: false);
         ignored = orderController.ignoreOrderById(orderId);
       }
       _closeIncomingCardIfOpen();
       if(!ignored) {
         debugPrint('FoxGoCallAction recusa sem pedido local correspondente; latest_orders atualizado orderId=$orderId');
-        await refreshRequests(orderId: orderId?.toString(), showCard: false);
+        await refreshRequests(orderId: orderId?.toString(), showCard: false, routeGlobal: false);
       }
     } catch(error, stackTrace) {
       debugPrint('FoxGoCallAction erro em rejectFromOverlayPayload: $error\n$stackTrace');
