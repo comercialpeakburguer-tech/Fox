@@ -6,7 +6,7 @@ import 'package:sixam_mart_delivery/features/delivery_module/order/domain/models
 import 'package:sixam_mart_delivery/features/delivery_module/order/domain/models/update_status_body_model.dart';
 import 'package:sixam_mart_delivery/interface/repository_interface.dart';
 
-import 'package:sixam_mart_delivery/features/auth/domain/models/response_model.dart';
+import 'package:sixam_mart_delivery/lib/common/models/response_model.dart';
 abstract class OrderRepositoryInterface implements RepositoryInterface {
   Future<dynamic> getCancelReasons();
   Future<dynamic> getCompletedOrderList(int offset, {String orderStatus = 'all'});
