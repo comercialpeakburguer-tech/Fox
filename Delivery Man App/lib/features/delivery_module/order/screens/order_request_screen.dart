@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:sixam_mart_delivery/features/delivery_module/order/controllers/order_controller.dart';
 import 'package:sixam_mart_delivery/features/profile/controllers/profile_controller.dart';
+import 'package:sixam_mart_delivery/helper/order_request_overlay_helper.dart';
 import 'package:sixam_mart_delivery/util/dimensions.dart';
 import 'package:sixam_mart_delivery/util/styles.dart';
 import 'package:sixam_mart_delivery/features/delivery_module/order/widgets/fox_go_order_request_card_widget.dart';
@@ -23,6 +24,7 @@ class OrderRequestScreenState extends State<OrderRequestScreen> {
   @override
   initState() {
     super.initState();
+    OrderRequestOverlayHelper.setSuppressAutoCard(true);
 
     if(Get.find<ProfileController>().profileModel == null) {
       Get.find<ProfileController>().getProfile();
@@ -39,7 +41,7 @@ class OrderRequestScreenState extends State<OrderRequestScreen> {
     _refreshing = true;
     final orderController = Get.find<OrderController>();
     orderController.removeFromIgnoreList();
-    await orderController.getLatestOrders();
+    await orderController.getLatestOrders(routeCall: false);
     if(mounted) {
       setState(() => _refreshing = false);
     } else {
@@ -49,6 +51,7 @@ class OrderRequestScreenState extends State<OrderRequestScreen> {
 
   @override
   void dispose() {
+    OrderRequestOverlayHelper.setSuppressAutoCard(false);
     _timer?.cancel();
     super.dispose();
   }
