@@ -1,9 +1,9 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:sixam_mart_delivery/common/widgets/confirmation_dialog_widget.dart';
 import 'package:sixam_mart_delivery/common/widgets/custom_button_widget.dart';
 import 'package:sixam_mart_delivery/features/address/controllers/address_controller.dart';
 import 'package:sixam_mart_delivery/features/delivery_module/order/controllers/order_controller.dart';
@@ -16,7 +16,6 @@ import 'package:sixam_mart_delivery/helper/price_converter_helper.dart';
 import 'package:sixam_mart_delivery/util/app_constants.dart';
 import 'package:sixam_mart_delivery/util/dimensions.dart';
 import 'package:sixam_mart_delivery/util/enums.dart';
-import 'package:sixam_mart_delivery/util/images.dart';
 import 'package:sixam_mart_delivery/util/styles.dart';
 
 class FoxGoOrderRequestCardWidget extends StatefulWidget {
@@ -60,6 +59,14 @@ class _FoxGoOrderRequestCardWidgetState extends State<FoxGoOrderRequestCardWidge
   }
 
   bool get _isParcel => widget.orderModel.orderType == 'parcel';
+
+  int get _routeStopCount {
+    final detailsCount = widget.orderModel.detailsCount ?? 0;
+    final baseStops = _isParcel ? 2 : 2;
+    return math.max(baseStops, detailsCount > 1 ? detailsCount : baseStops);
+  }
+
+  bool get _isGroupedRoute => (widget.orderModel.detailsCount ?? 0) > 1;
 
   @override
   void initState() {
@@ -117,97 +124,80 @@ class _FoxGoOrderRequestCardWidgetState extends State<FoxGoOrderRequestCardWidge
     final double distance = _distanceFromDeliveryMan();
     final String payment = _paymentLabel();
     final bool showAmount = showEarning && Get.find<ProfileController>().profileModel != null && Get.find<ProfileController>().profileModel!.earnings == 1;
+    final String receiveValue = PriceConverterHelper.convertPrice(_earningAmount());
 
     return Container(
       margin: EdgeInsets.only(bottom: widget.compact ? 0 : Dimensions.paddingSizeSmall),
       decoration: BoxDecoration(
         color: theme.cardColor,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFF17A34A).withValues(alpha: 0.22)),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.12), blurRadius: 18, offset: const Offset(0, 8))],
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.18), blurRadius: 24, offset: const Offset(0, 10))],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(24),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xFF062E1C), Color(0xFF0E7A3D)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF7A6),
+              border: Border(left: BorderSide(color: Theme.of(context).primaryColor, width: 7)),
             ),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Row(children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.14), borderRadius: BorderRadius.circular(999)),
-                  child: Text('FOX GO', style: robotoBold.copyWith(color: Colors.white, fontSize: Dimensions.fontSizeSmall)),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                  decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.85), borderRadius: BorderRadius.circular(999)),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    const Icon(Icons.room_service_rounded, size: 17, color: Colors.black87),
+                    const SizedBox(width: 7),
+                    Text('${_moduleTitle()}${_isGroupedRoute ? ' (${widget.orderModel.detailsCount})' : ''}', style: robotoBold.copyWith(color: Colors.black87, fontSize: Dimensions.fontSizeSmall)),
+                  ]),
                 ),
                 const Spacer(),
-                Text('#${widget.orderModel.id ?? '-'}', style: robotoMedium.copyWith(color: Colors.white70, fontSize: Dimensions.fontSizeSmall)),
+                _timerChip(),
               ]),
-              const SizedBox(height: Dimensions.paddingSizeSmall),
-              Text(
-                _isFoodOrder ? 'Nova entrega de comida' : 'Nova entrega disponível',
-                style: robotoBold.copyWith(color: Colors.white, fontSize: Dimensions.fontSizeLarge),
-              ),
-              const SizedBox(height: Dimensions.paddingSizeExtraSmall),
-              Text(_moduleLabel(), style: robotoRegular.copyWith(color: Colors.white70, fontSize: Dimensions.fontSizeSmall)),
-              if(_remaining.inSeconds > 0) ...[
-                const SizedBox(height: Dimensions.paddingSizeExtraSmall),
-                Text('Expira em: ${_remaining.inSeconds}s', style: robotoBold.copyWith(color: const Color(0xFFFFE066), fontSize: Dimensions.fontSizeSmall)),
-              ] else ...[
-                const SizedBox(height: Dimensions.paddingSizeExtraSmall),
-                Text('Chamada expirada', style: robotoBold.copyWith(color: Colors.redAccent.shade100, fontSize: Dimensions.fontSizeSmall)),
-              ],
+              const SizedBox(height: Dimensions.paddingSizeDefault),
+              Text(receiveValue, style: robotoBold.copyWith(fontSize: 42, color: Colors.black, height: 1)),
+              const SizedBox(height: 8),
+              Text('Você recebe', style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeDefault, color: Colors.black54)),
             ]),
           ),
           Padding(
             padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              if(_isFoodOrder) _buildFoodItems(context),
-              if(_isFoodOrder) const SizedBox(height: Dimensions.paddingSizeSmall),
-              _infoRow(context, Icons.storefront_outlined, _isParcel ? 'Origem' : 'Loja / origem', _originName()),
-              _infoRow(context, Icons.shopping_bag_outlined, 'Retirada', _pickupAddress()),
-              _infoRow(context, Icons.location_on_outlined, 'Destino', _destinationAddress()),
               Row(children: [
-                Expanded(child: _metricBox(context, 'Distância', '${distance > 1000 ? '1000+' : distance.toStringAsFixed(2)} km')),
+                Expanded(child: _metricLine(Icons.route_rounded, 'Distância total', '${distance > 1000 ? '1000+' : distance.toStringAsFixed(1)} km')),
                 const SizedBox(width: Dimensions.paddingSizeSmall),
-                Expanded(child: _metricBox(context, 'Pagamento', payment)),
+                Expanded(child: _metricLine(Icons.payments_rounded, 'Pagamento', payment)),
               ]),
-              if(showAmount) ...[
+              const SizedBox(height: Dimensions.paddingSizeDefault),
+              _routeTimeline(),
+              if(_isFoodOrder) ...[
                 const SizedBox(height: Dimensions.paddingSizeSmall),
-                _metricBox(
-                  context,
-                  'Você recebe',
-                  PriceConverterHelper.convertPrice(_earningAmount()),
-                  highlight: true,
-                ),
+                _buildFoodItems(context),
               ],
               const SizedBox(height: Dimensions.paddingSizeDefault),
               Row(children: [
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: (_isIgnoring || _isAccepting || _remaining.inSeconds <= 0) ? null : () => _confirmIgnore(context),
+                    onPressed: (_isIgnoring || _isAccepting || _remaining.inSeconds <= 0) ? null : () => _showDecisionOverlay(accept: false),
                     style: OutlinedButton.styleFrom(
-                      minimumSize: const Size(0, 46),
-                      side: BorderSide(color: theme.disabledColor.withValues(alpha: 0.55)),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Dimensions.radiusDefault)),
+                      minimumSize: const Size(0, 52),
+                      side: const BorderSide(color: Color(0xFFE6003E), width: 1.2),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     ),
-                    child: Text('Recusar / Ignorar', textAlign: TextAlign.center, style: robotoMedium.copyWith(color: theme.textTheme.bodyLarge?.color)),
+                    child: Text('Recusar', textAlign: TextAlign.center, style: robotoBold.copyWith(color: const Color(0xFFE6003E), fontSize: Dimensions.fontSizeDefault)),
                   ),
                 ),
                 const SizedBox(width: Dimensions.paddingSizeSmall),
                 Expanded(
                   child: CustomButtonWidget(
-                    height: 46,
-                    radius: Dimensions.radiusDefault,
-                    buttonText: _isAccepting ? 'Aguarde...' : (_remaining.inSeconds <= 0 ? 'Expirada' : 'Aceitar pedido'),
+                    height: 52,
+                    radius: 16,
+                    buttonText: _isAccepting ? 'Aguarde...' : (_remaining.inSeconds <= 0 ? 'Expirada' : _isGroupedRoute ? 'Aceitar (${widget.orderModel.detailsCount})' : 'Aceitar'),
                     fontSize: Dimensions.fontSizeDefault,
-                    onPressed: (_isAccepting || _isIgnoring || _remaining.inSeconds <= 0) ? null : () => _confirmAccept(context),
+                    onPressed: (_isAccepting || _isIgnoring || _remaining.inSeconds <= 0) ? null : () => _showDecisionOverlay(accept: true),
                   ),
                 ),
               ]),
@@ -216,6 +206,60 @@ class _FoxGoOrderRequestCardWidgetState extends State<FoxGoOrderRequestCardWidge
         ]),
       ),
     );
+  }
+
+  Widget _timerChip() {
+    final expired = _remaining.inSeconds <= 0;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(color: expired ? const Color(0xFFE6003E) : Colors.black.withValues(alpha: 0.78), borderRadius: BorderRadius.circular(999)),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        const Icon(Icons.timer_rounded, color: Colors.white, size: 16),
+        const SizedBox(width: 6),
+        Text(expired ? 'Expirada' : '${_remaining.inSeconds}s', style: robotoBold.copyWith(color: Colors.white, fontSize: Dimensions.fontSizeSmall)),
+      ]),
+    );
+  }
+
+  Widget _metricLine(IconData icon, String label, String value) {
+    return Row(children: [
+      Icon(icon, color: Colors.black87, size: 22),
+      const SizedBox(width: 8),
+      Expanded(child: RichText(
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+        text: TextSpan(style: robotoRegular.copyWith(color: Colors.black87, fontSize: Dimensions.fontSizeDefault), children: [
+          TextSpan(text: '$label ', style: robotoRegular.copyWith(color: Colors.black54)),
+          TextSpan(text: value, style: robotoBold.copyWith(color: Colors.black87)),
+        ]),
+      )),
+    ]);
+  }
+
+  Widget _routeTimeline() {
+    final points = <_RoutePoint>[
+      _RoutePoint(color: const Color(0xFFFFD400), title: _originName(), subtitle: _pickupAddress()),
+      _RoutePoint(color: const Color(0xFFFF6A2A), title: _isParcel ? 'Destinatário' : 'Cliente', subtitle: _destinationAddress()),
+    ];
+
+    return Column(children: [
+      for(int index = 0; index < points.length; index++)
+        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Column(children: [
+            Container(width: 14, height: 14, decoration: BoxDecoration(color: points[index].color, shape: BoxShape.circle)),
+            if(index != points.length - 1) Container(width: 2, height: 42, color: const Color(0xFFBDBDBD)),
+          ]),
+          const SizedBox(width: 14),
+          Expanded(child: Padding(
+            padding: EdgeInsets.only(bottom: index == points.length - 1 ? 0 : 15),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(points[index].title.isNotEmpty ? points[index].title : 'Local a confirmar', style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeDefault, color: Colors.black)),
+              const SizedBox(height: 4),
+              Text(points[index].subtitle.isNotEmpty ? points[index].subtitle : 'Endereço a confirmar', style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Colors.black54)),
+            ]),
+          )),
+        ]),
+    ]);
   }
 
   Widget _buildFoodItems(BuildContext context) {
@@ -238,16 +282,20 @@ class _FoxGoOrderRequestCardWidgetState extends State<FoxGoOrderRequestCardWidge
     return _panel(
       context,
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('Itens comprados', style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault)),
+        Text('Itens do pedido', style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault)),
         const SizedBox(height: Dimensions.paddingSizeExtraSmall),
-        ...details.asMap().entries.map((entry) {
+        ...details.take(4).toList().asMap().entries.map((entry) {
           final item = entry.value;
           final name = item.itemDetails?.name?.trim().isNotEmpty == true ? item.itemDetails!.name!.trim() : 'Item do pedido';
           return Padding(
             padding: const EdgeInsets.only(top: Dimensions.paddingSizeExtraSmall),
-            child: Text('Item ${entry.key + 1}: $name (x${item.quantity ?? 1})', style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall)),
+            child: Text('• $name (x${item.quantity ?? 1})', style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall)),
           );
         }),
+        if(details.length > 4) Padding(
+          padding: const EdgeInsets.only(top: Dimensions.paddingSizeExtraSmall),
+          child: Text('+ ${details.length - 4} itens', style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall)),
+        ),
       ]),
     );
   }
@@ -264,73 +312,52 @@ class _FoxGoOrderRequestCardWidgetState extends State<FoxGoOrderRequestCardWidge
     );
   }
 
-  Widget _infoRow(BuildContext context, IconData icon, String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: Dimensions.paddingSizeSmall),
-      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Icon(icon, size: 20, color: const Color(0xFF17A34A)),
-        const SizedBox(width: Dimensions.paddingSizeSmall),
-        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(label, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).disabledColor)),
-          const SizedBox(height: 2),
-          Text(value.isNotEmpty ? value : 'A confirmar', style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall)),
-        ])),
-      ]),
-    );
-  }
-
-  Widget _metricBox(BuildContext context, String label, String value, {bool highlight = false}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall, vertical: Dimensions.paddingSizeSmall),
-      decoration: BoxDecoration(
-        color: highlight ? const Color(0xFF17A34A).withValues(alpha: 0.14) : Theme.of(context).disabledColor.withValues(alpha: 0.07),
-        borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+  void _showDecisionOverlay({required bool accept}) {
+    Get.dialog(
+      _RouteDecisionOverlay(
+        accept: accept,
+        amount: PriceConverterHelper.convertPrice(_earningAmount()),
+        distance: '${_distanceFromDeliveryMan() > 1000 ? '1000+' : _distanceFromDeliveryMan().toStringAsFixed(2)} km',
+        stops: _routeStopCount,
+        initialSeconds: _remaining.inSeconds,
+        onConfirm: () => accept ? _acceptOrder() : _rejectOrder(),
       ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(label, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).disabledColor)),
-        const SizedBox(height: 3),
-        Text(value.isNotEmpty ? value : 'A confirmar', maxLines: 2, overflow: TextOverflow.ellipsis, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeSmall)),
-      ]),
+      barrierDismissible: false,
+      useSafeArea: false,
     );
   }
 
-  void _confirmIgnore(BuildContext context) {
-    Get.dialog(ConfirmationDialogWidget(
-      icon: Images.warning,
-      title: 'are_you_sure_to_ignore'.tr,
-      description: _isParcel ? 'you_want_to_ignore_this_delivery'.tr : 'you_want_to_ignore_this_order'.tr,
-      onYesPressed: () async {
-        if(_isIgnoring || _isAccepting) return;
-        setState(() => _isIgnoring = true);
-        Get.back();
-        Get.find<OrderController>().ignoreOrder(widget.index);
-        if(mounted) setState(() => _isIgnoring = false);
-      },
-    ), barrierDismissible: false);
+  Future<void> _rejectOrder() async {
+    if(_isIgnoring || _isAccepting || _remaining.inSeconds <= 0) return;
+    setState(() => _isIgnoring = true);
+    Get.find<OrderController>().ignoreOrder(widget.index);
+    if(widget.compact) {
+      widget.onTap();
+    }
+    if(Get.isDialogOpen == true) {
+      Get.back();
+    }
+    if(mounted) setState(() => _isIgnoring = false);
   }
 
-  void _confirmAccept(BuildContext context) {
+  Future<void> _acceptOrder() async {
+    if(_isAccepting || _remaining.inSeconds <= 0) return;
+    setState(() => _isAccepting = true);
     final orderController = Get.find<OrderController>();
-    Get.dialog(ConfirmationDialogWidget(
-      icon: Images.warning,
-      title: 'are_you_sure_to_accept'.tr,
-      description: _isParcel ? 'you_want_to_accept_this_delivery'.tr : 'you_want_to_accept_this_order'.tr,
-      onYesPressed: () {
-        if(_isAccepting || _remaining.inSeconds <= 0) return;
-        setState(() => _isAccepting = true);
-        orderController.acceptOrder(widget.orderModel.id, widget.index, widget.orderModel).then((isSuccess) {
-          if(isSuccess) {
-            widget.orderModel.orderStatus = (widget.orderModel.orderStatus == 'pending' || widget.orderModel.orderStatus == 'confirmed') ? 'accepted' : widget.orderModel.orderStatus;
-            if(widget.compact) {
-              widget.onTap();
-            }
-            Get.dialog(FoxGoAcceptedOrderCardWidget(orderModel: widget.orderModel), barrierDismissible: false);
-          } else {
-            orderController.getLatestOrders();
-          }
-        }).whenComplete(() { if(mounted) setState(() => _isAccepting = false); });
-      },
-    ), barrierDismissible: false);
+    final isSuccess = await orderController.acceptOrder(widget.orderModel.id, widget.index, widget.orderModel);
+    if(Get.isDialogOpen == true) {
+      Get.back();
+    }
+    if(isSuccess) {
+      widget.orderModel.orderStatus = (widget.orderModel.orderStatus == 'pending' || widget.orderModel.orderStatus == 'confirmed') ? 'accepted' : widget.orderModel.orderStatus;
+      if(widget.compact) {
+        widget.onTap();
+      }
+      Get.dialog(FoxGoAcceptedOrderCardWidget(orderModel: widget.orderModel), barrierDismissible: false);
+    } else {
+      orderController.getLatestOrders();
+    }
+    if(mounted) setState(() => _isAccepting = false);
   }
 
   double _distanceFromDeliveryMan() {
@@ -340,14 +367,17 @@ class _FoxGoOrderRequestCardWidgetState extends State<FoxGoOrderRequestCardWidge
   }
 
   double _earningAmount() {
-    return ((widget.orderModel.originalDeliveryCharge ?? 0) + (widget.orderModel.dmTips ?? 0)).toDouble();
+    final amount = ((widget.orderModel.originalDeliveryCharge ?? 0) + (widget.orderModel.dmTips ?? 0)).toDouble();
+    return amount > 0 ? amount : ((widget.orderModel.deliveryCharge ?? 0) + (widget.orderModel.dmTips ?? 0)).toDouble();
   }
 
-  String _moduleLabel() {
-    if(_isFoodOrder) return 'Food / comida / restaurante';
-    if(_isParcel) return 'Entrega / encomenda';
-    final module = widget.orderModel.moduleType?.trim();
-    return module != null && module.isNotEmpty ? module : 'Entrega';
+  String _moduleTitle() {
+    if(_isFoodOrder) return 'Entrega Food';
+    if(_isParcel) return 'Entrega Encomenda';
+    final module = widget.orderModel.moduleType?.toLowerCase() ?? '';
+    if(module.contains('pharmacy')) return 'Entrega Farmácia';
+    if(module.contains('grocery') || module.contains('market')) return 'Entrega Mercado';
+    return 'Entrega';
   }
 
   String _originName() {
@@ -409,5 +439,128 @@ class _FoxGoOrderRequestCardWidgetState extends State<FoxGoOrderRequestCardWidge
     if(ttl != null && ttl > 0) return DateTime.now().add(Duration(seconds: ttl));
     return null;
   }
+}
 
+class _RouteDecisionOverlay extends StatefulWidget {
+  const _RouteDecisionOverlay({
+    required this.accept,
+    required this.amount,
+    required this.distance,
+    required this.stops,
+    required this.initialSeconds,
+    required this.onConfirm,
+  });
+
+  final bool accept;
+  final String amount;
+  final String distance;
+  final int stops;
+  final int initialSeconds;
+  final Future<void> Function() onConfirm;
+
+  @override
+  State<_RouteDecisionOverlay> createState() => _RouteDecisionOverlayState();
+}
+
+class _RouteDecisionOverlayState extends State<_RouteDecisionOverlay> {
+  Timer? _timer;
+  late int _seconds;
+  bool _loading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _seconds = widget.initialSeconds > 0 ? widget.initialSeconds : 0;
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if(!mounted) return;
+      if(_seconds <= 0) {
+        timer.cancel();
+        return;
+      }
+      setState(() => _seconds--);
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final Color actionColor = widget.accept ? const Color(0xFF006B2B) : const Color(0xFFE6003E);
+    return Material(
+      color: Colors.black.withValues(alpha: 0.58),
+      child: SafeArea(
+        child: Center(
+          child: Container(
+            width: MediaQuery.of(context).size.width - 32,
+            constraints: const BoxConstraints(maxWidth: 520),
+            padding: const EdgeInsets.fromLTRB(28, 70, 28, 34),
+            decoration: BoxDecoration(color: actionColor, borderRadius: BorderRadius.circular(28)),
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              SizedBox(
+                width: 118,
+                height: 118,
+                child: Stack(alignment: Alignment.center, children: [
+                  SizedBox(
+                    width: 104,
+                    height: 104,
+                    child: CircularProgressIndicator(
+                      value: widget.initialSeconds <= 0 ? 0 : (_seconds / widget.initialSeconds).clamp(0.0, 1.0),
+                      strokeWidth: 10,
+                      backgroundColor: Colors.black.withValues(alpha: 0.16),
+                      valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  ),
+                  Text('$_seconds', style: const TextStyle(color: Colors.white, fontSize: 42, fontWeight: FontWeight.w800)),
+                ]),
+              ),
+              const SizedBox(height: 52),
+              Text(widget.accept ? 'Aceitar a rota?' : 'Rejeitar a rota?', textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontSize: 38, height: 1.05, fontWeight: FontWeight.w800, letterSpacing: 1.2)),
+              const SizedBox(height: 28),
+              Text(widget.amount, style: const TextStyle(color: Colors.white, fontSize: 42, fontWeight: FontWeight.w900, letterSpacing: 1.1)),
+              const SizedBox(height: 22),
+              Text('${widget.distance} • 30 min • ${widget.stops} paradas', textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w500, letterSpacing: 1.0)),
+              const SizedBox(height: 120),
+              SizedBox(
+                width: double.infinity,
+                height: 62,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: actionColor, elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                  onPressed: (_loading || _seconds <= 0) ? null : () async {
+                    setState(() => _loading = true);
+                    await widget.onConfirm();
+                    if(mounted) setState(() => _loading = false);
+                  },
+                  child: _loading
+                    ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))
+                    : Text(widget.accept ? 'Aceito' : 'Rejeitar', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+                ),
+              ),
+              const SizedBox(height: 18),
+              SizedBox(
+                width: double.infinity,
+                height: 62,
+                child: OutlinedButton(
+                  style: OutlinedButton.styleFrom(foregroundColor: Colors.white, side: const BorderSide(color: Colors.white, width: 1.2), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                  onPressed: _loading ? null : () => Get.back(),
+                  child: const Text('Voltar', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+                ),
+              ),
+            ]),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RoutePoint {
+  final Color color;
+  final String title;
+  final String subtitle;
+
+  const _RoutePoint({required this.color, required this.title, required this.subtitle});
 }
