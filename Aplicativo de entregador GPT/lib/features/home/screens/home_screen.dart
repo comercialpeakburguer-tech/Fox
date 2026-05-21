@@ -1,4 +1,3 @@
-import 'package:permission_handler/permission_handler.dart';
 import 'package:sixam_mart_delivery/features/auth/controllers/auth_controller.dart';
 import 'package:sixam_mart_delivery/features/dashboard/screens/dashboard_screen.dart';
 import 'package:sixam_mart_delivery/features/home/widgets/active_order_widget.dart';
@@ -12,8 +11,10 @@ import 'package:sixam_mart_delivery/features/home/widgets/ride_floating_button_w
 import 'package:sixam_mart_delivery/features/home/widgets/ride_order_count_widget.dart';
 import 'package:sixam_mart_delivery/features/home/widgets/vehicle_add_widget.dart';
 import 'package:sixam_mart_delivery/features/notification/controllers/notification_controller.dart';
+import 'package:sixam_mart_delivery/features/permission/controllers/permission_flow_controller.dart';
 import 'package:sixam_mart_delivery/features/delivery_module/order/controllers/order_controller.dart';
 import 'package:sixam_mart_delivery/features/profile/controllers/profile_controller.dart';
+import 'package:sixam_mart_delivery/helper/order_request_overlay_helper.dart';
 import 'package:sixam_mart_delivery/features/ride_module/ride_order/controllers/ride_controller.dart';
 import 'package:sixam_mart_delivery/features/ride_module/trip/controllers/trip_controller.dart';
 import 'package:sixam_mart_delivery/features/splash/controllers/splash_controller.dart';
@@ -78,7 +79,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _checkSystemNotification() async {
-    if(await Permission.notification.status.isDenied || await Permission.notification.status.isPermanentlyDenied) {
+    await Get.find<PermissionFlowController>().refreshStatuses();
+    final bool notificationMissing = Get.find<PermissionFlowController>().checks.any(
+      (check) => check.step == FoxGoPermissionStep.notifications && check.needsAction,
+    );
+    if (notificationMissing) {
       await Get.find<AuthController>().setNotificationActive(false);
     }
   }
@@ -90,6 +95,7 @@ class _HomeScreenState extends State<HomeScreen> {
         break;
       case AppLifecycleState.resumed:
         checkPermission();
+        _refreshOnResume();
         break;
       case AppLifecycleState.inactive:
         break;
@@ -100,60 +106,46 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> checkPermission() async {
-    var notificationStatus = await Permission.notification.status;
-    var batteryStatus = await Permission.ignoreBatteryOptimizations.status;
 
-    if(notificationStatus.isDenied || notificationStatus.isPermanentlyDenied) {
-      setState(() {
-        _isNotificationPermissionGranted = false;
-        _isBatteryOptimizationGranted = true;
-      });
-
-      await Get.find<AuthController>().setNotificationActive(!notificationStatus.isDenied);
-
-    } else if(batteryStatus.isDenied) {
-      setState(() {
-        _isBatteryOptimizationGranted = false;
-        _isNotificationPermissionGranted = true;
-      });
-    } else {
-      setState(() {
-        _isNotificationPermissionGranted = true;
-        _isBatteryOptimizationGranted = true;
-      });
-      Get.find<ProfileController>().setBackgroundNotificationActive(true);
-    }
-
-    if(batteryStatus.isDenied) {
-      Get.find<ProfileController>().setBackgroundNotificationActive(false);
+  Future<void> _refreshOnResume() async {
+    try {
+      final auth = Get.find<AuthController>();
+      final profile = Get.find<ProfileController>().profileModel;
+      final isOnline = auth.isLoggedIn() && profile != null && profile.active == 1;
+      debugPrint('FoxGoOrderRefresh source=app-resumed online=$isOnline');
+      if(!isOnline) return;
+      await OrderRequestOverlayHelper.refreshRequests(source: 'app-resumed', routeGlobal: true);
+    } catch (error, stackTrace) {
+      debugPrint('FoxGoOrderRefresh source=app-resumed erro=$error\n$stackTrace');
     }
   }
+
+  Future<void> checkPermission() async {
+    final controller = Get.find<PermissionFlowController>();
+    await controller.refreshStatuses();
+    final notificationMissing = controller.checks.any((check) => check.step == FoxGoPermissionStep.notifications && check.needsAction);
+    final batteryMissing = controller.checks.any((check) => check.step == FoxGoPermissionStep.batteryOptimization && check.needsAction);
+    if (mounted) {
+      setState(() {
+        _isNotificationPermissionGranted = !notificationMissing;
+        _isBatteryOptimizationGranted = !batteryMissing;
+      });
+    }
+    Get.find<ProfileController>().setBackgroundNotificationActive(!batteryMissing);
+  }
+
 
   Future<void> requestNotificationPermission() async {
-    if (await Permission.notification.request().isGranted) {
-      checkPermission();
-      return;
-    } else {
-      await openAppSettings();
-    }
-
-    checkPermission();
+    await Get.find<PermissionFlowController>().openPermissionFlow(startAt: FoxGoPermissionStep.notifications);
+    await checkPermission();
   }
+
 
   void requestBatteryOptimization() async {
-    var status = await Permission.ignoreBatteryOptimizations.status;
-
-    if (status.isGranted) {
-      return;
-    } else if(status.isDenied) {
-      await Permission.ignoreBatteryOptimizations.request();
-    } else {
-      openAppSettings();
-    }
-
-    checkPermission();
+    await Get.find<PermissionFlowController>().openPermissionFlow(startAt: FoxGoPermissionStep.batteryOptimization);
+    await checkPermission();
   }
+
 
   @override
   void dispose() {

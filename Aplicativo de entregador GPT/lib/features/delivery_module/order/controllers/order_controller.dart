@@ -17,6 +17,7 @@ import 'package:sixam_mart_delivery/util/app_constants.dart';
 import 'package:sixam_mart_delivery/common/widgets/custom_snackbar_widget.dart';
 import 'package:get/get.dart';
 import 'package:sixam_mart_delivery/features/delivery_module/order/domain/services/order_service_interface.dart';
+import 'package:sixam_mart_delivery/helper/global_call_route_helper.dart';
 
 class OrderController extends GetxController implements GetxService {
   final OrderServiceInterface orderServiceInterface;
@@ -241,47 +242,14 @@ class OrderController extends GetxController implements GetxService {
       _latestOrderList = [];
       List<int?> ignoredIdList = orderServiceInterface.prepareIgnoreIdList(_ignoredRequests);
       _latestOrderList!.addAll(orderServiceInterface.processLatestOrders(latestOrderList, ignoredIdList));
-    }
-    update();
-  }
-
-  OrderModel? foxgoFindLatestOrderById(String? orderId) {
-    final int? parsedOrderId = int.tryParse(orderId ?? '');
-    if(parsedOrderId == null || _latestOrderList == null) {
-      return null;
-    }
-
-    for(final OrderModel order in _latestOrderList!) {
-      if(order.id == parsedOrderId) {
-        return order;
+      if(_latestOrderList!.isNotEmpty) {
+        debugPrint('FoxGoOrderRefresh getLatestOrders nova chamada count=${_latestOrderList!.length} firstOrderId=${_latestOrderList!.first.id}');
+        GlobalCallRouteHelper.routeOrderModel(_latestOrderList!.first, source: 'getLatestOrders/latest_orders');
+      } else {
+        debugPrint('FoxGoOrderRefresh getLatestOrders sem chamadas pendentes');
       }
     }
-
-    return null;
-  }
-
-  Map<String, dynamic> foxgoOverlayPayloadForOrder(String? orderId, Map<String, dynamic> basePayload) {
-    final Map<String, dynamic> payload = Map<String, dynamic>.from(basePayload);
-    final OrderModel? order = foxgoFindLatestOrderById(orderId);
-
-    if(order == null) {
-      return payload;
-    }
-
-    payload['foxgo_offer_id'] = order.foxgoOfferId;
-    payload['foxgo_offer_uuid'] = order.foxgoOfferUuid;
-    payload['foxgo_offer_status'] = order.foxgoOfferStatus;
-    payload['foxgo_offer_expires_at'] = order.foxgoOfferExpiresAt;
-    payload['foxgo_offer_remaining_seconds'] = order.foxgoOfferRemainingSeconds;
-    payload['foxgo_offer_ttl_seconds'] = order.foxgoOfferTtlSeconds;
-    payload['foxgo_driver_earning_amount'] = order.foxgoDriverEarningAmount;
-
-    final String currentEarning = payload['earning']?.toString().trim() ?? '';
-    if(order.foxgoDriverEarningAmount != null && (currentEarning.isEmpty || currentEarning == 'A confirmar')) {
-      payload['earning'] = order.foxgoDriverEarningAmount.toString();
-    }
-
-    return payload;
+    update();
   }
 
   Future<bool> updateOrderStatus(OrderModel currentOrder, String status, {bool back = false,  String? reason, bool? parcel = false,
@@ -318,37 +286,11 @@ class OrderController extends GetxController implements GetxService {
       }
       showCustomSnackBar(responseModel.message, isError: false, getXSnackBar: false);
     }else {
-      showCustomSnackBar(_foxgoStatusErrorMessage(responseModel.message, status), isError: true, getXSnackBar: false);
+      showCustomSnackBar(responseModel.message, isError: true, getXSnackBar: false);
     }
     _isLoading = false;
     update();
     return responseModel.isSuccess;
-  }
-
-
-  String _foxgoStatusErrorMessage(String? rawMessage, String status) {
-    final String message = (rawMessage ?? '').trim();
-    final String lower = message.toLowerCase();
-
-    if(status == AppConstants.pickedUp) {
-      if(lower.contains('pickup_otp_required')) {
-        return 'foxgo_pickup_otp_required_error'.tr;
-      }
-      if(lower.contains('pickup_otp_invalid')) {
-        return 'foxgo_pickup_otp_invalid_error'.tr;
-      }
-      if(lower.contains('pickup_otp_not_generated')) {
-        return 'foxgo_pickup_otp_not_generated_error'.tr;
-      }
-      if(lower.contains('otp') && lower.contains('invalid')) {
-        return 'foxgo_pickup_otp_invalid_error'.tr;
-      }
-      if(lower.contains('otp') && lower.contains('required')) {
-        return 'foxgo_pickup_otp_required_error'.tr;
-      }
-    }
-
-    return message.isNotEmpty ? message : 'something_went_wrong'.tr;
   }
 
   Future<void> getOrderDetails(int? orderID, bool parcel) async {
@@ -371,41 +313,16 @@ class OrderController extends GetxController implements GetxService {
     ResponseModel responseModel = await orderServiceInterface.acceptOrder(orderID);
     Get.back();
     if(responseModel.isSuccess) {
-      if(index >= 0 && _latestOrderList != null && index < _latestOrderList!.length) {
+      if(_latestOrderList != null && index >= 0 && index < _latestOrderList!.length) {
         _latestOrderList!.removeAt(index);
       } else {
         _latestOrderList?.removeWhere((order) => order.id == orderID);
       }
-
       _currentOrderList ??= [];
-      if(!_currentOrderList!.any((order) => order.id == orderModel.id)) {
-        _currentOrderList!.add(orderModel);
-      }
+      _currentOrderList!.add(orderModel);
     }else {
       showCustomSnackBar(responseModel.message, isError: true);
     }
-    _isLoading = false;
-    update();
-    return responseModel.isSuccess;
-  }
-
-  Future<bool> foxgoAcceptOverlayOrder(int? orderID, OrderModel orderModel) async {
-    _isLoading = true;
-    update();
-
-    ResponseModel responseModel = await orderServiceInterface.acceptOrder(orderID);
-
-    if(responseModel.isSuccess) {
-      _latestOrderList?.removeWhere((order) => order.id == orderID);
-
-      _currentOrderList ??= [];
-      if(!_currentOrderList!.any((order) => order.id == orderModel.id)) {
-        _currentOrderList!.add(orderModel);
-      }
-    }else {
-      showCustomSnackBar(responseModel.message, isError: true);
-    }
-
     _isLoading = false;
     update();
     return responseModel.isSuccess;
@@ -417,14 +334,24 @@ class OrderController extends GetxController implements GetxService {
   }
 
   void ignoreOrder(int index) {
-    if(_latestOrderList == null || index < 0 || index >= _latestOrderList!.length) {
-      return;
-    }
-
     _ignoredRequests.add(IgnoreModel(id: _latestOrderList![index].id, time: DateTime.now()));
     _latestOrderList!.removeAt(index);
     orderServiceInterface.setIgnoreList(_ignoredRequests);
     update();
+  }
+
+  bool ignoreOrderById(int? orderId) {
+    if(orderId == null || _latestOrderList == null) {
+      return false;
+    }
+
+    final int index = _latestOrderList!.indexWhere((order) => order.id == orderId);
+    if(index < 0) {
+      return false;
+    }
+
+    ignoreOrder(index);
+    return true;
   }
 
   void removeFromIgnoreList() {

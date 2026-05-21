@@ -8,6 +8,7 @@ import 'package:sixam_mart_delivery/features/ride_module/ride_order/screens/pend
 import 'package:sixam_mart_delivery/features/ride_module/ride_order/screens/ride_order_screen.dart';
 import 'package:sixam_mart_delivery/helper/notification_helper.dart';
 import 'package:sixam_mart_delivery/helper/new_call_overlay_helper.dart';
+import 'package:sixam_mart_delivery/helper/order_request_overlay_helper.dart';
 import 'package:sixam_mart_delivery/helper/route_helper.dart';
 import 'package:sixam_mart_delivery/main.dart';
 import 'package:sixam_mart_delivery/util/app_constants.dart';
@@ -65,65 +66,36 @@ class DashboardScreenState extends State<DashboardScreen> {
     showDisbursementWarningMessage();
     Get.find<OrderController>().getLatestOrders();
 
-    NewCallOverlayHelper.bindDefaultCallbacks();
+    NewCallOverlayHelper.setCallbacks(
+      accept: (payload) => OrderRequestOverlayHelper.acceptFromOverlayPayload(payload),
+      reject: (payload) => OrderRequestOverlayHelper.rejectFromOverlayPayload(payload),
+      dismissed: (_) {},
+    );
     
     _stream = FirebaseMessaging.onMessage.listen((RemoteMessage message) {
 
-      String? type = message.data['body_loc_key'] ?? message.data['type'];
-      String? orderID = message.data['title_loc_key'] ?? message.data['order_id'];
+      String? type = message.data['body_loc_key'] ?? message.data['type'] ?? message.data['message_type'] ?? message.data['notification_type'];
+      String? orderID = message.data['title_loc_key'] ?? message.data['order_id'] ?? message.data['orderId'];
+      debugPrint('FoxGoDashboardRoute entrou Dashboard listener keys=${message.data.keys.toList()} type=$type orderId=$orderID');
       bool isParcel = (message.data['order_type'] == 'parcel_order');
       bool isPrescription = (message.data['order_type'] == 'prescription');
       if(type != 'assign' && type != 'new_order' && type != 'message' && type != 'order_request' && type != 'order_status') {
         NotificationHelper.showNotification(message, flutterLocalNotificationsPlugin);
       }
-      if(type == 'new_order' || type == 'order_request') {
-        final orderController = Get.find<OrderController>();
-        orderController.getRunningOrders(orderController.offset, status: 'all');
-        orderController.getOrderCount(orderController.orderType);
-        orderController.getLatestOrders().then((_) {
-          final updatedPayload = orderController.foxgoOverlayPayloadForOrder(
-            message.data['order_id']?.toString(),
-            {
-              'callId': message.data['order_id']?.toString(),
-              'orderId': message.data['order_id']?.toString(),
-              'rawType': message.data['order_type']?.toString() ?? message.data['type']?.toString() ?? 'delivery',
-              'type': message.data['order_type']?.toString() ?? 'delivery',
-              'title': 'Nova entrega disponível',
-              'originName': message.data['store_name']?.toString() ?? '',
-              'pickupAddress': message.data['store_address']?.toString() ?? '',
-              'destinationAddress': message.data['delivery_address']?.toString() ?? '',
-              'earning': message.data['earning']?.toString() ?? '',
-              'distance': message.data['distance']?.toString() ?? '',
-              'paymentMethod': message.data['payment_method']?.toString() ?? '',
-            },
-          );
-          NewCallOverlayHelper.update(updatedPayload).catchError((_) => false);
-        }).catchError((_) {});
+      if(type == 'new_order' || type == 'order_request' || type == 'latest_orders') {
+        Get.find<OrderController>().getRunningOrders(Get.find<OrderController>().offset, status: 'all');
+        Get.find<OrderController>().getOrderCount(Get.find<OrderController>().orderType);
+        Get.find<OrderController>().getLatestOrders();
 
-        final overlayPayload = orderController.foxgoOverlayPayloadForOrder(
-          message.data['order_id']?.toString(),
-          {
-            'callId': message.data['order_id']?.toString(),
-            'orderId': message.data['order_id']?.toString(),
-            'rawType': message.data['order_type']?.toString() ?? message.data['type']?.toString() ?? 'delivery',
-            'type': message.data['order_type']?.toString() ?? 'delivery',
-            'title': 'Nova entrega disponível',
-            'originName': message.data['store_name']?.toString() ?? '',
-            'pickupAddress': message.data['store_address']?.toString() ?? '',
-            'destinationAddress': message.data['delivery_address']?.toString() ?? '',
-            'earning': message.data['earning']?.toString() ?? '',
-            'distance': message.data['distance']?.toString() ?? '',
-            'paymentMethod': message.data['payment_method']?.toString() ?? '',
-          },
-        );
-        NewCallOverlayHelper.show(overlayPayload).catchError((_) => false);
-        // Fox GO: evita duplicar a chamada. O overlay nativo já mostra o card de nova entrega.
-        // O popup original NewRequestDialogWidget ficava por trás do overlay e causava dois cards na tela.
-          // O botão Aceitar do overlay agora aceita o pedido e abre OrderDetailsScreen/retirada pelo callback padrão.
+        // Roteia em camada global para o overlay nativo/fallback, sem depender da Home montada.
+        NotificationHelper.routeNewCallMessage(message, source: 'dashboard-listener');
       }else if(type == 'assign' && orderID != null && orderID.isNotEmpty) {
-        // Fox GO APP-28A-R3: evita popup duplicado no fluxo assign.
-        // Mantém a atualização de pedidos e deixa o detalhe abrir pelo fluxo padrão/notificação.
-        Get.find<OrderController>().getCurrentOrders();
+        Get.find<OrderController>().getRunningOrders(Get.find<OrderController>().offset, status: 'all');
+        Get.find<OrderController>().getOrderCount(Get.find<OrderController>().orderType);
+        Get.find<OrderController>().getLatestOrders();
+        Get.dialog(NewRequestDialogWidget(isRequest: false, orderId: int.parse(message.data['order_id'].toString()), hideItemCount: isParcel || isPrescription, onTap: () {
+          Get.offAllNamed(RouteHelper.getOrderDetailsRoute(int.parse(orderID), fromNotification: true));
+        }));
       }else if(type == 'block') {
         Get.find<AuthController>().clearSharedData();
         Get.find<ProfileController>().stopLocationRecord();

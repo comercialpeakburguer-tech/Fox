@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:sixam_mart_delivery/common/models/response_model.dart';
 import 'package:sixam_mart_delivery/features/auth/controllers/auth_controller.dart';
 import 'package:sixam_mart_delivery/features/profile/domain/models/level_model.dart';
@@ -7,8 +8,11 @@ import 'package:sixam_mart_delivery/features/ride_module/ride_order/controllers/
 import 'package:sixam_mart_delivery/features/splash/controllers/splash_controller.dart';
 import 'package:sixam_mart_delivery/features/address/domain/models/record_location_body_model.dart';
 import 'package:sixam_mart_delivery/features/profile/domain/models/profile_model.dart';
+import 'package:sixam_mart_delivery/features/permission/controllers/permission_flow_controller.dart';
 import 'package:sixam_mart_delivery/helper/pusher_helper.dart';
 import 'package:sixam_mart_delivery/helper/deliveryman_availability_helper.dart';
+import 'package:sixam_mart_delivery/helper/fox_go_online_service_helper.dart';
+import 'package:sixam_mart_delivery/helper/order_request_overlay_helper.dart';
 import 'package:sixam_mart_delivery/helper/route_helper.dart';
 import 'package:sixam_mart_delivery/common/widgets/custom_snackbar_widget.dart';
 import 'package:geolocator/geolocator.dart';
@@ -59,9 +63,27 @@ class ProfileController extends GetxController implements GetxService {
       PusherHelper().driverTripRequestSubscribe(_profileModel!.id.toString());
 
       if (_profileModel!.active == 1) {
-        await DeliverymanAvailabilityHelper.setOnline();
-        profileServiceInterface.checkPermission(() => startLocationRecord());
+        final bool permissionsOk = await Get.find<PermissionFlowController>().ensureCriticalPermissions(openFlow: false);
+        if (permissionsOk) {
+          final bool onlineServiceStarted = await FoxGoOnlineServiceHelper.start();
+          if (!onlineServiceStarted) {
+            showCustomSnackBar('Falha ao iniciar serviço online permanente.');
+          }
+          await DeliverymanAvailabilityHelper.setOnline();
+          startLocationRecord();
+          try {
+            debugPrint('FoxGoOrderRefresh source=online-start online=true refresh iniciado');
+            await OrderRequestOverlayHelper.refreshRequests(source: 'online-start', routeGlobal: true);
+          } catch (error, stackTrace) {
+            debugPrint('FoxGoOrderRefresh source=online-start erro=$error\n$stackTrace');
+          }
+        } else {
+          await FoxGoOnlineServiceHelper.stop();
+          await DeliverymanAvailabilityHelper.setOffline();
+          stopLocationRecord();
+        }
       } else {
+        await FoxGoOnlineServiceHelper.stop();
         await DeliverymanAvailabilityHelper.setOffline();
         stopLocationRecord();
       }
@@ -96,15 +118,41 @@ class ProfileController extends GetxController implements GetxService {
   }
 
   Future<bool> updateActiveStatus() async {
+    if (_profileModel != null && _profileModel!.active == 0) {
+      final bool permissionsOk = await Get.find<PermissionFlowController>().ensureCriticalPermissions(openFlow: true);
+      if (!permissionsOk) {
+        showCustomSnackBar('Conclua as permissões do app para ficar online.');
+        return false;
+      }
+    }
+
     ResponseModel responseModel = await profileServiceInterface.updateActiveStatus();
     if (responseModel.isSuccess) {
       Get.back();
       _profileModel!.active = _profileModel!.active == 0 ? 1 : 0;
       showCustomSnackBar(responseModel.message, isError: false);
       if (_profileModel!.active == 1) {
-        await DeliverymanAvailabilityHelper.setOnline();
-        profileServiceInterface.checkPermission(() => startLocationRecord());
+        final bool permissionsOk = await Get.find<PermissionFlowController>().ensureCriticalPermissions(openFlow: false);
+        if (permissionsOk) {
+          final bool onlineServiceStarted = await FoxGoOnlineServiceHelper.start();
+          if (!onlineServiceStarted) {
+            showCustomSnackBar('Falha ao iniciar serviço online permanente.');
+          }
+          await DeliverymanAvailabilityHelper.setOnline();
+          startLocationRecord();
+          try {
+            debugPrint('FoxGoOrderRefresh source=online-start online=true refresh iniciado');
+            await OrderRequestOverlayHelper.refreshRequests(source: 'online-start', routeGlobal: true);
+          } catch (error, stackTrace) {
+            debugPrint('FoxGoOrderRefresh source=online-start erro=$error\n$stackTrace');
+          }
+        } else {
+          await FoxGoOnlineServiceHelper.stop();
+          await DeliverymanAvailabilityHelper.setOffline();
+          stopLocationRecord();
+        }
       } else {
+        await FoxGoOnlineServiceHelper.stop();
         await DeliverymanAvailabilityHelper.setOffline();
         stopLocationRecord();
       }
@@ -123,6 +171,7 @@ class ProfileController extends GetxController implements GetxService {
     if (responseModel.isSuccess) {
       showCustomSnackBar(responseModel.message, isError: false);
       Get.find<AuthController>().clearSharedData();
+      await FoxGoOnlineServiceHelper.stop();
       stopLocationRecord();
       PusherHelper().pusherDisconnectPusher();
       Get.offAllNamed(RouteHelper.getSignInRoute());
@@ -145,6 +194,10 @@ class ProfileController extends GetxController implements GetxService {
   }
 
   Future<void> recordLocation() async {
+    if (GetPlatform.isMobile && Get.find<PermissionFlowController>().hasCriticalMissing) {
+      stopLocationRecord();
+      return;
+    }
     final Position locationResult = await Geolocator.getCurrentPosition();
     String address = await profileServiceInterface.addressPlaceMark(locationResult);
     String zoneId = await profileServiceInterface.getZoneId(locationResult);
