@@ -236,15 +236,17 @@ class OrderController extends GetxController implements GetxService {
     }
   }
 
-  Future<void> getLatestOrders() async {
+  Future<void> getLatestOrders({bool routeCall = true}) async {
     List<OrderModel>? latestOrderList = await orderServiceInterface.getLatestOrders();
     if(latestOrderList != null) {
       _latestOrderList = [];
       List<int?> ignoredIdList = orderServiceInterface.prepareIgnoreIdList(_ignoredRequests);
       _latestOrderList!.addAll(orderServiceInterface.processLatestOrders(latestOrderList, ignoredIdList));
       if(_latestOrderList!.isNotEmpty) {
-        debugPrint('FoxGoOrderRefresh getLatestOrders nova chamada count=${_latestOrderList!.length} firstOrderId=${_latestOrderList!.first.id}');
-        GlobalCallRouteHelper.routeOrderModel(_latestOrderList!.first, source: 'getLatestOrders/latest_orders');
+        debugPrint('FoxGoOrderRefresh getLatestOrders nova chamada count=${_latestOrderList!.length} firstOrderId=${_latestOrderList!.first.id} routeCall=$routeCall');
+        if(routeCall) {
+          GlobalCallRouteHelper.routeOrderModel(_latestOrderList!.first, source: 'getLatestOrders/latest_orders');
+        }
       } else {
         debugPrint('FoxGoOrderRefresh getLatestOrders sem chamadas pendentes');
       }
@@ -274,7 +276,6 @@ class OrderController extends GetxController implements GetxService {
       if(!stopOtherDataCall){
         Get.find<ProfileController>().getProfile();
         
-        // Auto-reset to 'all' for handover and post-handover status changes
         List<String> autoResetStatuses = ['picked_up'];
         if (autoResetStatuses.contains(currentOrder.orderStatus) && _selectedRunningStatus != 'all') {
           _selectedRunningStatus = 'all';
@@ -416,10 +417,7 @@ class OrderController extends GetxController implements GetxService {
 
   void initializeDates(String canceledDateTimeString, int returnDays) {
     try {
-      // Parse canceled datetime
       DateTime canceledDateTime = DateTime.parse(canceledDateTimeString);
-
-      // Generate available dates (from canceled date to canceled date + returnDays)
       _availableDates.clear();
       DateTime currentDate = DateTime.now();
 
@@ -430,14 +428,11 @@ class OrderController extends GetxController implements GetxService {
           canceledDateTime.day + i,
         );
 
-        // Only add dates that are today or in the future
-        if (availableDate.isAfter(currentDate.subtract(const Duration(days: 1))) ||
-            _isSameDay(availableDate, currentDate)) {
+        if (availableDate.isAfter(currentDate.subtract(const Duration(days: 1))) || _isSameDay(availableDate, currentDate)) {
           _availableDates.add(availableDate);
         }
       }
 
-      // Set default selected date to the first available date
       if (_availableDates.isNotEmpty) {
         _selectedDate = _availableDates.first;
       }
@@ -563,7 +558,6 @@ class OrderController extends GetxController implements GetxService {
     }
     _isLoading = false;
   }
-
 
   void setHistoryOrderStatus(String status) {
     _selectedHistoryStatus = status;
