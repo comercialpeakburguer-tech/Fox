@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:sixam_mart_delivery/api/api_client.dart';
 import 'package:sixam_mart_delivery/features/auth/domain/models/delivery_man_body_model.dart';
-import 'package:sixam_mart_delivery/common/models/response_model.dart';
 import 'package:sixam_mart_delivery/features/auth/domain/models/vehicle_model.dart';
 import 'package:sixam_mart_delivery/features/splash/controllers/splash_controller.dart';
 import 'package:sixam_mart_delivery/helper/pusher_helper.dart';
@@ -11,6 +10,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:sixam_mart_delivery/features/auth/domain/services/auth_service_interface.dart';
 import 'package:sixam_mart_delivery/helper/deliveryman_availability_helper.dart';
 
+import 'package:sixam_mart_delivery/common/models/response_model.dart';
 class AuthController extends GetxController implements GetxService {
   final AuthServiceInterface authServiceInterface;
   AuthController({required this.authServiceInterface}){

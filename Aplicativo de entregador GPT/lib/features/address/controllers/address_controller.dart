@@ -7,11 +7,11 @@ import 'package:sixam_mart_delivery/common/widgets/custom_snackbar_widget.dart';
 import 'package:sixam_mart_delivery/features/profile/controllers/profile_controller.dart';
 import 'package:sixam_mart_delivery/features/address/domain/models/address_model.dart';
 import 'package:sixam_mart_delivery/features/address/domain/models/zone_model.dart';
-import 'package:sixam_mart_delivery/features/address/domain/models/zone_response_model.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:sixam_mart_delivery/features/address/domain/services/address_service_interface.dart';
 
+import 'package:sixam_mart_delivery/common/models/response_model.dart';
 class AddressController extends GetxController implements GetxService {
   final AddressServiceInterface addressServiceInterface;
   AddressController({required this.addressServiceInterface});

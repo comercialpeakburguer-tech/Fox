@@ -1,3 +1,4 @@
+import 'package:sixam_mart_delivery/common/models/response_model.dart';
 class ZoneResponseModel {
   final bool _isSuccess;
   final List<int> _zoneIds;

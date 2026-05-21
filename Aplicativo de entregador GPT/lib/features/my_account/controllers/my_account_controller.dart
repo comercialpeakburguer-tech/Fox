@@ -5,7 +5,6 @@ import 'package:get/get.dart';
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sixam_mart_delivery/api/api_checker.dart';
-import 'package:sixam_mart_delivery/common/models/response_model.dart';
 import 'package:sixam_mart_delivery/features/my_account/domain/models/earning_report_model.dart';
 import 'package:sixam_mart_delivery/features/my_account/domain/models/loyalty_point_model.dart';
 import 'package:sixam_mart_delivery/features/my_account/domain/models/loyalty_report_model.dart';
@@ -16,6 +15,7 @@ import 'package:sixam_mart_delivery/features/my_account/domain/models/withdraw_r
 import 'package:sixam_mart_delivery/features/my_account/domain/services/my_account_service_interface.dart';
 import 'package:sixam_mart_delivery/features/profile/controllers/profile_controller.dart';
 
+import 'package:sixam_mart_delivery/common/models/response_model.dart';
 class MyAccountController extends GetxController implements GetxService {
   final MyAccountServiceInterface myAccountServiceInterface;
   MyAccountController({required this.myAccountServiceInterface});

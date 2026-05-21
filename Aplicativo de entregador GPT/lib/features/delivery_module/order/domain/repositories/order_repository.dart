@@ -3,7 +3,6 @@ import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sixam_mart_delivery/api/api_client.dart';
-import 'package:sixam_mart_delivery/common/models/response_model.dart';
 import 'package:sixam_mart_delivery/features/delivery_module/order/domain/models/ignore_model.dart';
 import 'package:sixam_mart_delivery/features/delivery_module/order/domain/models/order_cancellation_body.dart';
 import 'package:sixam_mart_delivery/features/delivery_module/order/domain/models/order_details_model.dart';
@@ -16,6 +15,7 @@ import 'package:sixam_mart_delivery/util/app_constants.dart';
 
 import '../models/order_count_model.dart';
 
+import 'package:sixam_mart_delivery/common/models/response_model.dart';
 class OrderRepository implements OrderRepositoryInterface {
   final ApiClient apiClient;
   final SharedPreferences sharedPreferences;

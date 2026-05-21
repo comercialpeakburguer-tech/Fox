@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:sixam_mart_delivery/common/models/response_model.dart';
 import 'package:sixam_mart_delivery/features/auth/controllers/auth_controller.dart';
 import 'package:sixam_mart_delivery/features/profile/domain/models/level_model.dart';
 import 'package:sixam_mart_delivery/features/ride_module/map/controllers/ride_map_controller.dart';
@@ -16,6 +15,7 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:sixam_mart_delivery/features/profile/domain/services/profile_service_interface.dart';
 
+import 'package:sixam_mart_delivery/common/models/response_model.dart';
 class ProfileController extends GetxController implements GetxService {
   final ProfileServiceInterface profileServiceInterface;
   ProfileController({required this.profileServiceInterface});
