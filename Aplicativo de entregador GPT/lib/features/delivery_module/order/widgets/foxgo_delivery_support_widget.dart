@@ -1,9 +1,13 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:sixam_mart_delivery/common/widgets/custom_button_widget.dart';
 import 'package:sixam_mart_delivery/features/chat/domain/models/conversation_model.dart';
 import 'package:sixam_mart_delivery/features/delivery_module/order/domain/models/order_model.dart';
+import 'package:sixam_mart_delivery/features/delivery_module/order/controllers/order_controller.dart';
 import 'package:sixam_mart_delivery/features/notification/domain/models/notification_body_model.dart';
+import 'package:sixam_mart_delivery/features/profile/controllers/profile_controller.dart';
 import 'package:sixam_mart_delivery/helper/route_helper.dart';
 import 'package:sixam_mart_delivery/util/app_constants.dart';
 import 'package:sixam_mart_delivery/util/dimensions.dart';
@@ -19,27 +23,28 @@ class FoxGoDeliverySupportWidget extends StatelessWidget {
     required this.parcel,
   });
 
-  static const List<_FoxGoSupportReason> _regularReasons = [
-    _FoxGoSupportReason('loja_demora', 'Loja demorando', 'A loja está demorando para liberar o pedido.'),
-    _FoxGoSupportReason('pedido_errado', 'Pedido errado ou incompleto', 'O pedido parece errado, incompleto ou com divergência.'),
-    _FoxGoSupportReason('cliente_nao_aparece', 'Cliente não aparece', 'Cheguei no destino, mas o cliente não aparece ou não responde.'),
-    _FoxGoSupportReason('endereco_incorreto', 'Endereço incorreto', 'O endereço parece incorreto ou não consigo localizar o destino.'),
-    _FoxGoSupportReason('problema_moto', 'Problema na moto', 'Tive um problema com a moto/veículo durante a entrega.'),
-    _FoxGoSupportReason('acidente', 'Acidente ou emergência', 'Sofri um acidente ou estou em situação de emergência.'),
-    _FoxGoSupportReason('outro', 'Outro problema', 'Preciso de ajuda do suporte com esta entrega.'),
-  ];
+  bool get _isPickupStage => order.orderStatus?.toLowerCase() == AppConstants.handover;
 
-  static const List<_FoxGoSupportReason> _parcelReasons = [
-    _FoxGoSupportReason('coleta_demora', 'Coleta demorando', 'A coleta está demorando ou o remetente não liberou o pacote.'),
-    _FoxGoSupportReason('pacote_errado', 'Pacote errado ou danificado', 'O pacote está errado, danificado ou com divergência.'),
-    _FoxGoSupportReason('destinatario_nao_aparece', 'Destinatário não aparece', 'Cheguei no destino, mas o destinatário não aparece ou não responde.'),
-    _FoxGoSupportReason('endereco_incorreto', 'Endereço incorreto', 'O endereço parece incorreto ou não consigo localizar o destino.'),
-    _FoxGoSupportReason('problema_moto', 'Problema na moto', 'Tive um problema com a moto/veículo durante a entrega.'),
-    _FoxGoSupportReason('acidente', 'Acidente ou emergência', 'Sofri um acidente ou estou em situação de emergência.'),
-    _FoxGoSupportReason('outro', 'Outro problema', 'Preciso de ajuda do suporte com esta entrega.'),
-  ];
+  DateTime? get _pickupStartedAt {
+    final String? value = order.handover;
+    if (value == null || value.trim().isEmpty) {
+      return null;
+    }
+    return DateTime.tryParse(value);
+  }
 
-  List<_FoxGoSupportReason> get _reasons => parcel ? _parcelReasons : _regularReasons;
+  int get _pickupWaitedMinutes {
+    final DateTime? started = _pickupStartedAt;
+    if (started == null) {
+      return 0;
+    }
+    return DateTime.now().difference(started).inMinutes;
+  }
+
+  int get _pickupRemainingMinutes {
+    final int remaining = 10 - _pickupWaitedMinutes;
+    return remaining > 0 ? remaining : 0;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -57,22 +62,31 @@ class FoxGoDeliverySupportWidget extends StatelessWidget {
         boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('Precisa de ajuda?', style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge)),
+        Text('foxgo_nina_support_title'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge)),
         const SizedBox(height: Dimensions.paddingSizeExtraSmall),
         Text(
-          'Escolha um motivo e fale com o suporte Fox GO.',
+          'foxgo_nina_support_subtitle'.tr,
           style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).hintColor),
         ),
         const SizedBox(height: Dimensions.paddingSizeSmall),
         CustomButtonWidget(
-          buttonText: 'Falar com suporte',
-          onPressed: () => _openReasonSheet(context),
+          buttonText: 'foxgo_talk_to_nina'.tr,
+          onPressed: () => _startNinaFlow(context),
         ),
       ]),
     );
   }
 
-  void _openReasonSheet(BuildContext context) {
+  void _startNinaFlow(BuildContext context) {
+    if (_isPickupStage && _pickupRemainingMinutes > 0) {
+      _showPickupWaitSheet(context);
+      return;
+    }
+
+    _openReasonSheet(context);
+  }
+
+  void _showPickupWaitSheet(BuildContext context) {
     Get.bottomSheet(
       Container(
         width: double.infinity,
@@ -83,26 +97,70 @@ class FoxGoDeliverySupportWidget extends StatelessWidget {
         ),
         child: SafeArea(
           child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Motivo do suporte', style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge)),
+            Text('foxgo_pickup_wait_title'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge)),
+            const SizedBox(height: Dimensions.paddingSizeSmall),
+            Text(
+              'foxgo_pickup_wait_description'.tr,
+              style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).hintColor),
+            ),
+            const SizedBox(height: Dimensions.paddingSizeDefault),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
+              decoration: BoxDecoration(
+                color: Theme.of(context).primaryColor.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+              ),
+              child: Text(
+                '${'foxgo_time_remaining'.tr}: $_pickupRemainingMinutes min',
+                style: robotoBold.copyWith(color: Theme.of(context).primaryColor),
+              ),
+            ),
+            const SizedBox(height: Dimensions.paddingSizeDefault),
+            CustomButtonWidget(
+              buttonText: 'back'.tr,
+              onPressed: () => Get.back(),
+            ),
+          ]),
+        ),
+      ),
+      isScrollControlled: true,
+    );
+  }
+
+  void _openReasonSheet(BuildContext context) {
+    final List<_FoxGoSupportReason> reasons = _isPickupStage ? _pickupReasons : _generalReasons;
+
+    Get.bottomSheet(
+      Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: SafeArea(
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('foxgo_support_reason_title'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge)),
             const SizedBox(height: Dimensions.paddingSizeExtraSmall),
             Text(
-              'A mensagem será aberta no chat com o suporte.',
+              'foxgo_support_reason_subtitle'.tr,
               style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).hintColor),
             ),
             const SizedBox(height: Dimensions.paddingSizeDefault),
             Flexible(
               child: ListView.separated(
                 shrinkWrap: true,
-                itemCount: _reasons.length,
+                itemCount: reasons.length,
                 separatorBuilder: (_, __) => const Divider(height: 1),
                 itemBuilder: (context, index) {
-                  final reason = _reasons[index];
+                  final reason = reasons[index];
                   return ListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: Text(reason.title, style: robotoMedium),
-                    subtitle: Text(reason.description, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall)),
+                    title: Text(reason.title.tr, style: robotoMedium),
+                    subtitle: Text(reason.description.tr, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall)),
                     trailing: const Icon(Icons.chevron_right),
-                    onTap: () => _openSupportChat(reason),
+                    onTap: () => _handleReason(context, reason),
                   );
                 },
               ),
@@ -114,7 +172,111 @@ class FoxGoDeliverySupportWidget extends StatelessWidget {
     );
   }
 
-  void _openSupportChat(_FoxGoSupportReason reason) {
+  void _handleReason(BuildContext context, _FoxGoSupportReason reason) {
+    if (reason.code == 'pedido_nao_pronto') {
+      _showOrderNotReadySheet(context);
+      return;
+    }
+
+    if (reason.code == 'outro') {
+      _showDynamicWaitSheet(context, reason);
+      return;
+    }
+
+    _openSupportChat(reason);
+  }
+
+  void _showOrderNotReadySheet(BuildContext context) {
+    Get.bottomSheet(
+      Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: SafeArea(
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('foxgo_order_not_ready_title'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge)),
+            const SizedBox(height: Dimensions.paddingSizeSmall),
+            Text(
+              'foxgo_order_not_ready_description'.tr,
+              style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).hintColor),
+            ),
+            const SizedBox(height: Dimensions.paddingSizeDefault),
+            CustomButtonWidget(
+              buttonText: 'foxgo_wait_more_5_min'.tr,
+              onPressed: () => Get.back(),
+            ),
+            const SizedBox(height: Dimensions.paddingSizeSmall),
+            CustomButtonWidget(
+              buttonText: 'foxgo_talk_to_nina'.tr,
+              backgroundColor: Theme.of(context).disabledColor,
+              onPressed: () => _openSupportChat(
+                const _FoxGoSupportReason(
+                  'pedido_nao_pronto',
+                  'foxgo_reason_order_not_ready',
+                  'foxgo_reason_order_not_ready_description',
+                ),
+              ),
+            ),
+            const SizedBox(height: Dimensions.paddingSizeSmall),
+            CustomButtonWidget(
+              buttonText: 'foxgo_release_to_another_deliveryman'.tr,
+              backgroundColor: Theme.of(context).primaryColor,
+              onPressed: () => _releaseToAnotherDeliveryman(),
+            ),
+          ]),
+        ),
+      ),
+      isScrollControlled: true,
+    );
+  }
+
+
+  Future<void> _releaseToAnotherDeliveryman() async {
+    if(Get.isBottomSheetOpen ?? false) {
+      Get.back();
+    }
+
+    await Get.find<OrderController>().releaseToAnotherDeliveryman(
+      order.id,
+      'pedido_nao_pronto_entregador_solicitou_outro_entregador',
+    );
+  }
+
+  void _showDynamicWaitSheet(BuildContext context, _FoxGoSupportReason reason) {
+    final int waitMinutes = 15 + Random().nextInt(16);
+
+    Get.bottomSheet(
+      Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: SafeArea(
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('foxgo_nina_wait_title'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge)),
+            const SizedBox(height: Dimensions.paddingSizeSmall),
+            Text(
+              '${'foxgo_nina_wait_description'.tr} $waitMinutes min.',
+              style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).hintColor),
+            ),
+            const SizedBox(height: Dimensions.paddingSizeDefault),
+            CustomButtonWidget(
+              buttonText: 'foxgo_talk_to_nina'.tr,
+              onPressed: () => _openSupportChat(reason, extraWaitMinutes: waitMinutes),
+            ),
+          ]),
+        ),
+      ),
+      isScrollControlled: true,
+    );
+  }
+
+  void _openSupportChat(_FoxGoSupportReason reason, {int? extraWaitMinutes}) {
     if(Get.isBottomSheetOpen ?? false) {
       Get.back();
     }
@@ -127,25 +289,48 @@ class FoxGoDeliverySupportWidget extends StatelessWidget {
       ),
       user: User(
         id: 0,
-        fName: 'Suporte',
+        fName: 'Nina',
         lName: 'Fox GO',
       ),
       fromSupport: true,
-      initialMessage: _buildInitialMessage(reason),
+      initialMessage: _buildInitialMessage(reason, extraWaitMinutes: extraWaitMinutes),
     ));
   }
 
-  String _buildInitialMessage(_FoxGoSupportReason reason) {
+  String _buildInitialMessage(_FoxGoSupportReason reason, {int? extraWaitMinutes}) {
+    final location = Get.find<ProfileController>().recordLocationBody;
+
     return [
-      '[Suporte Fox GO Entregador]',
-      'Motivo: ${reason.title}',
+      '[Nina - Suporte Fox GO]',
+      'Motivo: ${reason.title.tr}',
       'Pedido: #${order.id ?? 'não informado'}',
       'Status atual: ${order.orderStatus ?? 'não informado'}',
       'Tipo: ${parcel ? 'Entrega/Parcel' : 'Pedido/Delivery'}',
+      'Loja/Origem: ${(order.storeName ?? '').trim().isEmpty ? 'não informado' : order.storeName}',
+      'Endereço de retirada: ${(order.storeAddress ?? '').trim().isEmpty ? 'não informado' : order.storeAddress}',
+      'Tempo em retirada: $_pickupWaitedMinutes min',
+      if(extraWaitMinutes != null) 'Espera dinâmica sugerida: $extraWaitMinutes min',
+      'Localização atual: ${location?.latitude ?? 'sem latitude'}, ${location?.longitude ?? 'sem longitude'}',
       '',
-      reason.description,
+      reason.description.tr,
+      '',
+      'A Nina deve avaliar o caso primeiro. Se não conseguir resolver com segurança, encaminhar para o setor responsável.',
     ].join('\n');
   }
+
+  static const List<_FoxGoSupportReason> _pickupReasons = [
+    _FoxGoSupportReason('pedido_nao_pronto', 'foxgo_reason_order_not_ready', 'foxgo_reason_order_not_ready_description'),
+    _FoxGoSupportReason('loja_fechada', 'foxgo_reason_store_closed', 'foxgo_reason_store_closed_description'),
+    _FoxGoSupportReason('outro', 'foxgo_reason_other_problem', 'foxgo_reason_other_problem_description'),
+  ];
+
+  static const List<_FoxGoSupportReason> _generalReasons = [
+    _FoxGoSupportReason('cliente_nao_aparece', 'foxgo_reason_customer_not_found', 'foxgo_reason_customer_not_found_description'),
+    _FoxGoSupportReason('endereco_incorreto', 'foxgo_reason_wrong_address', 'foxgo_reason_wrong_address_description'),
+    _FoxGoSupportReason('problema_veiculo', 'foxgo_reason_vehicle_problem', 'foxgo_reason_vehicle_problem_description'),
+    _FoxGoSupportReason('emergencia', 'foxgo_reason_emergency', 'foxgo_reason_emergency_description'),
+    _FoxGoSupportReason('outro', 'foxgo_reason_other_problem', 'foxgo_reason_other_problem_description'),
+  ];
 }
 
 class _FoxGoSupportReason {

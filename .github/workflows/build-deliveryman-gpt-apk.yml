@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - "foxgo/deliveryman-gpt-apk-*"
+      - "foxgo/deliveryman-gpt-apk-final-*"
     paths:
       - "Aplicativo de entregador GPT/**"
       - ".github/workflows/build-deliveryman-gpt-apk.yml"
@@ -33,6 +33,9 @@ jobs:
           channel: stable
           cache: true
 
+      - name: Flutter version
+        run: flutter --version
+
       - name: Flutter pub get
         run: flutter pub get
 
@@ -42,5 +45,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: foxgo-deliveryman-gpt-apk
+          name: foxgo-deliveryman-gpt-apk-final
           path: "Aplicativo de entregador GPT/build/app/outputs/flutter-apk/*.apk"

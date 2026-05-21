@@ -416,6 +416,27 @@ class OrderController extends GetxController implements GetxService {
     _ignoredRequests.addAll(orderServiceInterface.getIgnoreList());
   }
 
+
+  Future<bool> releaseToAnotherDeliveryman(int? orderId, String reason) async {
+    _isLoading = true;
+    update();
+
+    ResponseModel responseModel = await orderServiceInterface.releaseToAnotherDeliveryman(orderId, reason);
+
+    if (responseModel.isSuccess) {
+      _currentOrderList?.removeWhere((order) => order.id == orderId);
+      _latestOrderList?.removeWhere((order) => order.id == orderId);
+      showCustomSnackBar('foxgo_release_to_another_success'.tr, isError: false);
+      Get.offAllNamed(RouteHelper.getInitialRoute(fromOrderDetails: true));
+    } else {
+      showCustomSnackBar(responseModel.message);
+    }
+
+    _isLoading = false;
+    update();
+    return responseModel.isSuccess;
+  }
+
   void ignoreOrder(int index) {
     if(_latestOrderList == null || index < 0 || index >= _latestOrderList!.length) {
       return;

@@ -25,6 +25,7 @@ import 'package:sixam_mart_delivery/features/delivery_module/order/widgets/foxgo
 import 'package:sixam_mart_delivery/features/delivery_module/order/widgets/foxgo_pickup_flow_card_widget.dart';
 import 'package:sixam_mart_delivery/features/delivery_module/order/widgets/info_card_widget.dart';
 import 'package:flutter/material.dart';
+import 'package:sixam_mart_delivery/features/delivery_module/order/widgets/verify_delivery_sheet_widget.dart';
 import 'package:get/get.dart';
 
 import '../widgets/custom_order_details_card.dart';
@@ -85,6 +86,22 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> with WidgetsBin
     super.dispose();
     _timer?.cancel();
   }
+
+  void _foxgoOpenPickupCodeSheet(dynamic order) {
+    final bool orderVerificationActive = Get.find<SplashController>().configModel?.orderDeliveryVerification ?? false;
+    final bool cod = order.paymentMethod == 'cash_on_delivery';
+
+    Get.bottomSheet(
+      VerifyDeliverySheetWidget(
+        currentOrderModel: order,
+        verify: orderVerificationActive,
+        orderAmount: order.orderAmount,
+        cod: cod,
+      ),
+      isScrollControlled: true,
+    );
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -780,6 +797,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> with WidgetsBin
               )),
 
               FoxGoPickupFlowCardWidget(
+                                    onPickupCodeTap: () => _foxgoOpenPickupCodeSheet(controllerOrderModel),
                 order: controllerOrderModel,
                 parcel: parcel,
               ),

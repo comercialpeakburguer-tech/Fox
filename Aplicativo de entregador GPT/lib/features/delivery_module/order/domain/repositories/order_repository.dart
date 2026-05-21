@@ -131,6 +131,22 @@ class OrderRepository implements OrderRepositoryInterface {
     return responseModel;
   }
 
+
+  @override
+  Future<ResponseModel> releaseToAnotherDeliveryman(int? orderId, String reason) async {
+    Response response = await apiClient.putData(
+      AppConstants.releaseToAnotherDeliverymanUri,
+      {
+        'token': _getUserToken(),
+        'order_id': orderId,
+        'reason': reason,
+      },
+      handleError: false,
+    );
+
+    return ResponseModel(response.statusCode == 200, response.statusText);
+  }
+
   @override
   List<IgnoreModel> getIgnoreList() {
     List<IgnoreModel> ignoreList = [];

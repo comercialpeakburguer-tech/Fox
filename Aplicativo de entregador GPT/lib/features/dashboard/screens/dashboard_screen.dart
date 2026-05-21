@@ -14,7 +14,6 @@ import 'package:sixam_mart_delivery/util/app_constants.dart';
 import 'package:sixam_mart_delivery/util/dimensions.dart';
 import 'package:sixam_mart_delivery/common/widgets/custom_alert_dialog_widget.dart';
 import 'package:sixam_mart_delivery/features/dashboard/widgets/bottom_nav_item_widget.dart';
-import 'package:sixam_mart_delivery/features/dashboard/widgets/new_request_dialog_widget.dart';
 import 'package:sixam_mart_delivery/features/home/screens/home_screen.dart';
 import 'package:sixam_mart_delivery/features/profile/screens/profile_screen.dart';
 import 'package:sixam_mart_delivery/features/delivery_module/order/screens/order_request_screen.dart';
@@ -118,12 +117,11 @@ class DashboardScreenState extends State<DashboardScreen> {
         );
         NewCallOverlayHelper.show(overlayPayload).catchError((_) => false);
         // Fox GO: evita duplicar a chamada. O overlay nativo já mostra o card de nova entrega.
-        // O popup original NewRequestDialogWidget ficava por trás do overlay e causava dois cards na tela.
           // O botão Aceitar do overlay agora aceita o pedido e abre OrderDetailsScreen/retirada pelo callback padrão.
       }else if(type == 'assign' && orderID != null && orderID.isNotEmpty) {
         // Fox GO APP-28A-R3: evita popup duplicado no fluxo assign.
         // Mantém a atualização de pedidos e deixa o detalhe abrir pelo fluxo padrão/notificação.
-        Get.find<OrderController>().getCurrentOrders();
+        Get.find<OrderController>().getLatestOrders();
       }else if(type == 'block') {
         Get.find<AuthController>().clearSharedData();
         Get.find<ProfileController>().stopLocationRecord();
@@ -186,18 +184,18 @@ class DashboardScreenState extends State<DashboardScreen> {
       },
       child: Scaffold(
         bottomNavigationBar: GetPlatform.isDesktop ? const SizedBox() : Container(
-          height: 70 + MediaQuery.of(context).padding.bottom,
+          height: 76 + MediaQuery.of(context).padding.bottom,
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
             boxShadow: [BoxShadow(color: Colors.grey[Get.isDarkMode ? 800 : 200]!, spreadRadius: 1, blurRadius: 5)],
           ),
-          padding: EdgeInsets.only(top: 14),
+          padding: const EdgeInsets.only(top: 8),
           child: Row(children: [
             BottomNavItemWidget(iconData: Images.home, label: 'home'.tr, isSelected: _pageIndex == 0, onTap: () => _setPage(0)),
-            BottomNavItemWidget(iconData: Images.request, label: 'request'.tr, isSelected: _pageIndex == 1, pageIndex: 1, onTap: () {
+            BottomNavItemWidget(iconData: Images.request, label: 'foxgo_nav_calls'.tr, isSelected: _pageIndex == 1, pageIndex: 1, onTap: () {
               _navigateRequestPage();
             }),
-            BottomNavItemWidget(iconData: Images.bag, label: isRideActive ? "history".tr : 'orders'.tr, isSelected: _pageIndex == 2, onTap: () => _setPage(2)),
+            BottomNavItemWidget(iconData: Images.bag, label: isRideActive ? "history".tr : 'foxgo_nav_orders'.tr, isSelected: _pageIndex == 2, onTap: () => _setPage(2)),
             BottomNavItemWidget(iconData: Images.userP, label: 'profile'.tr, isSelected: _pageIndex == 3, onTap: () => _setPage(3)),
           ]),
         ),

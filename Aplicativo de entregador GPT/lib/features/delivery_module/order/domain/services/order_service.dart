@@ -56,6 +56,12 @@ class OrderService implements OrderServiceInterface {
     return await orderRepositoryInterface.acceptOrder(orderID);
   }
 
+
+  @override
+  Future<ResponseModel> releaseToAnotherDeliveryman(int? orderId, String reason) async {
+    return await orderRepositoryInterface.releaseToAnotherDeliveryman(orderId, reason);
+  }
+
   @override
   List<IgnoreModel> getIgnoreList() {
     return orderRepositoryInterface.getIgnoreList();

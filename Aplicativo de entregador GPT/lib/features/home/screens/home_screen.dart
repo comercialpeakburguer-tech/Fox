@@ -26,6 +26,7 @@ import 'package:sixam_mart_delivery/util/styles.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import 'package:sixam_mart_delivery/features/home/widgets/foxgo_home_driver_panel_widget.dart';
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, this.onNavigateToOrders});
   final Function()? onNavigateToOrders;
@@ -252,6 +253,12 @@ class _HomeScreenState extends State<HomeScreen> {
                         ] else...[
                           ActiveOrderWidget(onNavigateToOrders: ()=> Get.offAll(DashboardScreen(pageIndex: 2)))
                         ],
+
+
+                FoxGoHomeDriverPanelWidget(
+                  onNavigateToOrders: null,
+                ),
+                const SizedBox(height: Dimensions.paddingSizeSmall),
 
                         if(showEarningWidget) HomeEarningWidget(profileController: profileController,),
 

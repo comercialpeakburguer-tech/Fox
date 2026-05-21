@@ -37,6 +37,9 @@ import 'package:sixam_mart_delivery/features/profile/widgets/profile_card_widget
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import 'package:sixam_mart_delivery/features/profile/widgets/foxgo_profile_header_widget.dart';
+import 'package:sixam_mart_delivery/features/profile/widgets/foxgo_earnings_score_summary_widget.dart';
+import 'package:sixam_mart_delivery/features/profile/screens/foxgo_delivery_style_screen.dart';
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
@@ -167,6 +170,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(width: Dimensions.paddingSizeExtraSmall),
               ]),
               const SizedBox(height: 15),
+
+                FoxGoProfileHeaderWidget(profileController: profileController),
+                const SizedBox(height: Dimensions.paddingSizeSmall),
+
+                FoxGoEarningsScoreSummaryWidget(
+                  completedOrders: profileController.profileModel?.orderCount ?? 0,
+                  isOnline: profileController.profileModel?.active == 1,
+                  earningsEnabled: profileController.profileModel?.earnings == 1,
+                  disbursementEnabled: Get.find<SplashController>().configModel!.disbursementType == 'automated'
+                      && profileController.profileModel!.type != 'store_wise'
+                      && profileController.profileModel!.earnings != 0,
+                  onEarningsTap: () => Get.toNamed(RouteHelper.getMyEarningRoute()),
+                  onWithdrawTap: () => Get.toNamed(RouteHelper.getWithdrawMethodRoute()),
+                  onDisbursementTap: () => Get.toNamed(RouteHelper.getDisbursementRoute()),
+                ),
+                const SizedBox(height: Dimensions.paddingSizeSmall),
 
               Row(children: [
                 ProfileCardWidget(title: 'days_since_joining'.tr, data: '${profileController.profileModel!.memberSinceDays}'),
@@ -408,6 +427,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Get.to(()=> const HelpAndSupportScreen());
               }),
               const SizedBox(height: Dimensions.paddingSizeSmall),
+
+                ProfileButtonWidget(icon: Icons.route_outlined, title: 'foxgo_delivery_style_title'.tr, onTap: () {
+                  Get.to(() => const FoxGoDeliveryStyleScreen());
+                }),
+                const SizedBox(height: Dimensions.paddingSizeSmall),
+
 
               (profileController.profileModel != null && profileController.profileModel!.earnings == 1) ? Padding(
                 padding: const EdgeInsets.only(bottom: Dimensions.paddingSizeSmall),

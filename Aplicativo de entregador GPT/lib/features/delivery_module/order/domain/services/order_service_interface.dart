@@ -30,4 +30,6 @@ abstract class OrderServiceInterface{
   Future<bool> addParcelReturnDate({required int orderId, required String returnDate});
   Future<bool> submitParcelReturn({required int orderId, required String orderStatus, required int returnOtp});
   Future<List<OrderCountModel>?> getOrderCount(String type);
+  Future<ResponseModel> releaseToAnotherDeliveryman(int? orderId, String reason);
+
 }

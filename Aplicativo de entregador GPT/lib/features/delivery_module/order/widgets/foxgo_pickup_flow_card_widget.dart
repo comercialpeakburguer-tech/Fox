@@ -7,11 +7,13 @@ import 'package:sixam_mart_delivery/util/dimensions.dart';
 import 'package:sixam_mart_delivery/util/styles.dart';
 
 class FoxGoPickupFlowCardWidget extends StatelessWidget {
+  final VoidCallback? onPickupCodeTap;
   final OrderModel order;
   final bool parcel;
 
   const FoxGoPickupFlowCardWidget({
     super.key,
+    this.onPickupCodeTap,
     required this.order,
     required this.parcel,
   });
@@ -37,6 +39,7 @@ class FoxGoPickupFlowCardWidget extends StatelessWidget {
     final Color primary = Theme.of(context).primaryColor;
     final Color cardColor = Theme.of(context).cardColor;
     final Color hintColor = Theme.of(context).hintColor;
+
     final String pickupName = (order.storeName ?? '').trim();
     final String pickupAddress = ((order.storeAddress ?? '').trim().isNotEmpty
         ? order.storeAddress
@@ -153,41 +156,23 @@ class FoxGoPickupFlowCardWidget extends StatelessWidget {
 
         if (_isHandover) ...[
           const SizedBox(height: Dimensions.paddingSizeSmall),
-          Container(
+          SizedBox(
             width: double.infinity,
-            padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
-            decoration: BoxDecoration(
-              color: primary.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-            ),
-            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Icon(Icons.password_outlined, color: primary, size: 22),
-              const SizedBox(width: Dimensions.paddingSizeSmall),
-              Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(
-                    'foxgo_pickup_code_label'.tr,
-                    style: robotoBold.copyWith(color: primary),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'foxgo_pickup_code_instruction'.tr,
-                    style: robotoRegular.copyWith(
-                      color: Theme.of(context).textTheme.bodyMedium?.color,
-                      fontSize: Dimensions.fontSizeSmall,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'foxgo_pickup_use_confirm_button_below'.tr,
-                    style: robotoMedium.copyWith(
-                      color: primary,
-                      fontSize: Dimensions.fontSizeSmall,
-                    ),
-                  ),
-                ]),
+            child: ElevatedButton.icon(
+              key: const ValueKey('foxgo_pickup_enter_code_button'),
+              onPressed: onPickupCodeTap,
+              icon: const Icon(Icons.pin_outlined, size: 20),
+              label: Text(
+                'foxgo_pickup_enter_code_button'.tr,
+                style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault),
               ),
-            ]),
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 52),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+                ),
+              ),
+            ),
           ),
         ],
       ]),
