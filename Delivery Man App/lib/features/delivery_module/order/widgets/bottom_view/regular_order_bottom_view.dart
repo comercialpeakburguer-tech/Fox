@@ -8,6 +8,7 @@ import 'package:sixam_mart_delivery/features/profile/controllers/profile_control
 import 'package:sixam_mart_delivery/features/splash/controllers/splash_controller.dart';
 import 'package:sixam_mart_delivery/features/delivery_module/order/domain/models/order_model.dart';
 import 'package:sixam_mart_delivery/helper/price_converter_helper.dart';
+import 'package:sixam_mart_delivery/helper/route_helper.dart';
 import 'package:sixam_mart_delivery/util/app_constants.dart';
 import 'package:sixam_mart_delivery/util/dimensions.dart';
 import 'package:sixam_mart_delivery/util/images.dart';
@@ -38,7 +39,7 @@ class RegularOrderBottomView extends StatelessWidget {
 
     switch (orderState) {
       case RegularOrderState.waitingToProcess:
-        return _buildOrderWaitingStatus();
+        return _buildOrderWaitingStatus(controllerOrderModel);
 
       case RegularOrderState.readyToConfirm:
         return _buildOrderConfirmationActions(orderController, controllerOrderModel);
@@ -88,17 +89,127 @@ class RegularOrderBottomView extends StatelessWidget {
     }
   }
 
-  // Regular order waiting status
-  Widget _buildOrderWaitingStatus() {
+  // Fox GO waiting status: visual profissional para quando o entregador já chegou/está aguardando retirada.
+  Widget _buildOrderWaitingStatus(OrderModel order) {
+    final context = Get.context!;
+    final isParcel = order.orderType == 'parcel';
+    final moduleLabel = _moduleLabel(order);
+    final placeName = isParcel ? (order.parcelCategory?.name ?? 'Local de retirada') : (order.storeName ?? 'Estabelecimento');
+    final placeAddress = isParcel ? (order.deliveryAddress?.address ?? '') : (order.storeAddress ?? '');
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
       decoration: BoxDecoration(
-        color: Theme.of(Get.context!).cardColor,
-        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
+        color: Theme.of(context).cardColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 12, spreadRadius: 1, offset: Offset(0, -4))],
       ),
-      child: Text('order_waiting_for_process'.tr, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeLarge), textAlign: TextAlign.center),
+      child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Container(
+          height: 118,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(22),
+            gradient: const LinearGradient(
+              colors: [Color(0xFFFFF3B0), Color(0xFFFFDD31)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: Stack(children: [
+            Positioned(
+              right: 20,
+              bottom: 14,
+              child: Icon(isParcel ? Icons.inventory_2_rounded : Icons.storefront_rounded, color: Colors.black.withValues(alpha: 0.12), size: 92),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(18),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.86), borderRadius: BorderRadius.circular(999)),
+                  child: Text(moduleLabel, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeSmall, color: Colors.black87)),
+                ),
+                const SizedBox(height: 12),
+                Text(isParcel ? 'Aguarde a retirada' : 'Aguarde o pedido', style: robotoBold.copyWith(fontSize: 28, color: Colors.black, height: 1.0)),
+              ]),
+            ),
+          ]),
+        ),
+        const SizedBox(height: 16),
+        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(color: const Color(0xFFFFF7D1), borderRadius: BorderRadius.circular(16)),
+            child: Icon(isParcel ? Icons.inventory_2_outlined : Icons.storefront_outlined, color: Colors.black87),
+          ),
+          const SizedBox(width: 12),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(placeName, maxLines: 1, overflow: TextOverflow.ellipsis, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge, color: Colors.black)),
+            const SizedBox(height: 5),
+            Text(placeAddress.isNotEmpty ? placeAddress : 'Endereço a confirmar', maxLines: 2, overflow: TextOverflow.ellipsis, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Colors.black54)),
+          ])),
+        ]),
+        const SizedBox(height: 14),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(color: const Color(0xFFF7F7F7), borderRadius: BorderRadius.circular(18)),
+          child: Row(children: [
+            const Icon(Icons.receipt_long_rounded, color: Colors.black87),
+            const SizedBox(width: 10),
+            Expanded(child: Text('Pedido #$orderId', style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault, color: Colors.black))),
+            TextButton(
+              onPressed: () => Get.toNamed(RouteHelper.getOrderDetailsRoute(order.id)),
+              child: Text('Detalhes', style: robotoBold.copyWith(color: Theme.of(context).primaryColor)),
+            ),
+          ]),
+        ),
+        const SizedBox(height: 12),
+        Row(children: [
+          Expanded(
+            child: OutlinedButton.icon(
+              onPressed: () => Get.toNamed(RouteHelper.getConversationListRoute()),
+              icon: const Icon(Icons.support_agent_rounded, size: 20),
+              label: const Text('Central de Ajuda'),
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size(0, 48),
+                foregroundColor: Colors.black87,
+                side: const BorderSide(color: Color(0xFFE0E0E0)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: CustomButtonWidget(
+              height: 48,
+              radius: 16,
+              buttonText: isParcel ? 'Concluir retirada' : 'Concluir coleta',
+              fontSize: Dimensions.fontSizeDefault,
+              onPressed: () {
+                if(order.orderStatus == AppConstants.handover) {
+                  _handleOrderPickup(orderController, order);
+                } else {
+                  showCustomSnackBar('Aguarde a liberação da coleta pelo estabelecimento.');
+                }
+              },
+            ),
+          ),
+        ]),
+      ]),
     );
+  }
+
+  String _moduleLabel(OrderModel order) {
+    final raw = [order.moduleType, order.orderType, order.storeBusinessModel].where((value) => value != null).join('|').toLowerCase();
+    if(raw.contains('parcel')) return 'Encomenda';
+    if(raw.contains('pharmacy') || raw.contains('farm')) return 'Farmácia';
+    if(raw.contains('grocery') || raw.contains('market') || raw.contains('mercado')) return 'Mercado';
+    if(raw.contains('ride') || raw.contains('taxi') || raw.contains('corrida')) return 'Corrida';
+    return 'Food';
   }
 
   // Regular order confirmation actions
