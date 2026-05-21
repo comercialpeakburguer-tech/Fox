@@ -205,14 +205,13 @@ class ProfileController extends GetxController implements GetxService {
     _recordLocation = RecordLocationBodyModel(
       location: address, latitude: locationResult.latitude, longitude: locationResult.longitude, zoneId: zoneId
     );
+    update();
 
     List<String> status = ['accepted','ongoing'];
     if(Get.find<RideController>().tripDetail != null && status.contains(Get.find<RiderMapController>().currentRideState.name) && Get.find<AuthController>().getUserToken() != ''){
       Get.find<RideController>().remainingDistance(Get.find<RideController>().tripDetail!.id!);
     }
 
-    //await profileServiceInterface.recordLocation(_recordLocation!);
-    /// todo Need to integrate Pusher
     if(Get.find<AuthController>().isLoggedIn()){
       if(Get.find<SplashController>().configModel!.webSocketStatus!) {
         await profileServiceInterface.recordWebSocketLocation(_recordLocation!, zoneId);
