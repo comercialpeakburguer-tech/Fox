@@ -8,6 +8,7 @@ import 'package:sixam_mart_delivery/features/delivery_module/order/domain/models
 import 'package:sixam_mart_delivery/features/delivery_module/order/screens/order_details_screen.dart';
 import 'package:sixam_mart_delivery/features/profile/controllers/profile_controller.dart';
 import 'package:sixam_mart_delivery/features/splash/controllers/splash_controller.dart';
+import 'package:sixam_mart_delivery/features/support/widgets/foxgo_support_center_sheet.dart';
 import 'package:sixam_mart_delivery/helper/price_converter_helper.dart';
 import 'package:sixam_mart_delivery/helper/route_helper.dart';
 import 'package:sixam_mart_delivery/util/app_constants.dart';
@@ -47,21 +48,21 @@ class FoxGoAcceptedOrderCardWidget extends StatelessWidget {
 
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault, vertical: Dimensions.paddingSizeLarge),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
       child: Container(
-        constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.86),
+        constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.88),
         decoration: BoxDecoration(
           color: theme.cardColor,
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: const Color(0xFF17A34A).withValues(alpha: 0.24)),
+          borderRadius: BorderRadius.circular(26),
+          border: Border.all(color: const Color(0xFF17A34A).withValues(alpha: 0.22)),
           boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.14), blurRadius: 22, offset: const Offset(0, 10))],
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(26),
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
+              padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   colors: [Color(0xFF062E1C), Color(0xFF0E7A3D)],
@@ -72,25 +73,38 @@ class FoxGoAcceptedOrderCardWidget extends StatelessWidget {
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Row(children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
                     decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.14), borderRadius: BorderRadius.circular(999)),
                     child: Text('FOX GO', style: robotoBold.copyWith(color: Colors.white, fontSize: Dimensions.fontSizeSmall)),
                   ),
                   const Spacer(),
                   Text('#${orderModel.id ?? '-'}', style: robotoMedium.copyWith(color: Colors.white70, fontSize: Dimensions.fontSizeSmall)),
                 ]),
-                const SizedBox(height: Dimensions.paddingSizeSmall),
-                Text('Pedido aceito', style: robotoBold.copyWith(color: Colors.white, fontSize: Dimensions.fontSizeLarge)),
-                const SizedBox(height: Dimensions.paddingSizeExtraSmall),
-                Text(_operationSubtitle(), style: robotoRegular.copyWith(color: Colors.white70, fontSize: Dimensions.fontSizeSmall)),
+                const SizedBox(height: 16),
+                Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+                  Container(
+                    width: 58,
+                    height: 58,
+                    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.14), borderRadius: BorderRadius.circular(20)),
+                    child: const Icon(Icons.check_circle_rounded, color: Colors.white, size: 36),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text('Pedido aceito', style: robotoBold.copyWith(color: Colors.white, fontSize: 26, height: 1.0)),
+                    const SizedBox(height: 6),
+                    Text(_operationSubtitle(), style: robotoRegular.copyWith(color: Colors.white70, fontSize: Dimensions.fontSizeDefault)),
+                  ])),
+                ]),
               ]),
             ),
             Flexible(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  _statusPanel(context),
+                  const SizedBox(height: Dimensions.paddingSizeDefault),
                   _infoRow(context, Icons.category_outlined, 'Tipo', _moduleLabel()),
-                  _infoRow(context, Icons.storefront_outlined, _isParcel ? 'Origem / local de partida' : 'Origem / loja', _originName()),
+                  _infoRow(context, Icons.storefront_outlined, _isParcel ? 'Origem / local de retirada' : 'Origem / loja', _originName()),
                   _infoRow(context, Icons.shopping_bag_outlined, 'Endereço de retirada', _pickupAddress()),
                   _infoRow(context, Icons.location_on_outlined, _isParcel ? 'Destino' : 'Endereço de entrega / destino', _destinationAddress()),
                   Row(children: [
@@ -100,31 +114,79 @@ class FoxGoAcceptedOrderCardWidget extends StatelessWidget {
                   ]),
                   if(showAmount) ...[
                     const SizedBox(height: Dimensions.paddingSizeSmall),
-                    _metricBox(context, 'Valor / você recebe', PriceConverterHelper.convertPrice(_earningAmount()), highlight: true),
+                    _metricBox(context, 'Você recebe', PriceConverterHelper.convertPrice(_earningAmount()), highlight: true),
                   ],
                   const SizedBox(height: Dimensions.paddingSizeDefault),
                   CustomButtonWidget(
-                    height: 48,
-                    radius: Dimensions.radiusDefault,
+                    height: 52,
+                    radius: 16,
                     buttonText: _primaryActionLabel(),
                     fontSize: Dimensions.fontSizeDefault,
                     onPressed: () => _openExistingOrderFlow(),
                   ),
                   const SizedBox(height: Dimensions.paddingSizeSmall),
-                  TextButton(
-                    onPressed: () {
-                      if(Get.isDialogOpen == true) {
-                        Get.back();
-                      }
-                    },
-                    child: Text('Continuar nesta tela', style: robotoMedium.copyWith(color: theme.disabledColor)),
-                  ),
+                  Row(children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          if(Get.isDialogOpen == true) {
+                            Get.back();
+                          }
+                          FoxGoSupportCenterSheet.show(orderId: orderModel.id, initialReason: 'Ajuda após aceite do pedido');
+                        },
+                        icon: const Icon(Icons.support_agent_rounded, size: 20),
+                        label: const Text('Ajuda'),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size(0, 48),
+                          foregroundColor: Colors.black87,
+                          side: const BorderSide(color: Color(0xFFE0E0E0)),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: Dimensions.paddingSizeSmall),
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () {
+                          if(Get.isDialogOpen == true) {
+                            Get.back();
+                          }
+                        },
+                        child: Text('Continuar aqui', style: robotoMedium.copyWith(color: theme.disabledColor)),
+                      ),
+                    ),
+                  ]),
                 ]),
               ),
             ),
           ]),
         ),
       ),
+    );
+  }
+
+  Widget _statusPanel(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEFF9EC),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Row(children: [
+        Container(
+          width: 42,
+          height: 42,
+          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
+          child: const Icon(Icons.route_rounded, color: Color(0xFF0E7A3D)),
+        ),
+        const SizedBox(width: 12),
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(_nextStepTitle(), style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault, color: Colors.black)),
+          const SizedBox(height: 4),
+          Text('Siga para a próxima etapa e mantenha o GPS ativo.', style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: const Color(0xFF666666))),
+        ])),
+      ]),
     );
   }
 
@@ -178,7 +240,8 @@ class FoxGoAcceptedOrderCardWidget extends StatelessWidget {
   }
 
   double _earningAmount() {
-    return ((orderModel.originalDeliveryCharge ?? 0) + (orderModel.dmTips ?? 0)).toDouble();
+    final amount = ((orderModel.originalDeliveryCharge ?? 0) + (orderModel.dmTips ?? 0)).toDouble();
+    return amount > 0 ? amount : ((orderModel.deliveryCharge ?? 0) + (orderModel.dmTips ?? 0)).toDouble();
   }
 
   String _moduleLabel() {
@@ -187,7 +250,7 @@ class FoxGoAcceptedOrderCardWidget extends StatelessWidget {
     if(raw.contains('pharmacy') || raw.contains('farm')) return 'Farmácia';
     if(raw.contains('grocery') || raw.contains('market') || raw.contains('mercado')) return 'Mercado';
     if(raw.contains('ride') || raw.contains('taxi') || raw.contains('corrida')) return 'Corrida';
-    if(_isParcel) return 'Entrega';
+    if(_isParcel) return 'Encomenda';
     final module = orderModel.moduleType?.trim();
     return module != null && module.isNotEmpty ? module : 'Entrega';
   }
@@ -196,12 +259,20 @@ class FoxGoAcceptedOrderCardWidget extends StatelessWidget {
     if(_isFoodOrder) return 'Retirada na loja + entrega ao cliente';
     final module = _moduleLabel().toLowerCase();
     if(module.contains('corrida')) return 'Local de partida + destino';
+    if(_isParcel) return 'Retirada da encomenda + entrega ao destinatário';
     return 'Entrega em andamento';
   }
 
+  String _nextStepTitle() {
+    if(_isParcel) return 'Próxima etapa: retirar encomenda';
+    if(_moduleLabel().toLowerCase().contains('corrida')) return 'Próxima etapa: ir ao embarque';
+    return 'Próxima etapa: ir para retirada';
+  }
+
   String _primaryActionLabel() {
-    if(_isFoodOrder || !_isParcel) return 'Ir para retirada';
-    return 'Ver no mapa / Iniciar retirada';
+    if(_moduleLabel().toLowerCase().contains('corrida')) return 'Ir para embarque';
+    if(_isParcel) return 'Iniciar retirada';
+    return 'Ir para retirada';
   }
 
   String _originName() {
