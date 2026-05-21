@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -38,6 +40,10 @@ class FoxGoOrderRequestCardWidget extends StatefulWidget {
 class _FoxGoOrderRequestCardWidgetState extends State<FoxGoOrderRequestCardWidget> {
   List<OrderDetailsModel>? _orderDetails;
   bool _loadingDetails = false;
+  bool _isAccepting = false;
+  bool _isIgnoring = false;
+  Timer? _ttlTimer;
+  Duration _remaining = Duration.zero;
 
   bool get _isFoodOrder {
     final raw = [
@@ -58,6 +64,7 @@ class _FoxGoOrderRequestCardWidgetState extends State<FoxGoOrderRequestCardWidge
   @override
   void initState() {
     super.initState();
+    _initCountdown();
     if(_isFoodOrder && !_isParcel) {
       _loadFoodItems();
     }
@@ -66,10 +73,20 @@ class _FoxGoOrderRequestCardWidgetState extends State<FoxGoOrderRequestCardWidge
   @override
   void didUpdateWidget(covariant FoxGoOrderRequestCardWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if(oldWidget.orderModel.id != widget.orderModel.id) {
+      _ttlTimer?.cancel();
+      _initCountdown();
+    }
     if(oldWidget.orderModel.id != widget.orderModel.id && _isFoodOrder && !_isParcel) {
       _orderDetails = null;
       _loadFoodItems();
     }
+  }
+
+  @override
+  void dispose() {
+    _ttlTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadFoodItems() async {
@@ -139,6 +156,13 @@ class _FoxGoOrderRequestCardWidgetState extends State<FoxGoOrderRequestCardWidge
               ),
               const SizedBox(height: Dimensions.paddingSizeExtraSmall),
               Text(_moduleLabel(), style: robotoRegular.copyWith(color: Colors.white70, fontSize: Dimensions.fontSizeSmall)),
+              if(_remaining.inSeconds > 0) ...[
+                const SizedBox(height: Dimensions.paddingSizeExtraSmall),
+                Text('Expira em: ${_remaining.inSeconds}s', style: robotoBold.copyWith(color: const Color(0xFFFFE066), fontSize: Dimensions.fontSizeSmall)),
+              ] else ...[
+                const SizedBox(height: Dimensions.paddingSizeExtraSmall),
+                Text('Chamada expirada', style: robotoBold.copyWith(color: Colors.redAccent.shade100, fontSize: Dimensions.fontSizeSmall)),
+              ],
             ]),
           ),
           Padding(
@@ -167,7 +191,7 @@ class _FoxGoOrderRequestCardWidgetState extends State<FoxGoOrderRequestCardWidge
               Row(children: [
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: () => _confirmIgnore(context),
+                    onPressed: (_isIgnoring || _isAccepting || _remaining.inSeconds <= 0) ? null : () => _confirmIgnore(context),
                     style: OutlinedButton.styleFrom(
                       minimumSize: const Size(0, 46),
                       side: BorderSide(color: theme.disabledColor.withValues(alpha: 0.55)),
@@ -181,9 +205,9 @@ class _FoxGoOrderRequestCardWidgetState extends State<FoxGoOrderRequestCardWidge
                   child: CustomButtonWidget(
                     height: 46,
                     radius: Dimensions.radiusDefault,
-                    buttonText: 'accept'.tr,
+                    buttonText: _isAccepting ? 'Aguarde...' : (_remaining.inSeconds <= 0 ? 'Expirada' : 'Aceitar pedido'),
                     fontSize: Dimensions.fontSizeDefault,
-                    onPressed: () => _confirmAccept(context),
+                    onPressed: (_isAccepting || _isIgnoring || _remaining.inSeconds <= 0) ? null : () => _confirmAccept(context),
                   ),
                 ),
               ]),
@@ -275,9 +299,12 @@ class _FoxGoOrderRequestCardWidgetState extends State<FoxGoOrderRequestCardWidge
       icon: Images.warning,
       title: 'are_you_sure_to_ignore'.tr,
       description: _isParcel ? 'you_want_to_ignore_this_delivery'.tr : 'you_want_to_ignore_this_order'.tr,
-      onYesPressed: () {
+      onYesPressed: () async {
+        if(_isIgnoring || _isAccepting) return;
+        setState(() => _isIgnoring = true);
         Get.back();
         Get.find<OrderController>().ignoreOrder(widget.index);
+        if(mounted) setState(() => _isIgnoring = false);
       },
     ), barrierDismissible: false);
   }
@@ -289,6 +316,8 @@ class _FoxGoOrderRequestCardWidgetState extends State<FoxGoOrderRequestCardWidge
       title: 'are_you_sure_to_accept'.tr,
       description: _isParcel ? 'you_want_to_accept_this_delivery'.tr : 'you_want_to_accept_this_order'.tr,
       onYesPressed: () {
+        if(_isAccepting || _remaining.inSeconds <= 0) return;
+        setState(() => _isAccepting = true);
         orderController.acceptOrder(widget.orderModel.id, widget.index, widget.orderModel).then((isSuccess) {
           if(isSuccess) {
             widget.orderModel.orderStatus = (widget.orderModel.orderStatus == 'pending' || widget.orderModel.orderStatus == 'confirmed') ? 'accepted' : widget.orderModel.orderStatus;
@@ -299,7 +328,7 @@ class _FoxGoOrderRequestCardWidgetState extends State<FoxGoOrderRequestCardWidge
           } else {
             orderController.getLatestOrders();
           }
-        });
+        }).whenComplete(() { if(mounted) setState(() => _isAccepting = false); });
       },
     ), barrierDismissible: false);
   }
@@ -346,4 +375,39 @@ class _FoxGoOrderRequestCardWidgetState extends State<FoxGoOrderRequestCardWidge
         return 'digitally_paid'.tr;
     }
   }
+
+  void _initCountdown() {
+    final expiry = _resolveExpiry();
+    if(expiry == null) {
+      _remaining = const Duration(seconds: 45);
+    } else {
+      _remaining = expiry.difference(DateTime.now());
+      if(_remaining.isNegative) _remaining = Duration.zero;
+    }
+
+    _ttlTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if(!mounted) return;
+      setState(() {
+        if(_remaining.inSeconds <= 0) {
+          _remaining = Duration.zero;
+          timer.cancel();
+        } else {
+          _remaining = Duration(seconds: _remaining.inSeconds - 1);
+        }
+      });
+    });
+  }
+
+  DateTime? _resolveExpiry() {
+    final dynamic expiresAt = widget.orderModel.toJson()['expires_at'];
+    if(expiresAt != null) {
+      final parsed = DateTime.tryParse(expiresAt.toString());
+      if(parsed != null) return parsed.toLocal();
+    }
+    final dynamic ttlRaw = widget.orderModel.toJson()['ttl_seconds'];
+    final ttl = int.tryParse((ttlRaw ?? '').toString());
+    if(ttl != null && ttl > 0) return DateTime.now().add(Duration(seconds: ttl));
+    return null;
+  }
+
 }
