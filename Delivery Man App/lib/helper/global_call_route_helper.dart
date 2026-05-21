@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter/services.dart';
@@ -8,6 +10,7 @@ class GlobalCallRouteHelper {
   static String? _lastOrderId;
   static DateTime? _lastRoutedAt;
   static String _lastRouteResult = 'nenhuma_tentativa';
+  static final Set<String> _routingOrderIds = <String>{};
 
   static bool get isAppForeground {
     final state = WidgetsBinding.instance.lifecycleState;
@@ -16,6 +19,10 @@ class GlobalCallRouteHelper {
 
   static bool shouldRoute(String? orderId, {int seconds = 8, String reason = 'precheck'}) {
     final now = DateTime.now();
+    if(orderId != null && orderId.isNotEmpty && _routingOrderIds.contains(orderId)) {
+      debugPrint('FoxGoCallRoute dedupe em_andamento orderId=$orderId motivo=$reason ultimoResultado=$_lastRouteResult');
+      return false;
+    }
     if(orderId != null && orderId.isNotEmpty && _lastOrderId == orderId && _lastRoutedAt != null) {
       final elapsed = now.difference(_lastRoutedAt!).inSeconds;
       if(elapsed < seconds) {
@@ -37,8 +44,17 @@ class GlobalCallRouteHelper {
 
   static Future<bool> routeOrderModel(OrderModel order, {required String source}) async {
     final payload = payloadFromOrder(order);
-    debugPrint('FoxGoCallRoute source=$source latest_orders orderId=${payload['orderId']} callId=${payload['callId']}');
-    if(!shouldRoute(payload['orderId']?.toString(), reason: source)) {
+    final orderId = payload['orderId']?.toString();
+    debugPrint('FoxGoCallRoute source=$source latest_orders orderId=$orderId callId=${payload['callId']}');
+
+    if(orderId != null && orderId.isNotEmpty && _routingOrderIds.contains(orderId)) {
+      await Future.delayed(const Duration(milliseconds: 650));
+      final isShowing = await NewCallOverlayHelper.isShowing();
+      debugPrint('FoxGoCallRoute aguardou rota em andamento orderId=$orderId overlayShowing=$isShowing source=$source');
+      return isShowing;
+    }
+
+    if(!shouldRoute(orderId, reason: source)) {
       return true;
     }
     return routePayload(payload, source: source);
@@ -46,6 +62,12 @@ class GlobalCallRouteHelper {
 
   static Future<bool> routePayload(Map<String, dynamic> payload, {required String source}) async {
     bool overlayVisible = false;
+    final orderId = payload['orderId']?.toString();
+
+    if(orderId != null && orderId.isNotEmpty) {
+      _routingOrderIds.add(orderId);
+    }
+
     try {
       debugPrint('FoxGoCallRoute chamou routeNewCallMessage/global source=$source keys=${payload.keys.toList()} type=${payload['type']} orderId=${payload['orderId']}');
       debugPrint('FoxGoOverlayService tentando start NewCallOverlayService source=$source callId=${payload['callId']}');
@@ -56,6 +78,10 @@ class GlobalCallRouteHelper {
       debugPrint('FoxGoOverlayService start/confirm falha PlatformException source=$source code=${error.code} message=${error.message}');
     } catch (error) {
       debugPrint('FoxGoOverlayService start/confirm falha source=$source error=$error');
+    } finally {
+      if(orderId != null && orderId.isNotEmpty) {
+        _routingOrderIds.remove(orderId);
+      }
     }
 
     if(overlayVisible) {
@@ -63,8 +89,8 @@ class GlobalCallRouteHelper {
       return true;
     }
 
-    _lastRouteResult = 'overlay_pendente_confirmacao_nativa';
-    debugPrint('FoxGoCallRoute fallback delegado ao nativo source=$source orderId=${payload['orderId']} callId=${payload['callId']}');
+    _lastRouteResult = 'overlay_indisponivel_fallback_app';
+    debugPrint('FoxGoCallRoute overlay não confirmado; fallback app permitido source=$source orderId=${payload['orderId']} callId=${payload['callId']}');
     return false;
   }
 
