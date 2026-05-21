@@ -41,6 +41,7 @@ class _FoxGoOrderRequestCardWidgetState extends State<FoxGoOrderRequestCardWidge
   bool _loadingDetails = false;
   bool _isAccepting = false;
   bool _isIgnoring = false;
+  bool _expiredHandled = false;
   Timer? _ttlTimer;
   Duration _remaining = Duration.zero;
 
@@ -82,6 +83,7 @@ class _FoxGoOrderRequestCardWidgetState extends State<FoxGoOrderRequestCardWidge
     super.didUpdateWidget(oldWidget);
     if(oldWidget.orderModel.id != widget.orderModel.id) {
       _ttlTimer?.cancel();
+      _expiredHandled = false;
       _initCountdown();
     }
     if(oldWidget.orderModel.id != widget.orderModel.id && _isFoodOrder && !_isParcel) {
@@ -125,86 +127,108 @@ class _FoxGoOrderRequestCardWidgetState extends State<FoxGoOrderRequestCardWidge
     final String payment = _paymentLabel();
     final bool showAmount = showEarning && Get.find<ProfileController>().profileModel != null && Get.find<ProfileController>().profileModel!.earnings == 1;
     final String receiveValue = PriceConverterHelper.convertPrice(_earningAmount());
+    final bool expired = _remaining.inSeconds <= 0;
 
-    return Container(
-      margin: EdgeInsets.only(bottom: widget.compact ? 0 : Dimensions.paddingSizeSmall),
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.18), blurRadius: 24, offset: const Offset(0, 10))],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFF7A6),
-              border: Border(left: BorderSide(color: Theme.of(context).primaryColor, width: 7)),
+    return AnimatedOpacity(
+      opacity: expired ? 0.72 : 1,
+      duration: const Duration(milliseconds: 220),
+      child: Container(
+        margin: EdgeInsets.only(bottom: widget.compact ? 0 : Dimensions.paddingSizeSmall),
+        decoration: BoxDecoration(
+          color: theme.cardColor,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.18), blurRadius: 24, offset: const Offset(0, 10))],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
+              decoration: BoxDecoration(
+                color: expired ? const Color(0xFFF2F2F2) : const Color(0xFFFFF7A6),
+                border: Border(left: BorderSide(color: expired ? const Color(0xFFE6003E) : Theme.of(context).primaryColor, width: 7)),
+              ),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Row(children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.85), borderRadius: BorderRadius.circular(999)),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      const Icon(Icons.room_service_rounded, size: 17, color: Colors.black87),
+                      const SizedBox(width: 7),
+                      Text('${_moduleTitle()}${_isGroupedRoute ? ' (${widget.orderModel.detailsCount})' : ''}', style: robotoBold.copyWith(color: Colors.black87, fontSize: Dimensions.fontSizeSmall)),
+                    ]),
+                  ),
+                  const Spacer(),
+                  _timerChip(),
+                ]),
+                const SizedBox(height: Dimensions.paddingSizeDefault),
+                Text(receiveValue, style: robotoBold.copyWith(fontSize: 42, color: Colors.black, height: 1)),
+                const SizedBox(height: 8),
+                Text(expired ? 'Oferta expirada' : 'Você recebe', style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeDefault, color: Colors.black54)),
+              ]),
             ),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Row(children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                  decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.85), borderRadius: BorderRadius.circular(999)),
-                  child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    const Icon(Icons.room_service_rounded, size: 17, color: Colors.black87),
-                    const SizedBox(width: 7),
-                    Text('${_moduleTitle()}${_isGroupedRoute ? ' (${widget.orderModel.detailsCount})' : ''}', style: robotoBold.copyWith(color: Colors.black87, fontSize: Dimensions.fontSizeSmall)),
-                  ]),
-                ),
-                const Spacer(),
-                _timerChip(),
-              ]),
-              const SizedBox(height: Dimensions.paddingSizeDefault),
-              Text(receiveValue, style: robotoBold.copyWith(fontSize: 42, color: Colors.black, height: 1)),
-              const SizedBox(height: 8),
-              Text('Você recebe', style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeDefault, color: Colors.black54)),
-            ]),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Row(children: [
-                Expanded(child: _metricLine(Icons.route_rounded, 'Distância total', '${distance > 1000 ? '1000+' : distance.toStringAsFixed(1)} km')),
-                const SizedBox(width: Dimensions.paddingSizeSmall),
-                Expanded(child: _metricLine(Icons.payments_rounded, 'Pagamento', payment)),
-              ]),
-              const SizedBox(height: Dimensions.paddingSizeDefault),
-              _routeTimeline(),
-              if(_isFoodOrder) ...[
-                const SizedBox(height: Dimensions.paddingSizeSmall),
-                _buildFoodItems(context),
-              ],
-              const SizedBox(height: Dimensions.paddingSizeDefault),
-              Row(children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: (_isIgnoring || _isAccepting || _remaining.inSeconds <= 0) ? null : () => _showDecisionOverlay(accept: false),
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size(0, 52),
-                      side: const BorderSide(color: Color(0xFFE6003E), width: 1.2),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            Padding(
+              padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Row(children: [
+                  Expanded(child: _metricLine(Icons.route_rounded, 'Distância total', '${distance > 1000 ? '1000+' : distance.toStringAsFixed(1)} km')),
+                  const SizedBox(width: Dimensions.paddingSizeSmall),
+                  Expanded(child: _metricLine(Icons.payments_rounded, 'Pagamento', payment)),
+                ]),
+                const SizedBox(height: Dimensions.paddingSizeDefault),
+                _routeTimeline(),
+                if(_isFoodOrder) ...[
+                  const SizedBox(height: Dimensions.paddingSizeSmall),
+                  _buildFoodItems(context),
+                ],
+                if(expired) ...[
+                  const SizedBox(height: Dimensions.paddingSizeDefault),
+                  _expiredNotice(),
+                ],
+                const SizedBox(height: Dimensions.paddingSizeDefault),
+                Row(children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: (_isIgnoring || _isAccepting || expired) ? null : () => _showDecisionOverlay(accept: false),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(0, 52),
+                        side: const BorderSide(color: Color(0xFFE6003E), width: 1.2),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      ),
+                      child: Text('Recusar', textAlign: TextAlign.center, style: robotoBold.copyWith(color: const Color(0xFFE6003E), fontSize: Dimensions.fontSizeDefault)),
                     ),
-                    child: Text('Recusar', textAlign: TextAlign.center, style: robotoBold.copyWith(color: const Color(0xFFE6003E), fontSize: Dimensions.fontSizeDefault)),
                   ),
-                ),
-                const SizedBox(width: Dimensions.paddingSizeSmall),
-                Expanded(
-                  child: CustomButtonWidget(
-                    height: 52,
-                    radius: 16,
-                    buttonText: _isAccepting ? 'Aguarde...' : (_remaining.inSeconds <= 0 ? 'Expirada' : _isGroupedRoute ? 'Aceitar (${widget.orderModel.detailsCount})' : 'Aceitar'),
-                    fontSize: Dimensions.fontSizeDefault,
-                    onPressed: (_isAccepting || _isIgnoring || _remaining.inSeconds <= 0) ? null : () => _showDecisionOverlay(accept: true),
+                  const SizedBox(width: Dimensions.paddingSizeSmall),
+                  Expanded(
+                    child: CustomButtonWidget(
+                      height: 52,
+                      radius: 16,
+                      buttonText: _isAccepting ? 'Aguarde...' : (expired ? 'Expirada' : _isGroupedRoute ? 'Aceitar (${widget.orderModel.detailsCount})' : 'Aceitar'),
+                      fontSize: Dimensions.fontSizeDefault,
+                      onPressed: (_isAccepting || _isIgnoring || expired) ? null : () => _showDecisionOverlay(accept: true),
+                    ),
                   ),
-                ),
+                ]),
               ]),
-            ]),
-          ),
-        ]),
+            ),
+          ]),
+        ),
       ),
+    );
+  }
+
+  Widget _expiredNotice() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(color: const Color(0xFFFFF0F3), borderRadius: BorderRadius.circular(16)),
+      child: Row(children: [
+        const Icon(Icons.timer_off_rounded, color: Color(0xFFE6003E), size: 22),
+        const SizedBox(width: 10),
+        Expanded(child: Text('O tempo dessa chamada acabou. Ela será removida da lista automaticamente.', style: robotoMedium.copyWith(color: const Color(0xFFE6003E), fontSize: Dimensions.fontSizeSmall))),
+      ]),
     );
   }
 
@@ -214,7 +238,7 @@ class _FoxGoOrderRequestCardWidgetState extends State<FoxGoOrderRequestCardWidge
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(color: expired ? const Color(0xFFE6003E) : Colors.black.withValues(alpha: 0.78), borderRadius: BorderRadius.circular(999)),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
-        const Icon(Icons.timer_rounded, color: Colors.white, size: 16),
+        Icon(expired ? Icons.timer_off_rounded : Icons.timer_rounded, color: Colors.white, size: 16),
         const SizedBox(width: 6),
         Text(expired ? 'Expirada' : '${_remaining.inSeconds}s', style: robotoBold.copyWith(color: Colors.white, fontSize: Dimensions.fontSizeSmall)),
       ]),
@@ -313,6 +337,7 @@ class _FoxGoOrderRequestCardWidgetState extends State<FoxGoOrderRequestCardWidge
   }
 
   void _showDecisionOverlay({required bool accept}) {
+    if(_remaining.inSeconds <= 0) return;
     Get.dialog(
       _RouteDecisionOverlay(
         accept: accept,
@@ -321,6 +346,7 @@ class _FoxGoOrderRequestCardWidgetState extends State<FoxGoOrderRequestCardWidge
         stops: _routeStopCount,
         initialSeconds: _remaining.inSeconds,
         onConfirm: () => accept ? _acceptOrder() : _rejectOrder(),
+        onExpired: _handleExpiredOffer,
       ),
       barrierDismissible: false,
       useSafeArea: false,
@@ -330,7 +356,7 @@ class _FoxGoOrderRequestCardWidgetState extends State<FoxGoOrderRequestCardWidge
   Future<void> _rejectOrder() async {
     if(_isIgnoring || _isAccepting || _remaining.inSeconds <= 0) return;
     setState(() => _isIgnoring = true);
-    Get.find<OrderController>().ignoreOrder(widget.index);
+    Get.find<OrderController>().ignoreOrderById(widget.orderModel.id);
     if(widget.compact) {
       widget.onTap();
     }
@@ -344,7 +370,8 @@ class _FoxGoOrderRequestCardWidgetState extends State<FoxGoOrderRequestCardWidge
     if(_isAccepting || _remaining.inSeconds <= 0) return;
     setState(() => _isAccepting = true);
     final orderController = Get.find<OrderController>();
-    final isSuccess = await orderController.acceptOrder(widget.orderModel.id, widget.index, widget.orderModel);
+    final int index = orderController.latestOrderList?.indexWhere((order) => order.id == widget.orderModel.id) ?? widget.index;
+    final isSuccess = await orderController.acceptOrder(widget.orderModel.id, index, widget.orderModel);
     if(Get.isDialogOpen == true) {
       Get.back();
     }
@@ -353,11 +380,23 @@ class _FoxGoOrderRequestCardWidgetState extends State<FoxGoOrderRequestCardWidge
       if(widget.compact) {
         widget.onTap();
       }
-      Get.dialog(FoxGoAcceptedOrderCardWidget(orderModel: widget.orderModel), barrierDismissible: false);
+      if(Get.isDialogOpen != true) {
+        Get.dialog(FoxGoAcceptedOrderCardWidget(orderModel: widget.orderModel), barrierDismissible: false);
+      }
     } else {
-      orderController.getLatestOrders();
+      orderController.getLatestOrders(routeCall: false);
     }
     if(mounted) setState(() => _isAccepting = false);
+  }
+
+  void _handleExpiredOffer() {
+    if(_expiredHandled) return;
+    _expiredHandled = true;
+    final orderController = Get.find<OrderController>();
+    orderController.ignoreOrderById(widget.orderModel.id);
+    if(widget.compact && Get.isDialogOpen == true) {
+      Get.back();
+    }
   }
 
   double _distanceFromDeliveryMan() {
@@ -415,12 +454,18 @@ class _FoxGoOrderRequestCardWidgetState extends State<FoxGoOrderRequestCardWidge
       if(_remaining.isNegative) _remaining = Duration.zero;
     }
 
+    if(_remaining.inSeconds <= 0) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _handleExpiredOffer());
+      return;
+    }
+
     _ttlTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if(!mounted) return;
       setState(() {
-        if(_remaining.inSeconds <= 0) {
+        if(_remaining.inSeconds <= 1) {
           _remaining = Duration.zero;
           timer.cancel();
+          WidgetsBinding.instance.addPostFrameCallback((_) => _handleExpiredOffer());
         } else {
           _remaining = Duration(seconds: _remaining.inSeconds - 1);
         }
@@ -429,12 +474,13 @@ class _FoxGoOrderRequestCardWidgetState extends State<FoxGoOrderRequestCardWidge
   }
 
   DateTime? _resolveExpiry() {
-    final dynamic expiresAt = widget.orderModel.toJson()['expires_at'];
+    final json = widget.orderModel.toJson();
+    final dynamic expiresAt = json['expires_at'] ?? json['expiresAt'] ?? json['offer_expires_at'];
     if(expiresAt != null) {
       final parsed = DateTime.tryParse(expiresAt.toString());
       if(parsed != null) return parsed.toLocal();
     }
-    final dynamic ttlRaw = widget.orderModel.toJson()['ttl_seconds'];
+    final dynamic ttlRaw = json['ttl_seconds'] ?? json['ttlSeconds'] ?? json['timeout'] ?? json['offer_timeout'];
     final ttl = int.tryParse((ttlRaw ?? '').toString());
     if(ttl != null && ttl > 0) return DateTime.now().add(Duration(seconds: ttl));
     return null;
@@ -449,6 +495,7 @@ class _RouteDecisionOverlay extends StatefulWidget {
     required this.stops,
     required this.initialSeconds,
     required this.onConfirm,
+    required this.onExpired,
   });
 
   final bool accept;
@@ -457,6 +504,7 @@ class _RouteDecisionOverlay extends StatefulWidget {
   final int stops;
   final int initialSeconds;
   final Future<void> Function() onConfirm;
+  final VoidCallback onExpired;
 
   @override
   State<_RouteDecisionOverlay> createState() => _RouteDecisionOverlayState();
@@ -466,6 +514,7 @@ class _RouteDecisionOverlayState extends State<_RouteDecisionOverlay> {
   Timer? _timer;
   late int _seconds;
   bool _loading = false;
+  bool _expiredCalled = false;
 
   @override
   void initState() {
@@ -473,8 +522,10 @@ class _RouteDecisionOverlayState extends State<_RouteDecisionOverlay> {
     _seconds = widget.initialSeconds > 0 ? widget.initialSeconds : 0;
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if(!mounted) return;
-      if(_seconds <= 0) {
+      if(_seconds <= 1) {
         timer.cancel();
+        setState(() => _seconds = 0);
+        _expireAndClose();
         return;
       }
       setState(() => _seconds--);
@@ -485,6 +536,17 @@ class _RouteDecisionOverlayState extends State<_RouteDecisionOverlay> {
   void dispose() {
     _timer?.cancel();
     super.dispose();
+  }
+
+  void _expireAndClose() {
+    if(_expiredCalled) return;
+    _expiredCalled = true;
+    widget.onExpired();
+    Future.delayed(const Duration(milliseconds: 260), () {
+      if(Get.isDialogOpen == true) {
+        Get.back();
+      }
+    });
   }
 
   @override
@@ -518,7 +580,7 @@ class _RouteDecisionOverlayState extends State<_RouteDecisionOverlay> {
                 ]),
               ),
               const SizedBox(height: 52),
-              Text(widget.accept ? 'Aceitar a rota?' : 'Rejeitar a rota?', textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontSize: 38, height: 1.05, fontWeight: FontWeight.w800, letterSpacing: 1.2)),
+              Text(_seconds <= 0 ? 'Tempo esgotado' : (widget.accept ? 'Aceitar a rota?' : 'Rejeitar a rota?'), textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontSize: 38, height: 1.05, fontWeight: FontWeight.w800, letterSpacing: 1.2)),
               const SizedBox(height: 28),
               Text(widget.amount, style: const TextStyle(color: Colors.white, fontSize: 42, fontWeight: FontWeight.w900, letterSpacing: 1.1)),
               const SizedBox(height: 22),
