@@ -9,6 +9,7 @@ import 'package:sixam_mart_delivery/features/delivery_module/order/widgets/parce
 import 'package:sixam_mart_delivery/features/delivery_module/order/widgets/parcel_cancelation/parcel_return_date_time_bottom_sheet.dart';
 import 'package:sixam_mart_delivery/features/profile/controllers/profile_controller.dart';
 import 'package:sixam_mart_delivery/features/splash/controllers/splash_controller.dart';
+import 'package:sixam_mart_delivery/features/support/widgets/foxgo_support_center_sheet.dart';
 import 'package:sixam_mart_delivery/features/delivery_module/order/domain/models/order_model.dart';
 import 'package:sixam_mart_delivery/helper/price_converter_helper.dart';
 import 'package:sixam_mart_delivery/util/app_constants.dart';
@@ -108,6 +109,8 @@ class ParcelBottomView extends StatelessWidget {
           SizedBox(width: (cancelPermission && ((controllerOrderModel.isGuest! && controllerOrderModel.orderStatus == 'pending') || (!controllerOrderModel.isGuest!))) ? Dimensions.paddingSizeSmall : 0),
           Expanded(child: _buildParcelConfirmButton(orderController, controllerOrderModel)),
         ]),
+        const SizedBox(height: Dimensions.paddingSizeSmall),
+        _buildParcelHelpButton(controllerOrderModel, 'Ajuda para confirmar encomenda'),
       ]),
     );
   }
@@ -142,6 +145,8 @@ class ParcelBottomView extends StatelessWidget {
           icon: _buildSliderIcon(), isLtr: Get.find<LocalizationController>().isLtr, boxShadow: const BoxShadow(blurRadius: 0), buttonColor: Theme.of(Get.context!).primaryColor,
           backgroundColor: Theme.of(Get.context!).primaryColor.withValues(alpha: 0.1), baseColor: Theme.of(Get.context!).primaryColor,
         ),
+        const SizedBox(height: Dimensions.paddingSizeSmall),
+        _buildParcelHelpButton(controllerOrderModel, 'Ajuda na retirada da encomenda'),
         (controllerOrderModel.isGuest! && controllerOrderModel.orderStatus == 'pending') || (!controllerOrderModel.isGuest!) ? _buildParcelCancelOption(controllerOrderModel) : SizedBox(height: 15),
       ]),
     );
@@ -161,8 +166,27 @@ class ParcelBottomView extends StatelessWidget {
           icon: _buildSliderIcon(), isLtr: Get.find<LocalizationController>().isLtr, boxShadow: const BoxShadow(blurRadius: 0), buttonColor: Theme.of(Get.context!).primaryColor,
           backgroundColor: Theme.of(Get.context!).primaryColor.withValues(alpha: 0.1), baseColor: Theme.of(Get.context!).primaryColor,
         ),
+        const SizedBox(height: Dimensions.paddingSizeSmall),
+        _buildParcelHelpButton(controllerOrderModel, 'Ajuda na entrega da encomenda'),
         (controllerOrderModel.isGuest! && controllerOrderModel.orderStatus == 'pending') || (!controllerOrderModel.isGuest!) ? _buildParcelCancelOption(controllerOrderModel) : SizedBox(height: 15),
       ]),
+    );
+  }
+
+  Widget _buildParcelHelpButton(OrderModel order, String reason) {
+    return SizedBox(
+      width: double.infinity,
+      height: 48,
+      child: OutlinedButton.icon(
+        onPressed: () => FoxGoSupportCenterSheet.show(orderId: order.id, initialReason: reason),
+        icon: const Icon(Icons.support_agent_rounded, size: 20),
+        label: const Text('Central de Ajuda'),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: Colors.black87,
+          side: const BorderSide(color: Color(0xFFE0E0E0)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        ),
+      ),
     );
   }
 
@@ -182,18 +206,22 @@ class ParcelBottomView extends StatelessWidget {
     return !(order.parcelCancellation?.beforePickup == 1) ? Container(
       padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
       decoration: BoxDecoration(color: Theme.of(Get.context!).cardColor, boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)]),
-      child: order.parcelCancellation?.setReturnDate == 0 ? CustomButtonWidget(
-        buttonText: 'set_return_date_and_time'.tr,
-        onPressed: () {
-          showCustomBottomSheet(child: ParcelReturnDateTimeBottomSheet(orderId: orderId, canceledDateTime: orderController.orderModel!.canceled!));
-        },
-      ) : SliderButton(
-        label: Text('parcel_returned'.tr, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge, color: Theme.of(Get.context!).primaryColor)),
-        dismissThresholds: 0.5, dismissible: false, shimmer: true, width: 1170, height: 60, buttonSize: 50, radius: 10,
-        icon: _buildSliderIcon(), isLtr: Get.find<LocalizationController>().isLtr, boxShadow: const BoxShadow(blurRadius: 0), buttonColor: Theme.of(Get.context!).primaryColor,
-        backgroundColor: Theme.of(Get.context!).primaryColor.withValues(alpha: 0.1), baseColor: Theme.of(Get.context!).primaryColor,
-        action: () { showCustomBottomSheet(child: CollectMoneyBottomSheet(orderId: orderId)); },
-      ),
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        order.parcelCancellation?.setReturnDate == 0 ? CustomButtonWidget(
+          buttonText: 'set_return_date_and_time'.tr,
+          onPressed: () {
+            showCustomBottomSheet(child: ParcelReturnDateTimeBottomSheet(orderId: orderId, canceledDateTime: orderController.orderModel!.canceled!));
+          },
+        ) : SliderButton(
+          label: Text('parcel_returned'.tr, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge, color: Theme.of(Get.context!).primaryColor)),
+          dismissThresholds: 0.5, dismissible: false, shimmer: true, width: 1170, height: 60, buttonSize: 50, radius: 10,
+          icon: _buildSliderIcon(), isLtr: Get.find<LocalizationController>().isLtr, boxShadow: const BoxShadow(blurRadius: 0), buttonColor: Theme.of(Get.context!).primaryColor,
+          backgroundColor: Theme.of(Get.context!).primaryColor.withValues(alpha: 0.1), baseColor: Theme.of(Get.context!).primaryColor,
+          action: () { showCustomBottomSheet(child: CollectMoneyBottomSheet(orderId: orderId)); },
+        ),
+        const SizedBox(height: Dimensions.paddingSizeSmall),
+        _buildParcelHelpButton(order, 'Ajuda na devolução da encomenda'),
+      ]),
     ) : SizedBox();
   }
 
