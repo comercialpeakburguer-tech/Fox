@@ -15,10 +15,22 @@ object FoxGoCallFallbackNotifier {
     private const val TAG = "FoxGoCallFallback"
     private const val CHANNEL_ID = "foxgo_call_fallback_v2"
     private const val NOTIFICATION_ID = 4102
+    private const val DEDUPE_TTL_MS = 8_000L
+    private var lastFallbackKey: String? = null
+    private var lastFallbackAtMs: Long = 0L
 
     fun show(context: Context, data: Map<String, Any?>, source: String): Boolean {
         val appContext = context.applicationContext
         return try {
+            val key = fallbackKey(data)
+            val now = System.currentTimeMillis()
+            if (key.isNotBlank() && key == lastFallbackKey && (now - lastFallbackAtMs) < DEDUPE_TTL_MS) {
+                Log.i(TAG, "fallback dedupe bloqueado source=$source key=$key")
+                return true
+            }
+            lastFallbackKey = key
+            lastFallbackAtMs = now
+
             ensureChannel(appContext)
             val notification = buildNotification(appContext, data)
             val manager = appContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -43,16 +55,30 @@ object FoxGoCallFallbackNotifier {
     }
 
     private fun buildNotification(context: Context, data: Map<String, Any?>): Notification {
-        val orderId = data["orderId"]?.toString().orEmpty()
-        val callId = data["callId"]?.toString().orEmpty()
-        val title = data["title"]?.toString()?.takeIf { it.isNotBlank() } ?: "Nova entrega disponível"
-        val text = if (orderId.isNotEmpty()) "Toque para abrir o pedido #$orderId" else "Toque para abrir a nova chamada"
+        val orderId = first(data, "orderId", "order_id", "id")
+        val callId = first(data, "callId", "call_id").ifBlank { orderId }
+        val title = first(data, "title").ifBlank { moduleTitle(data) }
+        val origin = first(data, "originName", "storeName", "store_name", "pickupName")
+        val destination = first(data, "destinationAddress", "destination_address", "deliveryAddress", "receiverAddress")
+        val earning = first(data, "earning", "driverEarningAmount", "driver_earning", "deliveryCharge")
+        val distance = first(data, "distance", "totalDistanceKm", "total_distance")
+        val payment = paymentLabel(first(data, "paymentMethod", "payment_method"))
+        val text = compactText(orderId, earning, distance, payment)
+        val bigText = listOf(
+            if (earning.isNotBlank()) "Você recebe: $earning" else "",
+            if (distance.isNotBlank()) "Distância: $distance" else "",
+            if (payment.isNotBlank()) "Pagamento: $payment" else "",
+            if (origin.isNotBlank()) "Origem: $origin" else "",
+            if (destination.isNotBlank()) "Destino: $destination" else "",
+        ).filter { it.isNotBlank() }.joinToString("\n").ifBlank { text }
+
         val openIntent = Intent(context, MainActivity::class.java).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
             putExtra(NewCallOverlayService.EXTRA_OPEN_ORDER_REQUEST, true)
             putExtra(NewCallOverlayService.EXTRA_OVERLAY_ACTION, "onNewCallFallbackOpen")
             if (orderId.isNotEmpty()) putExtra(NewCallOverlayService.EXTRA_ORDER_ID, orderId)
             if (callId.isNotEmpty()) putExtra(NewCallOverlayService.EXTRA_CALL_ID, callId)
+            data.forEach { (key, value) -> putExtraValue(key, value) }
         }
         val pendingIntent = PendingIntent.getActivity(
             context,
@@ -75,7 +101,7 @@ object FoxGoCallFallbackNotifier {
             rejectIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or immutableFlag(),
         )
-        Log.i(TAG, "PendingIntent fallback aceitar=4103 recusar=4104 orderId=$orderId callId=$callId")
+        Log.i(TAG, "PendingIntent fallback aceitar=4103 recusar=4104 orderId=$orderId callId=$callId title=$title")
 
         val builder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             Notification.Builder(context, CHANNEL_ID)
@@ -88,6 +114,7 @@ object FoxGoCallFallbackNotifier {
             .setSmallIcon(R.drawable.notification_icon)
             .setContentTitle(title)
             .setContentText(text)
+            .setStyle(Notification.BigTextStyle().bigText(bigText))
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
             .setPriority(Notification.PRIORITY_MAX)
@@ -123,6 +150,49 @@ object FoxGoCallFallbackNotifier {
             putExtra(NewCallOverlayService.EXTRA_OVERLAY_ACTION, overlayAction)
             data.forEach { (key, value) -> putExtraValue(key, value) }
         }
+    }
+
+    private fun fallbackKey(data: Map<String, Any?>): String {
+        return first(data, "orderId", "order_id", "id", "callId", "call_id")
+    }
+
+    private fun moduleTitle(data: Map<String, Any?>): String {
+        val raw = listOf(first(data, "moduleType", "module_type"), first(data, "orderType", "order_type"), first(data, "rawType")).joinToString("|").lowercase()
+        return when {
+            raw.contains("ride") || raw.contains("taxi") || raw.contains("corrida") -> "Nova corrida"
+            raw.contains("parcel") || raw.contains("encomenda") -> "Nova encomenda"
+            raw.contains("pharmacy") || raw.contains("farm") -> "Nova entrega de farmácia"
+            raw.contains("grocery") || raw.contains("market") || raw.contains("mercado") -> "Nova entrega de mercado"
+            else -> "Nova entrega disponível"
+        }
+    }
+
+    private fun compactText(orderId: String, earning: String, distance: String, payment: String): String {
+        val parts = listOf(
+            if (orderId.isNotBlank()) "#$orderId" else "",
+            if (earning.isNotBlank()) earning else "",
+            if (distance.isNotBlank()) distance else "",
+            if (payment.isNotBlank()) payment else "",
+        ).filter { it.isNotBlank() }
+        return parts.joinToString(" • ").ifBlank { "Toque para abrir a nova chamada" }
+    }
+
+    private fun paymentLabel(raw: String): String {
+        return when (raw) {
+            "cash_on_delivery" -> "Dinheiro"
+            "wallet" -> "Carteira"
+            "offline_payment" -> "Pagamento offline"
+            "partial_payment" -> "Pagamento parcial"
+            else -> raw
+        }
+    }
+
+    private fun first(data: Map<String, Any?>, vararg keys: String): String {
+        for (key in keys) {
+            val value = data[key]?.toString()?.trim().orEmpty()
+            if (value.isNotBlank() && value != "null") return value
+        }
+        return ""
     }
 
     private fun Intent.putExtraValue(key: String, value: Any?) {
