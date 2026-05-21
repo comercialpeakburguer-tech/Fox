@@ -4,7 +4,6 @@ import 'package:sixam_mart_delivery/features/home/widgets/active_order_widget.da
 import 'package:sixam_mart_delivery/features/home/widgets/active_ride_widget.dart';
 import 'package:sixam_mart_delivery/features/home/widgets/cash_in_hand_card_widget.dart';
 import 'package:sixam_mart_delivery/features/home/widgets/home_earning_widget.dart';
-import 'package:sixam_mart_delivery/features/home/widgets/foxgo_map_home_widget.dart';
 import 'package:sixam_mart_delivery/features/home/widgets/order_count_widget.dart';
 import 'package:sixam_mart_delivery/features/home/widgets/referal_card_widget.dart';
 import 'package:sixam_mart_delivery/features/home/widgets/ride_activity_view.dart';
@@ -29,10 +28,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key, this.onNavigateToOrders, this.onNavigateToRequests, this.onNavigateToProfile});
+  const HomeScreen({super.key, this.onNavigateToOrders});
   final Function()? onNavigateToOrders;
-  final Function()? onNavigateToRequests;
-  final Function()? onNavigateToProfile;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -163,32 +160,113 @@ class _HomeScreenState extends State<HomeScreen> {
       bool isRideActive = AppConstants.appMode == AppMode.ride;
 
       return Scaffold(
-        body: Column(children: [
-
-          if(!_isNotificationPermissionGranted)
-            permissionWarning(isBatteryPermission: false, onTap: requestNotificationPermission, closeOnTap: () {
-              setState(() {
-                _isNotificationPermissionGranted = true;
-              });
-            }),
-
-          if(!_isBatteryOptimizationGranted)
-            permissionWarning(isBatteryPermission: true, onTap: requestBatteryOptimization, closeOnTap: () {
-              setState(() {
-                _isBatteryOptimizationGranted = true;
-              });
-            }),
-
-          Expanded(
-            child: FoxGoMapHomeWidget(
-              profileController: profileController,
-              onRefresh: _loadData,
-              onNavigateToOrders: widget.onNavigateToOrders,
-              onNavigateToRequests: widget.onNavigateToRequests,
-              onNavigateToProfile: widget.onNavigateToProfile,
-            ),
+        appBar: AppBar(
+          backgroundColor: Theme.of(context).cardColor,
+          surfaceTintColor: Theme.of(context).cardColor,
+          shadowColor: Theme.of(context).disabledColor.withValues(alpha: 0.5),
+          elevation: 2,
+          leading: Padding(
+            padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
+            child: Image.asset(Images.logo, height: 30, width: 30),
           ),
-        ]),
+          titleSpacing: 0,
+          title: Text(AppConstants.appName, maxLines: 1, overflow: TextOverflow.ellipsis, style: robotoMedium.copyWith(
+            color: Theme.of(context).textTheme.bodyLarge!.color, fontSize: Dimensions.fontSizeDefault,
+          )),
+          actions: [
+            IconButton(
+              icon: GetBuilder<NotificationController>(builder: (notificationController) {
+                return Stack(children: [
+
+                  Icon(Icons.notifications, size: 25, color: Theme.of(context).textTheme.bodyLarge!.color),
+
+                  notificationController.hasNotification ? Positioned(top: 0, right: 0, child: Container(
+                    height: 10, width: 10, decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.error, shape: BoxShape.circle,
+                    border: Border.all(width: 1, color: Theme.of(context).cardColor),
+                  ),
+                  )) : const SizedBox(),
+
+                ]);
+              }),
+              onPressed: () => Get.toNamed(RouteHelper.getNotificationRoute()),
+            ),
+
+            const SizedBox(width: Dimensions.paddingSizeSmall),
+          ],
+        ),
+
+        body: RefreshIndicator(
+          onRefresh: () async {
+            return await _loadData();
+          },
+          child: Column(children: [
+
+            if(!_isNotificationPermissionGranted)
+              permissionWarning(isBatteryPermission: false, onTap: requestNotificationPermission, closeOnTap: () {
+                setState(() {
+                  _isNotificationPermissionGranted = true;
+                });
+              }),
+
+            if(!_isBatteryOptimizationGranted)
+              permissionWarning(isBatteryPermission: true, onTap: requestBatteryOptimization, closeOnTap: () {
+                setState(() {
+                  _isBatteryOptimizationGranted = true;
+                });
+              }),
+
+            Expanded(
+              child: Stack(children: [
+                SingleChildScrollView(
+                  child: GetBuilder<ProfileController>(builder: (profileController) {
+
+                    var config = Get.find<SplashController>().configModel;
+
+                    bool showReferAndEarn = profileController.profileModel != null && profileController.profileModel!.earnings == 1
+                        && (isRideActive ? (config?.riderReferralData?.referalStatus ?? false) : (config?.dmReferralData?.referalStatus ?? false));
+
+                    bool addNewVehicle = profileController.profileModel?.vehicle == null || profileController.profileModel?.vehicle?.vehicleRequestStatus == "pending";
+
+                    bool showEarningWidget = profileController.profileModel != null && profileController.profileModel!.earnings == 1;
+
+                    bool showCashInHandCard = profileController.profileModel != null && profileController.profileModel!.cashInHands! > 0;
+
+
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeDefault),
+                      child: Column( children: [
+
+                        if(isRideActive)...[
+                         addNewVehicle
+                             ? VehicleAddWidget(vehicle: profileController.profileModel?.vehicle)
+                             : ActiveRideWidget(),
+                        ] else...[
+                          ActiveOrderWidget(onNavigateToOrders: ()=> Get.offAll(DashboardScreen(pageIndex: 2)))
+                        ],
+
+                        if(showEarningWidget) HomeEarningWidget(profileController: profileController,),
+
+                        isRideActive
+                            ? RideOrderCountWidget(profileController: profileController)
+                            : OrderCountWidget(profileController: profileController),
+
+                        isRideActive ? RideActivityView() : SizedBox(),
+
+                        if(showCashInHandCard) CashInHandCardWidget(profileController: profileController),
+
+                        if(showReferAndEarn) ReferralCardWidget()
+
+                      ]),
+                    );
+                  }),
+                ),
+
+                if(isRideActive) RideMapNavigationWidget(),
+              ]),
+            ),
+          ]),
+        ),
       );
     });
   }

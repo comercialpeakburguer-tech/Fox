@@ -53,11 +53,7 @@ class DashboardScreenState extends State<DashboardScreen> {
     _pageController = PageController(initialPage: widget.pageIndex);
 
     _screens = [
-      HomeScreen(
-        onNavigateToOrders: () => _setPage(2),
-        onNavigateToRequests: () => _setPage(1),
-        onNavigateToProfile: () => _setPage(3),
-      ),
+      HomeScreen(onNavigateToOrders: () => _setPage(2)),
       isRideActive
           ? RideRequestScreen(onTap: () => _setPage(0))
           : OrderRequestScreen(onTap: () => _setPage(0)),
@@ -161,7 +157,7 @@ class DashboardScreenState extends State<DashboardScreen> {
         }
       },
       child: Scaffold(
-        bottomNavigationBar: (GetPlatform.isDesktop || _pageIndex == 0) ? const SizedBox() : Container(
+        bottomNavigationBar: GetPlatform.isDesktop ? const SizedBox() : Container(
           height: 70 + MediaQuery.of(context).padding.bottom,
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
