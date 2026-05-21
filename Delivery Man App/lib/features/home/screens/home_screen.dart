@@ -6,6 +6,7 @@ import 'package:sixam_mart_delivery/features/delivery_module/order/controllers/o
 import 'package:sixam_mart_delivery/features/notification/controllers/notification_controller.dart';
 import 'package:sixam_mart_delivery/features/permission/controllers/permission_flow_controller.dart';
 import 'package:sixam_mart_delivery/features/profile/controllers/profile_controller.dart';
+import 'package:sixam_mart_delivery/features/support/widgets/foxgo_support_center_sheet.dart';
 import 'package:sixam_mart_delivery/helper/order_request_overlay_helper.dart';
 import 'package:sixam_mart_delivery/helper/price_converter_helper.dart';
 import 'package:sixam_mart_delivery/helper/route_helper.dart';
@@ -194,10 +195,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         const SizedBox(width: 12),
                         _circleAction(
-                          icon: Icons.chat_bubble_rounded,
+                          icon: Icons.support_agent_rounded,
                           color: const Color(0xFF00B264),
                           iconColor: Colors.white,
-                          onTap: () => Get.toNamed(RouteHelper.getConversationListRoute()),
+                          onTap: () => FoxGoSupportCenterSheet.show(initialReason: 'Atendimento pela Home'),
                         ),
                       ],
                     ),
@@ -403,7 +404,10 @@ class _FoxGoHomeDrawer extends StatelessWidget {
             child: ListView(
               padding: EdgeInsets.zero,
               children: [
-                _drawerTile(Icons.support_agent_rounded, 'Ajuda / Suporte', () => Get.toNamed(RouteHelper.getConversationListRoute())),
+                _drawerTile(Icons.support_agent_rounded, 'Ajuda / Suporte', () {
+                  Get.back();
+                  FoxGoSupportCenterSheet.show(initialReason: 'Ajuda pelo menu lateral');
+                }),
                 _drawerTile(Icons.chat_rounded, 'Chat', () => Get.toNamed(RouteHelper.getConversationListRoute())),
                 _drawerTile(Icons.payments_rounded, 'Repasses', () => Get.toNamed(RouteHelper.getDisbursementRoute())),
                 _drawerTile(Icons.account_balance_wallet_rounded, 'Carteira', () => Get.toNamed(RouteHelper.getMyAccountRoute())),
@@ -412,7 +416,10 @@ class _FoxGoHomeDrawer extends StatelessWidget {
                 _drawerTile(Icons.person_rounded, 'Perfil', onNavigateToProfile ?? () => Get.toNamed(RouteHelper.getMainRoute('profile'))),
                 _drawerTile(Icons.notifications_rounded, 'Notificações', () => Get.toNamed(RouteHelper.getNotificationRoute())),
                 _drawerTile(Icons.settings_rounded, 'Configurações', () => Get.toNamed(RouteHelper.getPermissionCenterRoute())),
-                _drawerTile(Icons.hub_rounded, 'Central Fox GO', () => Get.toNamed(RouteHelper.getConversationListRoute())),
+                _drawerTile(Icons.hub_rounded, 'Central Fox GO', () {
+                  Get.back();
+                  FoxGoSupportCenterSheet.show(initialReason: 'Central Fox GO');
+                }),
               ],
             ),
           ),
