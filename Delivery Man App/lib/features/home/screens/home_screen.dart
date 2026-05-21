@@ -122,7 +122,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     _circleAction(
                       icon: Icons.menu,
-                      onTap: () => Get.toNamed(RouteHelper.getMainRoute('profile')),
+                      onTap: () => Get.toNamed(RouteHelper.getProfileRoute()),
                     ),
                     Row(
                       children: [
@@ -147,7 +147,7 @@ class _HomeScreenState extends State<HomeScreen> {
               bottom: 220,
               child: _circleAction(
                 icon: Icons.shield_outlined,
-                onTap: () => Get.toNamed(RouteHelper.getMainRoute('profile')),
+                onTap: () => Get.toNamed(RouteHelper.getProfileRoute()),
               ),
             ),
 
