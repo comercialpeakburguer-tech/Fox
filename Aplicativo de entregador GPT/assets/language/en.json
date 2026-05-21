@@ -1006,5 +1006,15 @@
   "foxgo_no_show_start_timer": "Start 5-minute wait",
   "foxgo_no_show_support_locked": "Support unlocks after countdown",
   "foxgo_no_show_open_support": "Contact support",
-  "foxgo_no_show_keep_delivery_available": "If the customer appears, complete the delivery normally using the delivery button below."
+  "foxgo_no_show_keep_delivery_available": "If the customer appears, complete the delivery normally using the delivery button below.",
+  "foxgo_home_menu": "Menu",
+  "foxgo_home_requests": "Requests",
+  "foxgo_home_messages": "Messages",
+  "foxgo_home_my_location": "My location",
+  "foxgo_home_earnings_panel": "Earnings and activity",
+  "foxgo_home_online_ready": "You are online and available to receive calls.",
+  "foxgo_home_offline_hint": "Go online to start receiving calls.",
+  "foxgo_home_waiting_location": "Waiting for real-time location.",
+  "foxgo_home_go_online": "Go online",
+  "foxgo_home_online_button": "Online"
 }
