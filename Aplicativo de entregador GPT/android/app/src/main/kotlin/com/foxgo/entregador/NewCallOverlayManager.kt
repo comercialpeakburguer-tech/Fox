@@ -2,22 +2,21 @@ package com.foxgo.entregador
 
 import android.content.Context
 import android.graphics.PixelFormat
-import android.graphics.Color
 import android.media.AudioAttributes
 import android.media.MediaPlayer
-import android.media.RingtoneManager
+import android.net.Uri
 import android.os.Build
-import android.os.CountDownTimer
+import android.os.Handler
+import android.os.Looper
+import android.os.SystemClock
 import android.provider.Settings
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
+import android.util.Log
 import android.view.WindowManager
 import android.widget.Button
 import android.widget.TextView
-import java.text.SimpleDateFormat
-import java.util.Locale
-import java.util.TimeZone
 
 class NewCallOverlayManager(
     private val context: Context,
@@ -26,250 +25,190 @@ class NewCallOverlayManager(
     private val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
     private var overlayView: View? = null
     private var mediaPlayer: MediaPlayer? = null
-    private var countdownTimer: CountDownTimer? = null
     private var currentCallId: String? = null
     private var currentData: Map<String, Any?> = emptyMap()
-    private var actionLocked: Boolean = false
-    private var rejectConfirmPending: Boolean = false
-    private var acceptConfirmPending: Boolean = false
+    private var overlayCreatedAtMs: Long = 0L
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private val attachmentGraceMs = 500L
 
     fun canDrawOverlays(): Boolean = Settings.canDrawOverlays(context)
 
-    fun isShowing(): Boolean = overlayView != null
+    fun isShowing(): Boolean {
+        val view = overlayView ?: return false
+        val attached = Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT || view.isAttachedToWindow
+        if (!attached) {
+            val elapsedMs = SystemClock.elapsedRealtime() - overlayCreatedAtMs
+            if (elapsedMs < attachmentGraceMs) {
+                Log.i(TAG, "overlayView ainda no período de tolerância de anexação (${elapsedMs}ms/${attachmentGraceMs}ms) callId=$currentCallId")
+                return true
+            }
+            Log.w(TAG, "overlayView sem anexação após tolerância; limpando estado preso callId=$currentCallId elapsedMs=$elapsedMs")
+            clearOverlayState(resetData = false)
+            return false
+        }
+        return true
+    }
 
     fun show(data: Map<String, Any?>): Boolean {
-        if (!canDrawOverlays()) return false
+        val overlayAllowed = canDrawOverlays()
+        Log.i(TAG, "Settings.canDrawOverlays=$overlayAllowed no momento da chamada")
+        if (!overlayAllowed) return false
         val newCallId = (data["callId"] ?: data["orderId"] ?: data["rideId"])?.toString() ?: "unknown"
         if (isShowing() && currentCallId == newCallId) {
-            update(data)
-            return true
+            return update(data)
         }
         dismiss(notify = false)
         currentData = data
         currentCallId = newCallId
-        actionLocked = false
-        rejectConfirmPending = false
-        acceptConfirmPending = false
 
         val view = LayoutInflater.from(context).inflate(R.layout.view_new_call_overlay, null)
         bindData(view, data)
 
         view.findViewById<Button>(R.id.btnAccept).setOnClickListener {
-            if (actionLocked) return@setOnClickListener
-
-            if (isCurrentCallExpired()) {
-                expireCurrentCall()
-                return@setOnClickListener
+            val actionData = actionPayload()
+            Log.i(CALL_ACTION_TAG, "clique Aceitar no overlay payload=$actionData orderId=${actionData["orderId"]} callId=${actionData["callId"]}")
+            try {
+                onAction("onNewCallAccept", actionData)
+            } catch (exception: Exception) {
+                Log.e(CALL_ACTION_TAG, "erro ao entregar Aceitar do overlay orderId=${actionData["orderId"]} callId=${actionData["callId"]}", exception)
             }
-
-            if (rejectConfirmPending) {
-                rejectConfirmPending = false
-                bindData(view, currentData)
-                return@setOnClickListener
-            }
-
-            if (!acceptConfirmPending) {
-                acceptConfirmPending = true
-                bindData(view, currentData)
-                return@setOnClickListener
-            }
-
-            actionLocked = true
-            onAction("onNewCallAccept", currentData + mapOf("callId" to currentCallId, "confirmed" to true))
             dismiss(notify = false)
         }
         view.findViewById<Button>(R.id.btnReject).setOnClickListener {
-            if (actionLocked) return@setOnClickListener
-
-            if (isCurrentCallExpired()) {
-                expireCurrentCall()
-                return@setOnClickListener
+            val actionData = actionPayload()
+            Log.i(CALL_ACTION_TAG, "clique Recusar no overlay payload=$actionData orderId=${actionData["orderId"]} callId=${actionData["callId"]}")
+            try {
+                onAction("onNewCallReject", actionData)
+            } catch (exception: Exception) {
+                Log.e(CALL_ACTION_TAG, "erro ao entregar Recusar do overlay orderId=${actionData["orderId"]} callId=${actionData["callId"]}", exception)
             }
-
-            if (acceptConfirmPending) {
-                acceptConfirmPending = false
-                bindData(view, currentData)
-                return@setOnClickListener
-            }
-
-            if (!rejectConfirmPending) {
-                rejectConfirmPending = true
-                bindData(view, currentData)
-                return@setOnClickListener
-            }
-
-            actionLocked = true
-            onAction("onNewCallReject", currentData + mapOf("callId" to currentCallId, "confirmed" to true))
             dismiss(notify = false)
         }
 
         val params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.MATCH_PARENT,
-            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.MATCH_PARENT,
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY else WindowManager.LayoutParams.TYPE_PHONE,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
+                WindowManager.LayoutParams.FLAG_DIM_BEHIND,
             PixelFormat.TRANSLUCENT,
         ).apply {
-            gravity = Gravity.BOTTOM
-            y = 24
+            gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
+            dimAmount = 0.8f
         }
 
-        windowManager.addView(view, params)
-        overlayView = view
-        startAlarm()
-        startCountdown(currentData)
-        return true
+        Log.i(TAG, "tentativa de WindowManager.addView callId=$newCallId")
+        return try {
+            windowManager.addView(view, params)
+            overlayView = view
+            overlayCreatedAtMs = SystemClock.elapsedRealtime()
+            startAlarm()
+            Log.i(TAG, "FoxGoOverlayWindow addView sucesso callId=$newCallId")
+            scheduleAttachmentVerification(newCallId, view)
+            true
+        } catch (securityException: SecurityException) {
+            Log.e(TAG, "erro do addView: SecurityException callId=$newCallId", securityException)
+            clearOverlayState()
+            false
+        } catch (badTokenException: WindowManager.BadTokenException) {
+            Log.e(TAG, "erro do addView: BadTokenException callId=$newCallId", badTokenException)
+            clearOverlayState()
+            false
+        } catch (illegalStateException: IllegalStateException) {
+            Log.e(TAG, "erro do addView: IllegalStateException callId=$newCallId", illegalStateException)
+            clearOverlayState()
+            false
+        } catch (exception: Exception) {
+            Log.e(TAG, "erro do addView: Exception callId=$newCallId", exception)
+            clearOverlayState()
+            false
+        }
     }
 
     fun update(data: Map<String, Any?>): Boolean {
-        if (overlayView == null) return show(data)
+        if (!isShowing()) return show(data)
         currentData = currentData + data
-        bindData(overlayView!!, currentData)
-        startCountdown(currentData)
-        return true
+        val view = overlayView ?: return show(currentData)
+        Log.i(TAG, "tentativa de updateView callId=$currentCallId")
+        return try {
+            bindData(view, currentData)
+            windowManager.updateViewLayout(view, view.layoutParams)
+            Log.i(TAG, "sucesso do updateView callId=$currentCallId")
+            true
+        } catch (securityException: SecurityException) {
+            Log.e(TAG, "erro do updateView: SecurityException callId=$currentCallId", securityException)
+            clearOverlayState()
+            false
+        } catch (badTokenException: WindowManager.BadTokenException) {
+            Log.e(TAG, "erro do updateView: BadTokenException callId=$currentCallId", badTokenException)
+            clearOverlayState()
+            false
+        } catch (illegalStateException: IllegalStateException) {
+            Log.e(TAG, "erro do updateView: IllegalStateException callId=$currentCallId", illegalStateException)
+            clearOverlayState()
+            false
+        } catch (exception: Exception) {
+            Log.e(TAG, "erro do updateView: Exception callId=$currentCallId", exception)
+            clearOverlayState()
+            false
+        }
     }
 
     fun dismiss(notify: Boolean = true) {
         stopAlarm()
-        stopCountdown()
         overlayView?.let {
-            windowManager.removeView(it)
-            overlayView = null
-            if (notify) onAction("onNewCallDismissed", currentData + mapOf("callId" to currentCallId))
-            currentCallId = null
-            actionLocked = false
-            rejectConfirmPending = false
-            acceptConfirmPending = false
-        }
-    }
-
-
-
-    private fun isCurrentCallExpired(): Boolean {
-        val remainingSeconds = readRemainingSeconds(currentData)
-        return remainingSeconds != null && remainingSeconds <= 0L
-    }
-
-    private fun startCountdown(data: Map<String, Any?>) {
-        stopCountdown()
-
-        val view = overlayView ?: return
-        val remainingSeconds = readRemainingSeconds(data)
-
-        if (remainingSeconds == null) {
-            view.findViewById<TextView>(R.id.tvCountdown).text = "Tempo: aguardando"
-            return
-        }
-
-        if (remainingSeconds <= 0L) {
-            view.findViewById<TextView>(R.id.tvCountdown).text = "Chamada expirada"
-            expireCurrentCall()
-            return
-        }
-
-        updateCountdownText(view, remainingSeconds)
-
-        countdownTimer = object : CountDownTimer(remainingSeconds * 1000L, 1000L) {
-            override fun onTick(millisUntilFinished: Long) {
-                val secondsLeft = ((millisUntilFinished + 999L) / 1000L).coerceAtLeast(0L)
-                overlayView?.let { updateCountdownText(it, secondsLeft) }
-            }
-
-            override fun onFinish() {
-                overlayView?.let { updateCountdownText(it, 0L) }
-                expireCurrentCall()
-            }
-        }.start()
-    }
-
-    private fun stopCountdown() {
-        try {
-            countdownTimer?.cancel()
-        } catch (_: Exception) {
-        }
-        countdownTimer = null
-    }
-
-    private fun updateCountdownText(view: View, secondsLeft: Long) {
-        val text = if (secondsLeft <= 0L) {
-            "Chamada expirada"
-        } else {
-            "Tempo restante: ${formatSeconds(secondsLeft)}"
-        }
-        view.findViewById<TextView>(R.id.tvCountdown).text = text
-    }
-
-    private fun formatSeconds(seconds: Long): String {
-        val safeSeconds = seconds.coerceAtLeast(0L)
-        val minutes = safeSeconds / 60L
-        val remaining = safeSeconds % 60L
-        return if (minutes > 0L) {
-            String.format(Locale.US, "%d:%02d", minutes, remaining)
-        } else {
-            "${remaining}s"
-        }
-    }
-
-    private fun readRemainingSeconds(data: Map<String, Any?>): Long? {
-        val remaining = (data["foxgo_offer_remaining_seconds"]
-            ?: data["foxgoOfferRemainingSeconds"]
-            ?: data["remainingSeconds"])?.toString()?.trim()
-
-        val parsedRemaining = remaining?.toDoubleOrNull()?.toLong()
-        if (parsedRemaining != null) {
-            return parsedRemaining
-        }
-
-        val expiresAt = (data["foxgo_offer_expires_at"]
-            ?: data["foxgoOfferExpiresAt"]
-            ?: data["expiresAt"])?.toString()?.trim()
-
-        return secondsUntil(expiresAt)
-    }
-
-    private fun secondsUntil(rawExpiresAt: String?): Long? {
-        if (rawExpiresAt.isNullOrBlank()) {
-            return null
-        }
-
-        val patterns = listOf(
-            "yyyy-MM-dd HH:mm:ss",
-            "yyyy-MM-dd'T'HH:mm:ss",
-            "yyyy-MM-dd'T'HH:mm:ss'Z'",
-            "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
-        )
-
-        for (pattern in patterns) {
+            Log.i(TAG, "tentativa de removeView callId=$currentCallId")
             try {
-                val formatter = SimpleDateFormat(pattern, Locale.US)
-                if (pattern.contains("'Z'")) {
-                    formatter.timeZone = TimeZone.getTimeZone("UTC")
-                }
-                val expiresAt = formatter.parse(rawExpiresAt)?.time ?: continue
-                return ((expiresAt - System.currentTimeMillis()) / 1000L)
-            } catch (_: Exception) {
+                windowManager.removeView(it)
+                Log.i(TAG, "sucesso do removeView callId=$currentCallId")
+            } catch (securityException: SecurityException) {
+                Log.e(TAG, "erro do removeView: SecurityException callId=$currentCallId", securityException)
+            } catch (badTokenException: WindowManager.BadTokenException) {
+                Log.e(TAG, "erro do removeView: BadTokenException callId=$currentCallId", badTokenException)
+            } catch (illegalStateException: IllegalStateException) {
+                Log.e(TAG, "erro do removeView: IllegalStateException callId=$currentCallId", illegalStateException)
+            } catch (exception: Exception) {
+                Log.e(TAG, "erro do removeView: Exception callId=$currentCallId", exception)
+            } finally {
+                if (notify) onAction("onNewCallDismissed", currentData + mapOf("callId" to currentCallId))
+                clearOverlayState()
             }
         }
-
-        return null
     }
 
-    private fun expireCurrentCall() {
-        val expiredData = currentData + mapOf(
-            "callId" to currentCallId,
-            "expired" to true,
-            "reason" to "expired"
-        )
-        onAction("onNewCallDismissed", expiredData)
-        dismiss(notify = false)
+    private fun clearOverlayState(resetData: Boolean = true) {
+        stopAlarm()
+        mainHandler.removeCallbacksAndMessages(null)
+        overlayView = null
+        currentCallId = null
+        overlayCreatedAtMs = 0L
+        if (resetData) currentData = emptyMap()
     }
 
+    private fun scheduleAttachmentVerification(callId: String, view: View) {
+        mainHandler.postDelayed({
+            val activeView = overlayView
+            if (activeView !== view) {
+                Log.i(TAG, "verificação atrasada ignorada: overlay já mudou callId=$callId")
+                return@postDelayed
+            }
+            val attached = Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT || view.isAttachedToWindow
+            Log.i(TAG, "FoxGoOverlayWindow attached após delay $attached callId=$callId atrasoMs=$attachmentGraceMs")
+            if (!attached) {
+                Log.w(TAG, "overlay não anexou após atraso; limpando estado callId=$callId")
+                clearOverlayState(resetData = false)
+            } else {
+                Log.i(TAG, "overlay mantido após verificação atrasada callId=$callId")
+            }
+        }, attachmentGraceMs)
+    }
 
     private fun startAlarm() {
         try {
             stopAlarm()
-            val uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-                ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+            val uri = callSoundUri()
+            Log.i(TAG, "iniciando som próprio da chamada uri=$uri")
 
             mediaPlayer = MediaPlayer().apply {
                 setDataSource(context, uri)
@@ -283,10 +222,18 @@ class NewCallOverlayManager(
                 prepare()
                 start()
             }
-        } catch (_: Exception) {
+        } catch (exception: Exception) {
+            Log.e(TAG, "erro ao iniciar som próprio da chamada", exception)
             stopAlarm()
         }
     }
+
+    private fun actionPayload(): Map<String, Any?> {
+        val callId = currentCallId ?: currentData["callId"]?.toString() ?: currentData["orderId"]?.toString()
+        return currentData + mapOf("callId" to callId)
+    }
+
+    private fun callSoundUri(): Uri = Uri.parse("android.resource://${context.packageName}/${R.raw.notification}")
 
     private fun stopAlarm() {
         try {
@@ -303,6 +250,15 @@ class NewCallOverlayManager(
     private fun bindData(view: View, data: Map<String, Any?>) {
         val rawType = ((data["rawType"] ?: data["type"] ?: data["moduleType"])?.toString() ?: "").lowercase()
         val ride = (data["isRide"] as? Boolean) == true || rawType.contains("ride") || rawType.contains("taxi") || rawType.contains("corrida")
+        val title = when {
+            ride -> "Nova corrida disponível"
+            rawType.contains("food") -> "Nova entrega de comida disponível"
+            rawType.contains("pharmacy") || rawType.contains("farm") -> "Nova entrega de farmácia disponível"
+            rawType.contains("grocery") || rawType.contains("market") || rawType.contains("mercado") -> "Nova entrega de mercado disponível"
+            rawType.contains("parcel") || rawType.contains("encomenda") -> "Nova entrega disponível"
+            else -> "Nova chamada disponível"
+        }
+
         val tipo = when {
             ride -> "Corrida"
             rawType.contains("food") -> "Food"
@@ -312,95 +268,31 @@ class NewCallOverlayManager(
             else -> "Entrega"
         }
 
-        val title = "Entrega | $tipo"
-
+        val items = data["itemsSummary"]?.toString().takeUnless { it.isNullOrBlank() }
         val origin = data["originName"]?.toString().takeUnless { it.isNullOrBlank() } ?: "Aguardando detalhes"
         val pickup = data["pickupAddress"]?.toString().takeUnless { it.isNullOrBlank() } ?: "Aguardando endereço de retirada"
         val destination = data["destinationAddress"]?.toString().takeUnless { it.isNullOrBlank() } ?: "Aguardando destino"
         val earning = data["earning"]?.toString().takeUnless { it.isNullOrBlank() } ?: "A confirmar"
         val distance = data["distance"]?.toString().takeUnless { it.isNullOrBlank() } ?: "A confirmar"
         val payment = data["paymentMethod"]?.toString().takeUnless { it.isNullOrBlank() } ?: "A confirmar"
-        val paymentLower = payment.lowercase()
-        val paymentChip = when {
-            paymentLower.contains("cash") || paymentLower.contains("cod") || paymentLower.contains("dinheiro") -> "Dinheiro"
-            paymentLower.contains("pix") -> "Pix"
-            paymentLower.contains("card") || paymentLower.contains("cart") -> "Cartão"
-            paymentLower.contains("online") || paymentLower.contains("digital") || paymentLower.contains("stripe") || paymentLower.contains("efi") || paymentLower.contains("pago") -> "Pago pelo app"
-            payment == "A confirmar" -> "Pagamento a confirmar"
-            else -> payment
+
+        val displayTitle = data["title"]?.toString().takeUnless { it.isNullOrBlank() } ?: title
+        view.findViewById<TextView>(R.id.tvTitle).text = "FOX GO • $displayTitle"
+        view.findViewById<TextView>(R.id.tvType).text = "Tipo: $tipo"
+        view.findViewById<TextView>(R.id.tvItems).apply {
+            visibility = if (items == null) View.GONE else View.VISIBLE
+            text = items?.let { "Itens comprados:\n$it" } ?: ""
         }
-
-        val estimatedRaw = (
-            data["estimatedTime"]
-                ?: data["estimated_time"]
-                ?: data["duration"]
-                ?: data["durationText"]
-                ?: data["eta"]
-                ?: data["time"]
-        )?.toString()?.trim().takeUnless { it.isNullOrBlank() }
-
-        val estimatedTime = when {
-            estimatedRaw.isNullOrBlank() -> "A confirmar"
-            estimatedRaw.contains("≈") -> estimatedRaw
-            estimatedRaw.lowercase().contains("min") -> "≈ $estimatedRaw"
-            estimatedRaw.toDoubleOrNull() != null -> "≈ ${estimatedRaw.toDouble().toInt()} min"
-            else -> estimatedRaw
-        }
-
-        view.findViewById<TextView>(R.id.tvTitle).text = title
-        view.findViewById<TextView>(R.id.tvType).text = tipo
-        view.findViewById<TextView>(R.id.tvPaymentChip).text = paymentChip
-        view.findViewById<TextView>(R.id.tvDistanceChip).text = distance
-        view.findViewById<TextView>(R.id.tvEstimatedTime).text = estimatedTime
-        view.findViewById<TextView>(R.id.tvOrigin).text = "Origem / Retirada\n$origin"
-        view.findViewById<TextView>(R.id.tvPickup).text = pickup
-        view.findViewById<TextView>(R.id.tvDestination).text = "Destino\n$destination"
-        view.findViewById<TextView>(R.id.tvEarning).text = "Você recebe\n$earning"
+        view.findViewById<TextView>(R.id.tvOrigin).text = "Origem: $origin"
+        view.findViewById<TextView>(R.id.tvPickup).text = "Retirada: $pickup"
+        view.findViewById<TextView>(R.id.tvDestination).text = "Destino: $destination"
+        view.findViewById<TextView>(R.id.tvEarning).text = "Você recebe: $earning"
         view.findViewById<TextView>(R.id.tvDistance).text = "Distância: $distance"
         view.findViewById<TextView>(R.id.tvPayment).text = "Pagamento: $payment"
+    }
 
-        val btnReject = view.findViewById<Button>(R.id.btnReject)
-        val btnAccept = view.findViewById<Button>(R.id.btnAccept)
-
-        btnReject.text = when {
-            acceptConfirmPending -> "Voltar"
-            rejectConfirmPending -> "Confirmar recusa"
-            else -> "Recusar"
-        }
-        btnAccept.text = when {
-            rejectConfirmPending -> "Voltar"
-            acceptConfirmPending -> "Confirmar aceite"
-            else -> "Aceitar"
-        }
-
-        when {
-            acceptConfirmPending -> {
-                btnReject.setBackgroundResource(R.drawable.foxgo_overlay_btn_back_bg)
-                btnReject.setTextColor(Color.parseColor("#2D343A"))
-                btnAccept.setBackgroundResource(R.drawable.foxgo_overlay_btn_accept_bg)
-                btnAccept.setTextColor(Color.parseColor("#FFFFFFFF"))
-            }
-            rejectConfirmPending -> {
-                btnReject.setBackgroundResource(R.drawable.foxgo_overlay_btn_reject_bg)
-                btnReject.setTextColor(Color.parseColor("#B3261E"))
-                btnAccept.setBackgroundResource(R.drawable.foxgo_overlay_btn_back_bg)
-                btnAccept.setTextColor(Color.parseColor("#2D343A"))
-            }
-            else -> {
-                btnReject.setBackgroundResource(R.drawable.foxgo_overlay_btn_reject_bg)
-                btnReject.setTextColor(Color.parseColor("#B3261E"))
-                btnAccept.setBackgroundResource(R.drawable.foxgo_overlay_btn_accept_bg)
-                btnAccept.setTextColor(Color.parseColor("#FFFFFFFF"))
-            }
-        }
-
-        val remainingSeconds = readRemainingSeconds(data)
-        view.findViewById<TextView>(R.id.tvCountdown).text = if (remainingSeconds == null) {
-            "Tempo: aguardando"
-        } else if (remainingSeconds <= 0L) {
-            "Chamada expirada"
-        } else {
-            "Tempo restante: ${formatSeconds(remainingSeconds)}"
-        }
+    companion object {
+        private const val TAG = "FoxGoOverlayWindow"
+        private const val CALL_ACTION_TAG = "FoxGoCallAction"
     }
 }
