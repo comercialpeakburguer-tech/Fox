@@ -7,6 +7,7 @@ import 'package:sixam_mart_delivery/features/delivery_module/order/widgets/botto
 import 'package:sixam_mart_delivery/features/delivery_module/order/widgets/foxgo_customer_no_show_timer_widget.dart';
 import 'package:sixam_mart_delivery/features/profile/controllers/profile_controller.dart';
 import 'package:sixam_mart_delivery/features/splash/controllers/splash_controller.dart';
+import 'package:sixam_mart_delivery/features/support/widgets/foxgo_support_center_sheet.dart';
 import 'package:sixam_mart_delivery/features/delivery_module/order/domain/models/order_model.dart';
 import 'package:sixam_mart_delivery/helper/price_converter_helper.dart';
 import 'package:sixam_mart_delivery/helper/route_helper.dart';
@@ -177,7 +178,7 @@ class RegularOrderBottomView extends StatelessWidget {
         Row(children: [
           Expanded(
             child: OutlinedButton.icon(
-              onPressed: () => Get.toNamed(RouteHelper.getConversationListRoute()),
+              onPressed: () => FoxGoSupportCenterSheet.show(orderId: order.id, initialReason: isParcel ? 'Ajuda na retirada da encomenda' : 'Ajuda na coleta do pedido'),
               icon: const Icon(Icons.support_agent_rounded, size: 20),
               label: const Text('Central de Ajuda'),
               style: OutlinedButton.styleFrom(
