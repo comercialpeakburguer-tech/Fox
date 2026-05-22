@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:sixam_mart_delivery/common/widgets/custom_image_widget.dart';
 import 'package:sixam_mart_delivery/features/auth/controllers/auth_controller.dart';
 import 'package:sixam_mart_delivery/features/delivery_module/order/controllers/order_controller.dart';
 import 'package:sixam_mart_delivery/features/notification/controllers/notification_controller.dart';
@@ -446,12 +447,28 @@ class _FoxGoHomeDrawer extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(24, 22, 22, 24),
             child: Row(children: [
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(color: _foxYellow, borderRadius: BorderRadius.circular(18)),
-                child: const Icon(Icons.pets_rounded, color: Colors.black, size: 31),
-              ),
+              GetBuilder<ProfileController>(builder: (profileController) {
+                final imageUrl = profileController.profileModel?.imageFullUrl?.toString() ?? '';
+                return Container(
+                  width: 58,
+                  height: 58,
+                  padding: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _foxYellow,
+                    border: Border.all(color: _foxYellow, width: 2),
+                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.28), blurRadius: 10, offset: const Offset(0, 4))],
+                  ),
+                  child: ClipOval(
+                    child: imageUrl.isNotEmpty
+                        ? CustomImageWidget(image: imageUrl, height: 54, width: 54, fit: BoxFit.cover)
+                        : Container(
+                            color: Colors.white,
+                            child: const Icon(Icons.person_rounded, color: Colors.black, size: 34),
+                          ),
+                  ),
+                );
+              }),
               const SizedBox(width: 14),
               const Expanded(child: _FoxGoWordmark()),
             ]),
