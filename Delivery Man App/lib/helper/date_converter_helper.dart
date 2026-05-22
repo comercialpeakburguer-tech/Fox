@@ -35,6 +35,18 @@ class DateConverterHelper {
     return DateFormat('yyyy-MM-ddTHH:mm:ss.SSS').parse(dateTime);
   }
 
+  static DateTime isoStringToLocalDateTime(String dateTime) {
+    try {
+      return DateTime.parse(dateTime).toLocal();
+    } catch (_) {
+      try {
+        return DateFormat('yyyy-MM-ddTHH:mm:ss.SSS').parse(dateTime, true).toLocal();
+      } catch (_) {
+        return DateFormat('yyyy-MM-dd HH:mm:ss').parse(dateTime).toLocal();
+      }
+    }
+  }
+
   static String isoStringToLocalTimeOnly(String dateTime) {
     return DateFormat(_timeFormatter()).format(isoStringToLocalDate(dateTime));
   }
