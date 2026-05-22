@@ -151,6 +151,12 @@ class _HomeScreenState extends State<HomeScreen> {
       final bool isOnline = profileController.profileModel?.active == 1;
       final LatLng driverPosition = _driverPosition(profileController);
       final bool hasRealLocation = _hasRealLocation(profileController);
+      final Size screenSize = MediaQuery.of(context).size;
+      final bool compact = screenSize.width < 380;
+      final double topActionSize = compact ? 48 : 52;
+      final double topIconSize = compact ? 24 : 26;
+      final double floatingActionSize = compact ? 50 : 54;
+      final double bottomSheetMin = compact ? 0.145 : 0.15;
 
       return Scaffold(
         key: _scaffoldKey,
@@ -188,11 +194,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      Colors.black.withValues(alpha: 0.46),
-                      Colors.black.withValues(alpha: 0.16),
+                      Colors.black.withValues(alpha: 0.40),
+                      Colors.black.withValues(alpha: 0.12),
                       Colors.transparent,
                     ],
-                    stops: const [0.0, 0.32, 0.72],
+                    stops: const [0.0, 0.30, 0.72],
                   ),
                 ),
               ),
@@ -200,20 +206,23 @@ class _HomeScreenState extends State<HomeScreen> {
 
             SafeArea(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+                padding: EdgeInsets.fromLTRB(compact ? 12 : 16, compact ? 8 : 10, compact ? 12 : 16, 0),
                 child: SizedBox(
-                  height: 64,
-                  child: Stack(alignment: Alignment.center, children: [
+                  height: compact ? 56 : 60,
+                  child: Stack(children: [
+                    Positioned.fill(child: Center(child: _FoxGoWordmark(compact: compact))),
                     Align(
                       alignment: Alignment.centerLeft,
                       child: _circleAction(
                         icon: Icons.menu_rounded,
                         color: Colors.black.withValues(alpha: 0.72),
                         iconColor: Colors.white,
+                        size: topActionSize,
+                        iconSize: topIconSize,
+                        elevation: 3,
                         onTap: () => _scaffoldKey.currentState?.openDrawer(),
                       ),
                     ),
-                    const _FoxGoWordmark(),
                     Align(
                       alignment: Alignment.centerRight,
                       child: Row(
@@ -223,13 +232,19 @@ class _HomeScreenState extends State<HomeScreen> {
                             icon: Icons.flash_on_rounded,
                             color: Colors.black.withValues(alpha: 0.70),
                             iconColor: _foxYellow,
+                            size: topActionSize,
+                            iconSize: topIconSize,
+                            elevation: 3,
                             onTap: widget.onNavigateToRequests ?? () => Get.toNamed(RouteHelper.getMainRoute('order-request')),
                           ),
-                          const SizedBox(width: 12),
+                          SizedBox(width: compact ? 8 : 10),
                           _circleAction(
                             icon: Icons.chat_bubble_rounded,
                             color: _foxGreen,
                             iconColor: Colors.white,
+                            size: topActionSize,
+                            iconSize: topIconSize,
+                            elevation: 3,
                             onTap: () => Get.toNamed(RouteHelper.getConversationListRoute()),
                           ),
                         ],
@@ -241,21 +256,25 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
 
             Positioned(
-              right: 18,
-              bottom: 186 + MediaQuery.of(context).padding.bottom,
+              right: compact ? 16 : 18,
+              bottom: (compact ? 166 : 176) + MediaQuery.of(context).padding.bottom,
               child: _circleAction(
                 icon: Icons.my_location_rounded,
+                size: floatingActionSize,
+                iconSize: compact ? 24 : 26,
                 onTap: () => _centerOnDriver(profileController),
               ),
             ),
 
             Positioned(
-              left: 18,
-              bottom: 186 + MediaQuery.of(context).padding.bottom,
+              left: compact ? 16 : 18,
+              bottom: (compact ? 166 : 176) + MediaQuery.of(context).padding.bottom,
               child: _circleAction(
                 icon: Icons.shield_rounded,
                 color: const Color(0xFF0B7CFF),
                 iconColor: Colors.white,
+                size: floatingActionSize,
+                iconSize: compact ? 24 : 26,
                 onTap: () => Get.toNamed(RouteHelper.getPermissionCenterRoute()),
               ),
             ),
@@ -264,49 +283,49 @@ class _HomeScreenState extends State<HomeScreen> {
               Positioned(
                 left: 16,
                 right: 16,
-                top: MediaQuery.of(context).padding.top + 86,
+                top: MediaQuery.of(context).padding.top + 78,
                 child: _permissionBanner(),
               ),
 
             DraggableScrollableSheet(
-              initialChildSize: 0.16,
-              minChildSize: 0.16,
+              initialChildSize: bottomSheetMin,
+              minChildSize: bottomSheetMin,
               maxChildSize: 0.46,
               builder: (context, scrollController) {
                 return Container(
                   decoration: const BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-                    boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 18)],
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
+                    boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 16)],
                   ),
                   child: ListView(
                     controller: scrollController,
-                    padding: EdgeInsets.fromLTRB(18, 12, 18, 24 + MediaQuery.of(context).padding.bottom),
+                    padding: EdgeInsets.fromLTRB(compact ? 16 : 18, 10, compact ? 16 : 18, 22 + MediaQuery.of(context).padding.bottom),
                     children: [
                       Center(
-                        child: Container(width: 46, height: 5, decoration: BoxDecoration(color: Colors.black12, borderRadius: BorderRadius.circular(10))),
+                        child: Container(width: 42, height: 4, decoration: BoxDecoration(color: Colors.black12, borderRadius: BorderRadius.circular(10))),
                       ),
-                      const SizedBox(height: 18),
+                      SizedBox(height: compact ? 14 : 16),
                       SizedBox(
-                        height: 58,
+                        height: compact ? 52 : 56,
                         child: ElevatedButton.icon(
                           style: ElevatedButton.styleFrom(
                             elevation: 0,
                             backgroundColor: _foxYellow,
                             foregroundColor: Colors.black,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
                           ),
                           onPressed: _isTogglingOnline ? null : () => _toggleOnline(profileController),
-                          icon: _isTogglingOnline ? const SizedBox.shrink() : const Icon(Icons.bolt_rounded, size: 25),
+                          icon: _isTogglingOnline ? const SizedBox.shrink() : Icon(Icons.bolt_rounded, size: compact ? 22 : 24),
                           label: _isTogglingOnline
                               ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2))
                               : Text(
                                   isOnline ? 'Ficar offline' : 'Ficar online',
-                                  style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w800, fontSize: 23, letterSpacing: 1.1),
+                                  style: TextStyle(color: Colors.black, fontWeight: FontWeight.w800, fontSize: compact ? 20 : 21, letterSpacing: 0.8),
                                 ),
                         ),
                       ),
-                      const SizedBox(height: 28),
+                      SizedBox(height: compact ? 22 : 26),
                       _panelCard(profileController),
                     ],
                   ),
@@ -326,11 +345,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       const Row(children: [
-        Text('Painel', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, letterSpacing: 1.2)),
+        Text('Painel', style: TextStyle(fontSize: 21, fontWeight: FontWeight.w800, letterSpacing: 1.0)),
         SizedBox(width: 10),
-        Icon(Icons.visibility_rounded, size: 23, color: Colors.black),
+        Icon(Icons.visibility_rounded, size: 22, color: Colors.black),
       ]),
-      const SizedBox(height: 16),
+      const SizedBox(height: 14),
       Container(
         decoration: BoxDecoration(
           color: Colors.white,
@@ -340,7 +359,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         child: Column(children: [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
             child: Row(children: [
               Expanded(child: _metric(todayEarning, 'Ganhos hoje')),
               Container(width: 1, height: 28, color: const Color(0xFFECECEC)),
@@ -350,20 +369,20 @@ class _HomeScreenState extends State<HomeScreen> {
           InkWell(
             onTap: () => Get.toNamed(RouteHelper.getEarningReportRoute()),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               decoration: const BoxDecoration(
                 color: Color(0xFFEFF9EC),
                 borderRadius: BorderRadius.vertical(bottom: Radius.circular(14)),
               ),
               child: Row(children: [
-                const Icon(Icons.trending_up_rounded, color: Color(0xFF0D7A20), size: 28),
-                const SizedBox(width: 14),
+                const Icon(Icons.trending_up_rounded, color: Color(0xFF0D7A20), size: 26),
+                const SizedBox(width: 12),
                 const Expanded(
-                  child: Text('Saldo da semana', style: TextStyle(fontSize: 17, height: 1.35, fontWeight: FontWeight.w600)),
+                  child: Text('Saldo da semana', style: TextStyle(fontSize: 16, height: 1.3, fontWeight: FontWeight.w600)),
                 ),
-                Text(weeklyBalance, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-                const SizedBox(width: 6),
-                const Icon(Icons.chevron_right_rounded, color: Colors.black, size: 26),
+                Text(weeklyBalance, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+                const SizedBox(width: 4),
+                const Icon(Icons.chevron_right_rounded, color: Colors.black, size: 24),
               ]),
             ),
           ),
@@ -374,9 +393,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _metric(String value, String label) {
     return Column(children: [
-      Text(value, style: const TextStyle(fontSize: 25, fontWeight: FontWeight.w800, letterSpacing: 1.1)),
-      const SizedBox(height: 10),
-      Text(label, style: const TextStyle(fontSize: 16, color: Color(0xFF626262), letterSpacing: 1.2)),
+      Text(value, style: const TextStyle(fontSize: 23, fontWeight: FontWeight.w800, letterSpacing: 1.0)),
+      const SizedBox(height: 8),
+      Text(label, style: const TextStyle(fontSize: 15, color: Color(0xFF626262), letterSpacing: 1.0)),
     ]);
   }
 
@@ -395,35 +414,39 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _circleAction({required IconData icon, required VoidCallback onTap, Color color = Colors.white, Color iconColor = Colors.black}) {
+  Widget _circleAction({required IconData icon, required VoidCallback onTap, Color color = Colors.white, Color iconColor = Colors.black, double size = 52, double iconSize = 26, double elevation = 4}) {
     return Material(
       color: color,
       shape: const CircleBorder(),
-      elevation: 4,
+      elevation: elevation,
       child: InkWell(
         customBorder: const CircleBorder(),
         onTap: onTap,
-        child: SizedBox(width: 56, height: 56, child: Icon(icon, color: iconColor, size: 28)),
+        child: SizedBox(width: size, height: size, child: Icon(icon, color: iconColor, size: iconSize)),
       ),
     );
   }
 }
 
 class _FoxGoWordmark extends StatelessWidget {
-  const _FoxGoWordmark();
+  const _FoxGoWordmark({this.compact = false});
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
-    return Column(mainAxisSize: MainAxisSize.min, children: [
-      RichText(
-        text: const TextSpan(children: [
-          TextSpan(text: 'FOX ', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 22, fontStyle: FontStyle.italic, letterSpacing: 1.1)),
-          TextSpan(text: 'GO', style: TextStyle(color: Color(0xFFFFEA00), fontWeight: FontWeight.w900, fontSize: 22, fontStyle: FontStyle.italic, letterSpacing: 1.1)),
-        ]),
-      ),
-      const SizedBox(height: 2),
-      const Text('DELIVERY', style: TextStyle(color: Colors.white70, fontSize: 8.5, letterSpacing: 3.2, fontWeight: FontWeight.w600)),
-    ]);
+    return IgnorePointer(
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        RichText(
+          textAlign: TextAlign.center,
+          text: TextSpan(children: [
+            TextSpan(text: 'FOX ', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: compact ? 20 : 21, fontStyle: FontStyle.italic, letterSpacing: 1.0)),
+            TextSpan(text: 'GO', style: TextStyle(color: const Color(0xFFFFEA00), fontWeight: FontWeight.w900, fontSize: compact ? 20 : 21, fontStyle: FontStyle.italic, letterSpacing: 1.0)),
+          ]),
+        ),
+        const SizedBox(height: 1),
+        Text('DELIVERY', style: TextStyle(color: Colors.white70, fontSize: compact ? 7.5 : 8, letterSpacing: compact ? 2.7 : 3.0, fontWeight: FontWeight.w600)),
+      ]),
+    );
   }
 }
 
@@ -470,7 +493,7 @@ class _FoxGoHomeDrawer extends StatelessWidget {
                 );
               }),
               const SizedBox(width: 14),
-              const Expanded(child: _FoxGoWordmark()),
+              const Expanded(child: _FoxGoWordmark(compact: true)),
             ]),
           ),
           Container(height: 1, margin: const EdgeInsets.symmetric(horizontal: 22), color: Colors.white.withValues(alpha: 0.08)),
