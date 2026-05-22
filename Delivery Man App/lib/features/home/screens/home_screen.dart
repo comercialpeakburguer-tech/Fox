@@ -195,10 +195,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         const SizedBox(width: 12),
                         _circleAction(
-                          icon: Icons.support_agent_rounded,
+                          icon: Icons.chat_bubble_rounded,
                           color: const Color(0xFF00B264),
                           iconColor: Colors.white,
-                          onTap: () => FoxGoSupportCenterSheet.show(initialReason: 'Atendimento pela Home'),
+                          onTap: () => Get.toNamed(RouteHelper.getConversationListRoute()),
                         ),
                       ],
                     ),
@@ -287,7 +287,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _panelCard(ProfileController profileController) {
     final String todayEarning = PriceConverterHelper.convertPrice(profileController.profileModel?.todaysEarning ?? 0);
-    final String advanceValue = PriceConverterHelper.convertPrice(profileController.profileModel?.withDrawableBalance ?? profileController.profileModel?.balance ?? 0);
+    final String weeklyBalance = PriceConverterHelper.convertPrice(profileController.profileModel?.thisWeekEarning ?? 0);
     final String todayOrders = '${profileController.profileModel?.todaysOrderCount ?? 0}';
 
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -320,12 +320,12 @@ class _HomeScreenState extends State<HomeScreen> {
               borderRadius: BorderRadius.vertical(bottom: Radius.circular(14)),
             ),
             child: Row(children: [
-              const Icon(Icons.account_balance_wallet_outlined, color: Color(0xFF0D7A20), size: 28),
+              const Icon(Icons.trending_up_rounded, color: Color(0xFF0D7A20), size: 28),
               const SizedBox(width: 14),
               const Expanded(
-                child: Text('Valor de adiantamento\ndisponível:', style: TextStyle(fontSize: 17, height: 1.35, fontWeight: FontWeight.w500)),
+                child: Text('Saldo da semana', style: TextStyle(fontSize: 17, height: 1.35, fontWeight: FontWeight.w600)),
               ),
-              Text(advanceValue, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+              Text(weeklyBalance, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
               const SizedBox(width: 6),
               const Icon(Icons.chevron_right_rounded, color: Colors.black, size: 26),
             ]),
@@ -408,8 +408,9 @@ class _FoxGoHomeDrawer extends StatelessWidget {
                   Get.back();
                   FoxGoSupportCenterSheet.show(initialReason: 'Ajuda pelo menu lateral');
                 }),
-                _drawerTile(Icons.chat_rounded, 'Chat', () => Get.toNamed(RouteHelper.getConversationListRoute())),
+                _drawerTile(Icons.chat_rounded, 'Mensagens', () => Get.toNamed(RouteHelper.getConversationListRoute())),
                 _drawerTile(Icons.payments_rounded, 'Repasses', () => Get.toNamed(RouteHelper.getDisbursementRoute())),
+                _drawerTile(Icons.analytics_rounded, 'Relatórios / Ganhos', () => Get.toNamed(RouteHelper.getEarningReportRoute())),
                 _drawerTile(Icons.account_balance_wallet_rounded, 'Carteira', () => Get.toNamed(RouteHelper.getMyAccountRoute())),
                 _drawerTile(Icons.receipt_long_rounded, 'Pedidos', onNavigateToOrders ?? () => Get.toNamed(RouteHelper.getMainRoute('order'))),
                 _drawerTile(Icons.local_activity_rounded, 'Solicitações', onNavigateToRequests ?? () => Get.toNamed(RouteHelper.getMainRoute('order-request'))),
