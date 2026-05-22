@@ -1,0 +1,25 @@
+{
+    servers {
+        protocols h1 h2
+    }
+}
+
+foxgodelivery.com.br {
+    redir https://www.foxgodelivery.com.br{uri} permanent
+}
+
+admin.foxgodelivery.com.br {
+    reverse_proxy foxgo_admin:80 {
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto https
+    }
+}
+
+www.foxgodelivery.com.br {
+    root * /srv/web_public
+    encode gzip
+    try_files {path} /index.html
+    file_server
+}

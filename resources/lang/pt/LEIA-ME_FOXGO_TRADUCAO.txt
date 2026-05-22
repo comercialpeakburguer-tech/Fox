@@ -1,0 +1,28 @@
+FOX GO / 6amMart - Pacote de tradução PT-BR
+Gerado em: 2026-04-29 17:54:11
+
+Arquivos:
+1) traduzir_pendentes_pt.py
+   - Lê pendentes_traducao.json
+   - Gera traduzidos_pt.json
+   - Não altera o sistema
+   - Tem cache/resume
+
+2) aplicar_traducao_pt.php
+   - Lê traduzidos_pt.json
+   - Aplica no messages.php
+   - Cria backup automático
+
+3) relatorio_traducao_pt.php
+   - Confere quantos textos ainda ficaram iguais ao inglês
+
+Uso sugerido na VPS:
+cd /opt/foxgo/admin/resources/lang/pt
+python3 traduzir_pendentes_pt.py
+php aplicar_traducao_pt.php
+cd /opt/foxgo/admin
+docker exec foxgo_admin php artisan optimize:clear
+docker exec foxgo_admin php /var/www/html/resources/lang/pt/relatorio_traducao_pt.php
+
+Observação:
+Este pacote não modifica código-fonte do 6amMart. Ele trabalha somente com os arquivos de idioma.

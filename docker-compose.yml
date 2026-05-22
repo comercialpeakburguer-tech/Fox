@@ -1,0 +1,41 @@
+services:
+  caddy:
+    image: caddy:2-alpine
+    container_name: foxgo_caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - ./web_public:/srv/web_public:ro
+      - foxgo_caddy_data:/data
+      - foxgo_caddy_config:/config
+    depends_on:
+      - foxgo_admin
+
+  foxgo_admin:
+    build: .
+    container_name: foxgo_admin
+    restart: unless-stopped
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      - foxgo_mysql
+
+  foxgo_mysql:
+    image: mysql:8.0
+    container_name: foxgo_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: foxgo_admin
+      MYSQL_USER: foxgo_user
+      MYSQL_PASSWORD: foxgo_pass_2026
+      MYSQL_ROOT_PASSWORD: foxgo_root_2026
+    volumes:
+      - foxgo_mysql_data:/var/lib/mysql
+
+volumes:
+  foxgo_mysql_data:
+  foxgo_caddy_data:
+  foxgo_caddy_config:

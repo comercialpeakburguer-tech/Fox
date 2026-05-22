@@ -1,0 +1,11 @@
+.d--none {
+    display: none
+}
+
+.razorpay-cancel-button {
+    border: 1px solid #0000008c;
+    border-radius: 2px;
+    margin: 0;
+    font-size: 14px;
+    padding: .125rem 1rem;
+}
