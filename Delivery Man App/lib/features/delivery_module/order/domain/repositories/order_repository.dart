@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -11,7 +12,6 @@ import 'package:sixam_mart_delivery/features/delivery_module/order/domain/models
 import 'package:sixam_mart_delivery/features/delivery_module/order/domain/models/parcel_cancellation_reasons_model.dart';
 import 'package:sixam_mart_delivery/features/delivery_module/order/domain/models/update_status_body_model.dart';
 import 'package:sixam_mart_delivery/features/delivery_module/order/domain/repositories/order_repository_interface.dart';
-import 'package:sixam_mart_delivery/features/delivery_module/order/domain/models/order_cancellation_body.dart';
 import 'package:sixam_mart_delivery/util/app_constants.dart';
 
 import '../models/order_count_model.dart';
@@ -52,16 +52,6 @@ class OrderRepository implements OrderRepositoryInterface {
     }
     return paginatedOrderModel;
   }
-
-  // @override
-  // Future<PaginatedOrderModel?> getCompletedOrderList(int offset) async {
-  //   PaginatedOrderModel? paginatedOrderModel;
-  //   Response response = await apiClient.getData('${AppConstants.allOrdersUri}?token=${_getUserToken()}&offset=$offset&limit=10&');
-  //   if (response.statusCode == 200) {
-  //     paginatedOrderModel = PaginatedOrderModel.fromJson(response.body);
-  //   }
-  //   return paginatedOrderModel;
-  // }
 
   @override
   Future<List<OrderModel>?> getLatestOrders() async {
@@ -112,21 +102,30 @@ class OrderRepository implements OrderRepositoryInterface {
   @override
   Future<ResponseModel> acceptOrder(int? orderID) async {
     ResponseModel responseModel;
-    final Position locationResult = await Geolocator.getCurrentPosition();
-    Response response = await apiClient.postData(
-        AppConstants.acceptOrderUri,
-        {
-          "_method": "put",
-          'token': _getUserToken(),
-          'order_id': orderID,
-          'lat': locationResult.latitude,
-          'lng': locationResult.longitude,
-        },
-        handleError: false);
-    if (response.statusCode == 200) {
-      responseModel = ResponseModel(true, response.body['message']);
-    }else {
-      responseModel = ResponseModel(false, response.statusText);
+    try {
+      final Position locationResult = await Geolocator.getCurrentPosition();
+      Response response = await apiClient.postData(
+          AppConstants.acceptOrderUri,
+          {
+            "_method": "put",
+            'token': _getUserToken(),
+            'order_id': orderID,
+            'lat': locationResult.latitude,
+            'lng': locationResult.longitude,
+          },
+          handleError: false);
+      if (response.statusCode == 200) {
+        responseModel = ResponseModel(true, response.body['message']);
+      }else {
+        responseModel = ResponseModel(false, response.statusText);
+      }
+    } catch (error, stackTrace) {
+      debugPrint('FoxGoAcceptOrder localização falhou orderId=$orderID error=$error\n$stackTrace');
+      if(error is PermissionDeniedException || error is LocationServiceDisabledException) {
+        responseModel = ResponseModel(false, 'Ative a localização do aparelho para aceitar a entrega.');
+      } else {
+        responseModel = ResponseModel(false, 'Não foi possível aceitar a entrega agora. Tente novamente.');
+      }
     }
     return responseModel;
   }
