@@ -30,6 +30,9 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isBatteryOptimizationGranted = true;
   bool _isTogglingOnline = false;
   static const LatLng _fallbackPosition = LatLng(-23.5897, -46.5115);
+  static const Color _foxYellow = Color(0xFFFFEA00);
+  static const Color _foxGreen = Color(0xFF00B264);
+  static const Color _foxDark = Color(0xFF101316);
 
   @override
   void initState() {
@@ -150,6 +153,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
       return Scaffold(
         key: _scaffoldKey,
+        drawerScrimColor: Colors.black.withValues(alpha: 0.58),
         drawer: _FoxGoHomeDrawer(
           onNavigateToOrders: widget.onNavigateToOrders,
           onNavigateToRequests: widget.onNavigateToRequests,
@@ -176,33 +180,61 @@ class _HomeScreenState extends State<HomeScreen> {
                   : <Marker>{},
               onMapCreated: (controller) => _mapController = controller,
             ),
+            IgnorePointer(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withValues(alpha: 0.46),
+                      Colors.black.withValues(alpha: 0.16),
+                      Colors.transparent,
+                    ],
+                    stops: const [0.0, 0.32, 0.72],
+                  ),
+                ),
+              ),
+            ),
 
             SafeArea(
               child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    _circleAction(
-                      icon: Icons.menu_rounded,
-                      onTap: () => _scaffoldKey.currentState?.openDrawer(),
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+                child: SizedBox(
+                  height: 64,
+                  child: Stack(alignment: Alignment.center, children: [
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: _circleAction(
+                        icon: Icons.menu_rounded,
+                        color: Colors.black.withValues(alpha: 0.72),
+                        iconColor: Colors.white,
+                        onTap: () => _scaffoldKey.currentState?.openDrawer(),
+                      ),
                     ),
-                    Row(
-                      children: [
-                        _circleAction(
-                          icon: Icons.flash_on_rounded,
-                          onTap: widget.onNavigateToRequests ?? () => Get.toNamed(RouteHelper.getMainRoute('order-request')),
-                        ),
-                        const SizedBox(width: 12),
-                        _circleAction(
-                          icon: Icons.chat_bubble_rounded,
-                          color: const Color(0xFF00B264),
-                          iconColor: Colors.white,
-                          onTap: () => Get.toNamed(RouteHelper.getConversationListRoute()),
-                        ),
-                      ],
+                    const _FoxGoWordmark(),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _circleAction(
+                            icon: Icons.flash_on_rounded,
+                            color: Colors.black.withValues(alpha: 0.70),
+                            iconColor: _foxYellow,
+                            onTap: widget.onNavigateToRequests ?? () => Get.toNamed(RouteHelper.getMainRoute('order-request')),
+                          ),
+                          const SizedBox(width: 12),
+                          _circleAction(
+                            icon: Icons.chat_bubble_rounded,
+                            color: _foxGreen,
+                            iconColor: Colors.white,
+                            onTap: () => Get.toNamed(RouteHelper.getConversationListRoute()),
+                          ),
+                        ],
+                      ),
                     ),
-                  ],
+                  ]),
                 ),
               ),
             ),
@@ -231,7 +263,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Positioned(
                 left: 16,
                 right: 16,
-                top: MediaQuery.of(context).padding.top + 80,
+                top: MediaQuery.of(context).padding.top + 86,
                 child: _permissionBanner(),
               ),
 
@@ -256,19 +288,20 @@ class _HomeScreenState extends State<HomeScreen> {
                       const SizedBox(height: 18),
                       SizedBox(
                         height: 58,
-                        child: ElevatedButton(
+                        child: ElevatedButton.icon(
                           style: ElevatedButton.styleFrom(
                             elevation: 0,
-                            backgroundColor: const Color(0xFFFFEA00),
+                            backgroundColor: _foxYellow,
                             foregroundColor: Colors.black,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                           ),
                           onPressed: _isTogglingOnline ? null : () => _toggleOnline(profileController),
-                          child: _isTogglingOnline
+                          icon: _isTogglingOnline ? const SizedBox.shrink() : const Icon(Icons.bolt_rounded, size: 25),
+                          label: _isTogglingOnline
                               ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2))
                               : Text(
                                   isOnline ? 'Ficar offline' : 'Ficar online',
-                                  style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w800, fontSize: 25, letterSpacing: 1.1),
+                                  style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w800, fontSize: 23, letterSpacing: 1.1),
                                 ),
                         ),
                       ),
@@ -313,22 +346,25 @@ class _HomeScreenState extends State<HomeScreen> {
               Expanded(child: _metric(todayOrders, 'Pedidos hoje')),
             ]),
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
-            decoration: const BoxDecoration(
-              color: Color(0xFFEFF9EC),
-              borderRadius: BorderRadius.vertical(bottom: Radius.circular(14)),
-            ),
-            child: Row(children: [
-              const Icon(Icons.trending_up_rounded, color: Color(0xFF0D7A20), size: 28),
-              const SizedBox(width: 14),
-              const Expanded(
-                child: Text('Saldo da semana', style: TextStyle(fontSize: 17, height: 1.35, fontWeight: FontWeight.w600)),
+          InkWell(
+            onTap: () => Get.toNamed(RouteHelper.getEarningReportRoute()),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+              decoration: const BoxDecoration(
+                color: Color(0xFFEFF9EC),
+                borderRadius: BorderRadius.vertical(bottom: Radius.circular(14)),
               ),
-              Text(weeklyBalance, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-              const SizedBox(width: 6),
-              const Icon(Icons.chevron_right_rounded, color: Colors.black, size: 26),
-            ]),
+              child: Row(children: [
+                const Icon(Icons.trending_up_rounded, color: Color(0xFF0D7A20), size: 28),
+                const SizedBox(width: 14),
+                const Expanded(
+                  child: Text('Saldo da semana', style: TextStyle(fontSize: 17, height: 1.35, fontWeight: FontWeight.w600)),
+                ),
+                Text(weeklyBalance, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+                const SizedBox(width: 6),
+                const Icon(Icons.chevron_right_rounded, color: Colors.black, size: 26),
+              ]),
+            ),
           ),
         ]),
       ),
@@ -372,59 +408,79 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
+class _FoxGoWordmark extends StatelessWidget {
+  const _FoxGoWordmark();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(mainAxisSize: MainAxisSize.min, children: [
+      RichText(
+        text: const TextSpan(children: [
+          TextSpan(text: 'FOX ', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 22, fontStyle: FontStyle.italic, letterSpacing: 1.1)),
+          TextSpan(text: 'GO', style: TextStyle(color: Color(0xFFFFEA00), fontWeight: FontWeight.w900, fontSize: 22, fontStyle: FontStyle.italic, letterSpacing: 1.1)),
+        ]),
+      ),
+      const SizedBox(height: 2),
+      const Text('DELIVERY', style: TextStyle(color: Colors.white70, fontSize: 8.5, letterSpacing: 3.2, fontWeight: FontWeight.w600)),
+    ]);
+  }
+}
+
 class _FoxGoHomeDrawer extends StatelessWidget {
   const _FoxGoHomeDrawer({this.onNavigateToOrders, this.onNavigateToRequests, this.onNavigateToProfile});
 
   final Function()? onNavigateToOrders;
   final Function()? onNavigateToRequests;
   final Function()? onNavigateToProfile;
+  static const Color _drawerDark = Color(0xFF080B0D);
+  static const Color _foxYellow = Color(0xFFFFEA00);
+  static const Color _dangerRed = Color(0xFFFF6B7D);
 
   @override
   Widget build(BuildContext context) {
     return Drawer(
-      backgroundColor: Colors.white,
+      backgroundColor: _drawerDark,
       width: MediaQuery.of(context).size.width * 0.86,
       child: SafeArea(
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(22, 20, 22, 12),
-            child: GetBuilder<ProfileController>(builder: (profileController) {
-              final name = '${profileController.profileModel?.fName ?? ''} ${profileController.profileModel?.lName ?? ''}'.trim();
-              return Row(children: [
-                const CircleAvatar(radius: 24, backgroundColor: Color(0xFFF2F2F2), child: Icon(Icons.person_rounded, color: Colors.black, size: 28)),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Text(name.isEmpty ? 'Perfil' : name, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700), maxLines: 1, overflow: TextOverflow.ellipsis),
-                ),
-              ]);
-            }),
+            padding: const EdgeInsets.fromLTRB(24, 22, 22, 24),
+            child: Row(children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(color: _foxYellow, borderRadius: BorderRadius.circular(18)),
+                child: const Icon(Icons.pets_rounded, color: Colors.black, size: 31),
+              ),
+              const SizedBox(width: 14),
+              const Expanded(child: _FoxGoWordmark()),
+            ]),
           ),
-          const Divider(height: 22),
+          Container(height: 1, margin: const EdgeInsets.symmetric(horizontal: 22), color: Colors.white.withValues(alpha: 0.08)),
           Expanded(
             child: ListView(
-              padding: EdgeInsets.zero,
+              padding: const EdgeInsets.only(top: 16),
               children: [
                 _drawerTile(Icons.support_agent_rounded, 'Ajuda / Suporte', () {
                   Get.back();
                   FoxGoSupportCenterSheet.show(initialReason: 'Ajuda pelo menu lateral');
                 }),
-                _drawerTile(Icons.chat_rounded, 'Mensagens', () => Get.toNamed(RouteHelper.getConversationListRoute())),
+                _drawerTile(Icons.chat_bubble_outline_rounded, 'Mensagens', () => Get.toNamed(RouteHelper.getConversationListRoute())),
                 _drawerTile(Icons.payments_rounded, 'Repasses', () => Get.toNamed(RouteHelper.getDisbursementRoute())),
                 _drawerTile(Icons.analytics_rounded, 'Relatórios / Ganhos', () => Get.toNamed(RouteHelper.getEarningReportRoute())),
                 _drawerTile(Icons.account_balance_wallet_rounded, 'Carteira', () => Get.toNamed(RouteHelper.getMyAccountRoute())),
                 _drawerTile(Icons.receipt_long_rounded, 'Pedidos', onNavigateToOrders ?? () => Get.toNamed(RouteHelper.getMainRoute('order'))),
                 _drawerTile(Icons.local_activity_rounded, 'Solicitações', onNavigateToRequests ?? () => Get.toNamed(RouteHelper.getMainRoute('order-request'))),
-                _drawerTile(Icons.person_rounded, 'Perfil', onNavigateToProfile ?? () => Get.toNamed(RouteHelper.getMainRoute('profile'))),
-                _drawerTile(Icons.notifications_rounded, 'Notificações', () => Get.toNamed(RouteHelper.getNotificationRoute())),
+                _drawerTile(Icons.person_outline_rounded, 'Perfil', onNavigateToProfile ?? () => Get.toNamed(RouteHelper.getMainRoute('profile'))),
                 _drawerTile(Icons.settings_rounded, 'Configurações', () => Get.toNamed(RouteHelper.getPermissionCenterRoute())),
-                _drawerTile(Icons.hub_rounded, 'Central Fox GO', () {
+                _drawerTile(Icons.shield_rounded, 'Central Fox GO', () {
                   Get.back();
                   FoxGoSupportCenterSheet.show(initialReason: 'Central Fox GO');
                 }),
               ],
             ),
           ),
-          const Divider(height: 1),
+          Container(height: 1, margin: const EdgeInsets.symmetric(horizontal: 22), color: Colors.white.withValues(alpha: 0.10)),
           Padding(
             padding: const EdgeInsets.fromLTRB(8, 8, 8, 18),
             child: _drawerTile(Icons.logout_rounded, 'Sair', () {
@@ -439,12 +495,14 @@ class _FoxGoHomeDrawer extends StatelessWidget {
   }
 
   Widget _drawerTile(IconData icon, String title, VoidCallback onTap, {bool isLogout = false}) {
+    final Color iconColor = isLogout ? _dangerRed : _foxYellow;
+    final Color textColor = isLogout ? _dangerRed : Colors.white.withValues(alpha: 0.92);
     return ListTile(
-      leading: Icon(icon, color: isLogout ? const Color(0xFF321414) : Colors.black, size: 28),
-      title: Text(title, style: TextStyle(fontSize: 21, fontWeight: isLogout ? FontWeight.w800 : FontWeight.w500, letterSpacing: 1.2)),
-      trailing: isLogout ? null : const Icon(Icons.chevron_right_rounded, color: Color(0xFF9A9A9A), size: 30),
+      leading: Icon(icon, color: iconColor, size: 27),
+      title: Text(title, style: TextStyle(color: textColor, fontSize: 18.5, fontWeight: isLogout ? FontWeight.w800 : FontWeight.w500, letterSpacing: 0.9)),
+      trailing: Icon(Icons.chevron_right_rounded, color: Colors.white.withValues(alpha: 0.56), size: 28),
       minLeadingWidth: 34,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 22, vertical: 8),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 5),
       onTap: onTap,
     );
   }
