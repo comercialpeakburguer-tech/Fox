@@ -68,7 +68,7 @@ class _EarningReportScreenState extends State<EarningReportScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBarWidget(title: 'earning_report'.tr),
+      appBar: const CustomAppBarWidget(title: 'Relatórios / Ganhos'),
       body: SafeArea(
         child: GetBuilder<EarningReportController>(builder: (reportController) {
           final report = reportController.getEarningReportModel;
@@ -89,7 +89,7 @@ class _EarningReportScreenState extends State<EarningReportScreen> {
                       )) :
                       Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                         Text(
-                          'earning_overview'.tr,
+                          'Resumo de ganhos',
                           style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeDefault),
                         ),
                         const SizedBox(height: Dimensions.paddingSizeSmall),
@@ -100,14 +100,14 @@ class _EarningReportScreenState extends State<EarningReportScreen> {
                           title: 'total_earning'.tr,
                           amount: summary?.totalEarnings ?? 0,
                           data: reportController.getEarningData(),
-                          profitText: '${'net_income'.tr} = ${'total_earning'.tr} - ${'total_expense'.tr}',
+                          profitText: '${'Receita líquida'} = ${'total_earning'.tr} - Total de despesas',
                         ),
                         const SizedBox(height: Dimensions.paddingSizeSmall),
                         EarningCardWidget(
                           cardColor: const Color(0xFFEFF9EC),
                           icon: Images.walletIconSign,
                           iconColor: const Color(0xFF0D7A20),
-                          title: 'net_income'.tr,
+                          title: 'Receita líquida',
                           amount: summary?.netProfit ?? 0,
                         ),
                       ]),
@@ -141,7 +141,7 @@ class _EarningReportScreenState extends State<EarningReportScreen> {
 
                       const SizedBox(height: Dimensions.paddingSizeLarge),
                       Text(
-                        AppConstants.appMode == AppMode.delivery ? "recent_transactions".tr : 'ride'.tr,
+                        AppConstants.appMode == AppMode.delivery ? 'Transações recentes' : 'ride'.tr,
                         style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeDefault),
                       ),
                       const SizedBox(height: Dimensions.paddingSizeSmall),
@@ -179,13 +179,13 @@ class _EarningReportScreenState extends State<EarningReportScreen> {
                             dateTime: _formatTransactionDate(txn.date),
                             rows: [
                               if ((txn.deliveryCharge ?? 0) > 0) OrderRow(label: 'delivery_charge', value: txn.deliveryCharge!),
-                              if ((txn.incentive ?? 0) > 0) OrderRow(label: 'incentive', value: txn.incentive!),
+                              if ((txn.incentive ?? 0) > 0) OrderRow(label: 'Incentivo', value: txn.incentive!),
                               if ((txn.rideCost ?? 0) > 0) OrderRow(label: 'ride_cost', value: txn.rideCost!),
-                              if ((txn.commissionPaid ?? 0) > 0) OrderRow(label: 'commission_paid', value: txn.commissionPaid!),
+                              if ((txn.commissionPaid ?? 0) > 0) OrderRow(label: 'Comissão paga', value: txn.commissionPaid!),
                               if ((txn.vatTex ?? 0) > 0) OrderRow(label: 'vat_tax', value: txn.vatTex!),
                               if ((txn.tips ?? 0) > 0) OrderRow(label: 'tips', value: txn.tips!),
                             ],
-                            netProfitLabel: 'net_income',
+                            netProfitLabel: 'Receita líquida',
                             netProfitValue: txn.netProfit ?? 0,
                           ),
                         );
