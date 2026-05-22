@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:sixam_mart_delivery/common/widgets/custom_app_bar_widget.dart';
-import 'package:sixam_mart_delivery/common/widgets/footer_view_widget.dart';
 import 'package:sixam_mart_delivery/features/earning_reports/controllers/earning_report_controller.dart';
 import 'package:sixam_mart_delivery/features/earning_reports/domain/emun/filter_type.dart';
 import 'package:sixam_mart_delivery/features/earning_reports/widgets/earning_card_widget.dart';
@@ -26,10 +25,15 @@ class _EarningReportScreenState extends State<EarningReportScreen> {
   void initState() {
     super.initState();
     final reportController = Get.find<EarningReportController>();
-    reportController.initReportData();
+    reportController.initSetDate();
+    reportController.getEarningReport(offset: '1', from: reportController.from, to: reportController.to);
     scrollController.addListener(() {
-      if (scrollController.position.pixels == scrollController.position.maxScrollExtent && !reportController.isLoading) {
-        reportController.getReportData(offset: reportController.offset + 1, isUpdate: true);
+      if (scrollController.position.pixels >= scrollController.position.maxScrollExtent - 120 && !reportController.isLoading) {
+        final pageSize = reportController.pageSize ?? 0;
+        final currentCount = reportController.transactions?.length ?? 0;
+        if (pageSize == 0 || currentCount < pageSize) {
+          reportController.getEarningReport(offset: '${reportController.offset + 1}', from: reportController.from, to: reportController.to);
+        }
       }
     });
   }
@@ -55,6 +59,11 @@ class _EarningReportScreenState extends State<EarningReportScreen> {
     }
   }
 
+  Future<void> _refreshReport(EarningReportController reportController) async {
+    reportController.initSetDate();
+    await reportController.getEarningReport(offset: '1', from: reportController.from, to: reportController.to);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -62,7 +71,7 @@ class _EarningReportScreenState extends State<EarningReportScreen> {
       body: SafeArea(
         child: GetBuilder<EarningReportController>(builder: (reportController) {
           return RefreshIndicator(
-            onRefresh: () async => reportController.initReportData(),
+            onRefresh: () async => _refreshReport(reportController),
             child: CustomScrollView(
               controller: scrollController,
               slivers: [
@@ -70,40 +79,43 @@ class _EarningReportScreenState extends State<EarningReportScreen> {
                   child: Padding(
                     padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      reportController.earningReportModel == null ?
-                      const Center(child: CircularProgressIndicator()) :
+                      reportController.getEarningReportModel == null ?
+                      const Center(child: Padding(
+                        padding: EdgeInsets.all(Dimensions.paddingSizeDefault),
+                        child: CircularProgressIndicator(),
+                      )) :
                       Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                         Text(
                           'earning_overview'.tr,
                           style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeDefault),
                         ),
                         const SizedBox(height: Dimensions.paddingSizeSmall),
-                        EarningCardWidget(earningReportModel: reportController.earningReportModel!),
+                        EarningCardWidget(earningReportModel: reportController.getEarningReportModel!),
                       ]),
 
                       const SizedBox(height: Dimensions.paddingSizeLarge),
                       Row(children: [
                         Expanded(
                           child: _FilterButton(
-                            title: 'today'.tr,
-                            isSelected: reportController.selectedFilter == EarningFilterType.today,
-                            onTap: () => reportController.setFilter(EarningFilterType.today),
+                            title: 'all'.tr,
+                            isSelected: reportController.selectedFilter == FilterType.all,
+                            onTap: () => reportController.setFilter(FilterType.all.name),
                           ),
                         ),
                         const SizedBox(width: Dimensions.paddingSizeSmall),
                         Expanded(
                           child: _FilterButton(
                             title: 'this_week'.tr,
-                            isSelected: reportController.selectedFilter == EarningFilterType.thisWeek,
-                            onTap: () => reportController.setFilter(EarningFilterType.thisWeek),
+                            isSelected: reportController.selectedFilter == FilterType.thisWeek,
+                            onTap: () => reportController.setFilter(FilterType.thisWeek.name),
                           ),
                         ),
                         const SizedBox(width: Dimensions.paddingSizeSmall),
                         Expanded(
                           child: _FilterButton(
                             title: 'this_month'.tr,
-                            isSelected: reportController.selectedFilter == EarningFilterType.thisMonth,
-                            onTap: () => reportController.setFilter(EarningFilterType.thisMonth),
+                            isSelected: reportController.selectedFilter == FilterType.thisMonth,
+                            onTap: () => reportController.setFilter(FilterType.thisMonth.name),
                           ),
                         ),
                       ]),
@@ -119,7 +131,10 @@ class _EarningReportScreenState extends State<EarningReportScreen> {
                 ),
 
                 if(reportController.transactions == null)
-                  const SliverToBoxAdapter(child: Center(child: CircularProgressIndicator()))
+                  const SliverToBoxAdapter(child: Center(child: Padding(
+                    padding: EdgeInsets.all(Dimensions.paddingSizeDefault),
+                    child: CircularProgressIndicator(),
+                  )))
                 else if(reportController.transactions!.isEmpty)
                   SliverToBoxAdapter(
                     child: Padding(
@@ -167,7 +182,7 @@ class _EarningReportScreenState extends State<EarningReportScreen> {
                       child: Center(child: CircularProgressIndicator()),
                     ),
                   ),
-                const SliverToBoxAdapter(child: FooterViewWidget(child: SizedBox())),
+                const SliverToBoxAdapter(child: SizedBox(height: Dimensions.paddingSizeLarge)),
               ],
             ),
           );
