@@ -45,35 +45,40 @@ class _FoxGoOrderRequestCardWidgetState extends State<FoxGoOrderRequestCardWidge
   Timer? _ttlTimer;
   Duration _remaining = Duration.zero;
 
-  bool get _isFoodOrder {
-    final raw = [
-      widget.orderModel.moduleType,
-      widget.orderModel.orderType,
-      widget.orderModel.storeBusinessModel,
-    ].where((value) => value != null).join('|').toLowerCase();
+  String get _rawType => [
+    widget.orderModel.moduleType,
+    widget.orderModel.orderType,
+    widget.orderModel.storeBusinessModel,
+    _jsonString('module_type'),
+    _jsonString('order_type'),
+    _jsonString('type'),
+  ].where((value) => value != null && value.toString().trim().isNotEmpty).join('|').toLowerCase();
 
-    if(raw.contains('parcel') || raw.contains('pharmacy') || raw.contains('grocery') || raw.contains('market') || raw.contains('ride') || raw.contains('taxi')) {
+  bool get _isRide => _rawType.contains('ride') || _rawType.contains('taxi') || _rawType.contains('corrida') || AppConstants.appMode == AppMode.ride;
+
+  bool get _isFoodOrder {
+    final raw = _rawType;
+    if(raw.contains('parcel') || raw.contains('pharmacy') || raw.contains('grocery') || raw.contains('market') || raw.contains('ride') || raw.contains('taxi') || raw.contains('corrida')) {
       return false;
     }
-
     return raw.isEmpty || raw.contains('food') || raw.contains('restaurant') || raw.contains('comida');
   }
 
-  bool get _isParcel => widget.orderModel.orderType == 'parcel';
+  bool get _isParcel => widget.orderModel.orderType == 'parcel' || _rawType.contains('parcel') || _rawType.contains('encomenda');
 
   int get _routeStopCount {
-    final detailsCount = widget.orderModel.detailsCount ?? 0;
-    final baseStops = _isParcel ? 2 : 2;
+    final detailsCount = widget.orderModel.detailsCount ?? _jsonInt('details_count') ?? _jsonInt('items_count') ?? 0;
+    final baseStops = 2;
     return math.max(baseStops, detailsCount > 1 ? detailsCount : baseStops);
   }
 
-  bool get _isGroupedRoute => (widget.orderModel.detailsCount ?? 0) > 1;
+  bool get _isGroupedRoute => (widget.orderModel.detailsCount ?? _jsonInt('details_count') ?? 0) > 1;
 
   @override
   void initState() {
     super.initState();
     _initCountdown();
-    if(_isFoodOrder && !_isParcel) {
+    if(_isFoodOrder && !_isParcel && !_isRide) {
       _loadFoodItems();
     }
   }
@@ -86,7 +91,7 @@ class _FoxGoOrderRequestCardWidgetState extends State<FoxGoOrderRequestCardWidge
       _expiredHandled = false;
       _initCountdown();
     }
-    if(oldWidget.orderModel.id != widget.orderModel.id && _isFoodOrder && !_isParcel) {
+    if(oldWidget.orderModel.id != widget.orderModel.id && _isFoodOrder && !_isParcel && !_isRide) {
       _orderDetails = null;
       _loadFoodItems();
     }
@@ -121,8 +126,7 @@ class _FoxGoOrderRequestCardWidgetState extends State<FoxGoOrderRequestCardWidge
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final config = Get.find<SplashController>().configModel;
-    final bool isRideActive = AppConstants.appMode == AppMode.ride;
-    final bool showEarning = isRideActive ? (config?.showRiderEarning ?? false) : (config?.showDmEarning ?? false);
+    final bool showEarning = _isRide ? (config?.showRiderEarning ?? true) : (config?.showDmEarning ?? false);
     final double distance = _distanceFromDeliveryMan();
     final String payment = _paymentLabel();
     final bool showAmount = showEarning && Get.find<ProfileController>().profileModel != null && Get.find<ProfileController>().profileModel!.earnings == 1;
@@ -146,8 +150,8 @@ class _FoxGoOrderRequestCardWidgetState extends State<FoxGoOrderRequestCardWidge
               width: double.infinity,
               padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
               decoration: BoxDecoration(
-                color: expired ? const Color(0xFFF2F2F2) : const Color(0xFFFFF7A6),
-                border: Border(left: BorderSide(color: expired ? const Color(0xFFE6003E) : Theme.of(context).primaryColor, width: 7)),
+                color: expired ? const Color(0xFFF2F2F2) : (_isRide ? const Color(0xFFEAF2FF) : const Color(0xFFFFF7A6)),
+                border: Border(left: BorderSide(color: expired ? const Color(0xFFE6003E) : (_isRide ? const Color(0xFF0B7CFF) : Theme.of(context).primaryColor), width: 7)),
               ),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Row(children: [
@@ -155,7 +159,7 @@ class _FoxGoOrderRequestCardWidgetState extends State<FoxGoOrderRequestCardWidge
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                     decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.85), borderRadius: BorderRadius.circular(999)),
                     child: Row(mainAxisSize: MainAxisSize.min, children: [
-                      const Icon(Icons.room_service_rounded, size: 17, color: Colors.black87),
+                      Icon(_moduleIcon(), size: 17, color: Colors.black87),
                       const SizedBox(width: 7),
                       Text('${_moduleTitle()}${_isGroupedRoute ? ' (${widget.orderModel.detailsCount})' : ''}', style: robotoBold.copyWith(color: Colors.black87, fontSize: Dimensions.fontSizeSmall)),
                     ]),
@@ -166,17 +170,21 @@ class _FoxGoOrderRequestCardWidgetState extends State<FoxGoOrderRequestCardWidge
                 const SizedBox(height: Dimensions.paddingSizeDefault),
                 Text(receiveValue, style: robotoBold.copyWith(fontSize: 42, color: Colors.black, height: 1)),
                 const SizedBox(height: 8),
-                Text(expired ? 'Oferta expirada' : 'Você recebe', style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeDefault, color: Colors.black54)),
+                Text(expired ? 'Oferta expirada' : (_isRide ? 'Valor estimado' : 'Você recebe'), style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeDefault, color: Colors.black54)),
               ]),
             ),
             Padding(
               padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Row(children: [
-                  Expanded(child: _metricLine(Icons.route_rounded, 'Distância total', '${distance > 1000 ? '1000+' : distance.toStringAsFixed(1)} km')),
+                  Expanded(child: _metricLine(Icons.route_rounded, _isRide ? 'Distância da corrida' : 'Distância total', '${distance > 1000 ? '1000+' : distance.toStringAsFixed(1)} km')),
                   const SizedBox(width: Dimensions.paddingSizeSmall),
                   Expanded(child: _metricLine(Icons.payments_rounded, 'Pagamento', payment)),
                 ]),
+                if(_isRide) ...[
+                  const SizedBox(height: Dimensions.paddingSizeSmall),
+                  _rideSafetyNotice(context),
+                ],
                 const SizedBox(height: Dimensions.paddingSizeDefault),
                 _routeTimeline(),
                 if(_isFoodOrder) ...[
@@ -205,7 +213,7 @@ class _FoxGoOrderRequestCardWidgetState extends State<FoxGoOrderRequestCardWidge
                     child: CustomButtonWidget(
                       height: 52,
                       radius: 16,
-                      buttonText: _isAccepting ? 'Aguarde...' : (expired ? 'Expirada' : _isGroupedRoute ? 'Aceitar (${widget.orderModel.detailsCount})' : 'Aceitar'),
+                      buttonText: _isAccepting ? 'Aguarde...' : (expired ? 'Expirada' : _isRide ? 'Aceitar corrida' : _isGroupedRoute ? 'Aceitar (${widget.orderModel.detailsCount})' : 'Aceitar'),
                       fontSize: Dimensions.fontSizeDefault,
                       onPressed: (_isAccepting || _isIgnoring || expired) ? null : () => _showDecisionOverlay(accept: true),
                     ),
@@ -216,6 +224,19 @@ class _FoxGoOrderRequestCardWidgetState extends State<FoxGoOrderRequestCardWidge
           ]),
         ),
       ),
+    );
+  }
+
+  Widget _rideSafetyNotice(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(color: const Color(0xFF0B7CFF).withValues(alpha: 0.08), borderRadius: BorderRadius.circular(16)),
+      child: Row(children: [
+        const Icon(Icons.shield_rounded, color: Color(0xFF0B7CFF), size: 22),
+        const SizedBox(width: 10),
+        Expanded(child: Text('Corrida com embarque e destino. Após aceitar, use os recursos de segurança/SOS quando disponíveis no fluxo da corrida.', style: robotoMedium.copyWith(color: const Color(0xFF194F8E), fontSize: Dimensions.fontSizeSmall))),
+      ]),
     );
   }
 
@@ -262,8 +283,8 @@ class _FoxGoOrderRequestCardWidgetState extends State<FoxGoOrderRequestCardWidge
 
   Widget _routeTimeline() {
     final points = <_RoutePoint>[
-      _RoutePoint(color: const Color(0xFFFFD400), title: _originName(), subtitle: _pickupAddress()),
-      _RoutePoint(color: const Color(0xFFFF6A2A), title: _isParcel ? 'Destinatário' : 'Cliente', subtitle: _destinationAddress()),
+      _RoutePoint(color: _isRide ? const Color(0xFF0B7CFF) : const Color(0xFFFFD400), title: _originName(), subtitle: _pickupAddress()),
+      _RoutePoint(color: const Color(0xFFFF6A2A), title: _isRide ? 'Destino' : (_isParcel ? 'Destinatário' : 'Cliente'), subtitle: _destinationAddress()),
     ];
 
     return Column(children: [
@@ -277,7 +298,7 @@ class _FoxGoOrderRequestCardWidgetState extends State<FoxGoOrderRequestCardWidge
           Expanded(child: Padding(
             padding: EdgeInsets.only(bottom: index == points.length - 1 ? 0 : 15),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(points[index].title.isNotEmpty ? points[index].title : 'Local a confirmar', style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeDefault, color: Colors.black)),
+              Text(points[index].title.isNotEmpty ? points[index].title : (_isRide && index == 0 ? 'Local de embarque' : 'Local a confirmar'), style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeDefault, color: Colors.black)),
               const SizedBox(height: 4),
               Text(points[index].subtitle.isNotEmpty ? points[index].subtitle : 'Endereço a confirmar', style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Colors.black54)),
             ]),
@@ -341,6 +362,7 @@ class _FoxGoOrderRequestCardWidgetState extends State<FoxGoOrderRequestCardWidge
     Get.dialog(
       _RouteDecisionOverlay(
         accept: accept,
+        isRide: _isRide,
         amount: PriceConverterHelper.convertPrice(_earningAmount()),
         distance: '${_distanceFromDeliveryMan() > 1000 ? '1000+' : _distanceFromDeliveryMan().toStringAsFixed(2)} km',
         stops: _routeStopCount,
@@ -400,17 +422,34 @@ class _FoxGoOrderRequestCardWidgetState extends State<FoxGoOrderRequestCardWidge
   }
 
   double _distanceFromDeliveryMan() {
-    final lat = double.tryParse(_isParcel ? widget.orderModel.deliveryAddress?.latitude ?? '0' : widget.orderModel.storeLat ?? '0') ?? 0;
-    final lng = double.tryParse(_isParcel ? widget.orderModel.deliveryAddress?.longitude ?? '0' : widget.orderModel.storeLng ?? '0') ?? 0;
+    final jsonDistance = _jsonDouble('distance') ?? _jsonDouble('distance_km') ?? _jsonDouble('total_distance') ?? _jsonDouble('totalDistanceKm');
+    if(_isRide && jsonDistance != null && jsonDistance > 0) return jsonDistance;
+    final lat = double.tryParse(_isParcel ? widget.orderModel.deliveryAddress?.latitude ?? '0' : (_isRide ? _pickupLat() : widget.orderModel.storeLat ?? '0')) ?? 0;
+    final lng = double.tryParse(_isParcel ? widget.orderModel.deliveryAddress?.longitude ?? '0' : (_isRide ? _pickupLng() : widget.orderModel.storeLng ?? '0')) ?? 0;
+    if(lat == 0 || lng == 0) return jsonDistance ?? 0;
     return Get.find<AddressController>().getRestaurantDistance(LatLng(lat, lng));
   }
 
   double _earningAmount() {
+    if(_isRide) {
+      final rideAmount = _jsonDouble('final_fare') ?? _jsonDouble('finalFare') ?? _jsonDouble('estimated_fare') ?? _jsonDouble('estimatedFare') ?? _jsonDouble('fare') ?? _jsonDouble('bid_fare') ?? _jsonDouble('amount');
+      if(rideAmount != null && rideAmount > 0) return rideAmount;
+    }
     final amount = ((widget.orderModel.originalDeliveryCharge ?? 0) + (widget.orderModel.dmTips ?? 0)).toDouble();
     return amount > 0 ? amount : ((widget.orderModel.deliveryCharge ?? 0) + (widget.orderModel.dmTips ?? 0)).toDouble();
   }
 
+  IconData _moduleIcon() {
+    if(_isRide) return Icons.local_taxi_rounded;
+    if(_isParcel) return Icons.inventory_2_rounded;
+    final module = widget.orderModel.moduleType?.toLowerCase() ?? '';
+    if(module.contains('pharmacy')) return Icons.local_pharmacy_rounded;
+    if(module.contains('grocery') || module.contains('market')) return Icons.shopping_cart_rounded;
+    return Icons.room_service_rounded;
+  }
+
   String _moduleTitle() {
+    if(_isRide) return 'Corrida';
     if(_isFoodOrder) return 'Entrega Food';
     if(_isParcel) return 'Entrega Encomenda';
     final module = widget.orderModel.moduleType?.toLowerCase() ?? '';
@@ -420,29 +459,59 @@ class _FoxGoOrderRequestCardWidgetState extends State<FoxGoOrderRequestCardWidge
   }
 
   String _originName() {
+    if(_isRide) return _jsonString('pickup_name') ?? _jsonString('pickupName') ?? _jsonString('pickup_address') ?? _jsonString('pickupAddress') ?? 'Local de embarque';
     if(_isParcel) return widget.orderModel.parcelCategory?.name ?? 'Origem do pacote';
     return widget.orderModel.storeName ?? 'Loja';
   }
 
   String _pickupAddress() {
+    if(_isRide) return _jsonString('pickup_address') ?? _jsonString('pickupAddress') ?? _jsonString('origin_address') ?? _jsonString('originAddress') ?? '';
     if(_isParcel) return widget.orderModel.deliveryAddress?.address ?? '';
     return widget.orderModel.storeAddress ?? '';
   }
 
   String _destinationAddress() {
+    if(_isRide) return _jsonString('destination_address') ?? _jsonString('destinationAddress') ?? _jsonString('drop_address') ?? _jsonString('dropAddress') ?? '';
     if(_isParcel) return widget.orderModel.receiverDetails?.address ?? '';
     return widget.orderModel.deliveryAddress?.address ?? '';
   }
 
   String _paymentLabel() {
-    switch (widget.orderModel.paymentMethod) {
+    final raw = _jsonString('payment_method') ?? _jsonString('paymentMethod') ?? widget.orderModel.paymentMethod;
+    switch (raw) {
       case 'cash_on_delivery':
-        return 'cod'.tr;
+      case 'cash':
+        return 'Dinheiro';
       case 'wallet':
         return 'wallet'.tr;
+      case 'offline_payment':
+        return 'Offline';
       default:
-        return 'digitally_paid'.tr;
+        return _isRide ? (raw?.isNotEmpty == true ? raw! : 'A confirmar') : 'digitally_paid'.tr;
     }
+  }
+
+  String _pickupLat() => (_jsonString('pickup_latitude') ?? _jsonString('pickupLatitude') ?? _jsonString('pickup_lat') ?? _jsonString('pickupLat') ?? '0');
+  String _pickupLng() => (_jsonString('pickup_longitude') ?? _jsonString('pickupLongitude') ?? _jsonString('pickup_lng') ?? _jsonString('pickupLng') ?? '0');
+
+  String? _jsonString(String key) {
+    try {
+      final value = widget.orderModel.toJson()[key];
+      final text = value?.toString().trim();
+      return text == null || text.isEmpty || text == 'null' ? null : text;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  int? _jsonInt(String key) {
+    final value = _jsonString(key);
+    return value == null ? null : int.tryParse(value);
+  }
+
+  double? _jsonDouble(String key) {
+    final value = _jsonString(key);
+    return value == null ? null : double.tryParse(value);
   }
 
   void _initCountdown() {
@@ -490,6 +559,7 @@ class _FoxGoOrderRequestCardWidgetState extends State<FoxGoOrderRequestCardWidge
 class _RouteDecisionOverlay extends StatefulWidget {
   const _RouteDecisionOverlay({
     required this.accept,
+    required this.isRide,
     required this.amount,
     required this.distance,
     required this.stops,
@@ -499,6 +569,7 @@ class _RouteDecisionOverlay extends StatefulWidget {
   });
 
   final bool accept;
+  final bool isRide;
   final String amount;
   final String distance;
   final int stops;
@@ -580,11 +651,11 @@ class _RouteDecisionOverlayState extends State<_RouteDecisionOverlay> {
                 ]),
               ),
               const SizedBox(height: 52),
-              Text(_seconds <= 0 ? 'Tempo esgotado' : (widget.accept ? 'Aceitar a rota?' : 'Rejeitar a rota?'), textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontSize: 38, height: 1.05, fontWeight: FontWeight.w800, letterSpacing: 1.2)),
+              Text(_seconds <= 0 ? 'Tempo esgotado' : (widget.accept ? (widget.isRide ? 'Aceitar corrida?' : 'Aceitar a rota?') : (widget.isRide ? 'Rejeitar corrida?' : 'Rejeitar a rota?')), textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontSize: 38, height: 1.05, fontWeight: FontWeight.w800, letterSpacing: 1.2)),
               const SizedBox(height: 28),
               Text(widget.amount, style: const TextStyle(color: Colors.white, fontSize: 42, fontWeight: FontWeight.w900, letterSpacing: 1.1)),
               const SizedBox(height: 22),
-              Text('${widget.distance} • 30 min • ${widget.stops} paradas', textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w500, letterSpacing: 1.0)),
+              Text(widget.isRide ? '${widget.distance} • embarque + destino' : '${widget.distance} • 30 min • ${widget.stops} paradas', textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w500, letterSpacing: 1.0)),
               const SizedBox(height: 120),
               SizedBox(
                 width: double.infinity,
