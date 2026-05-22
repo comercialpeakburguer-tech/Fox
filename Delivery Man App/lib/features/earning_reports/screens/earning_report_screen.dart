@@ -65,6 +65,17 @@ class _EarningReportScreenState extends State<EarningReportScreen> {
     await reportController.getEarningReport(offset: '1', from: reportController.from, to: reportController.to);
   }
 
+  String _filterTitle(FilterType filter) {
+    switch (filter) {
+      case FilterType.thisWeek:
+        return 'Esta semana';
+      case FilterType.thisMonth:
+        return 'Este mês';
+      default:
+        return 'Todos';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -97,10 +108,10 @@ class _EarningReportScreenState extends State<EarningReportScreen> {
                           cardColor: Theme.of(context).primaryColor.withValues(alpha: 0.10),
                           icon: Images.dollerIcon,
                           iconColor: Theme.of(context).primaryColor,
-                          title: 'total_earning'.tr,
+                          title: 'Total de ganhos',
                           amount: summary?.totalEarnings ?? 0,
                           data: reportController.getEarningData(),
-                          profitText: '${'Receita líquida'} = ${'total_earning'.tr} - Total de despesas',
+                          profitText: 'Receita líquida = Total de ganhos - Total de despesas',
                         ),
                         const SizedBox(height: Dimensions.paddingSizeSmall),
                         EarningCardWidget(
@@ -116,7 +127,7 @@ class _EarningReportScreenState extends State<EarningReportScreen> {
                       Row(children: [
                         Expanded(
                           child: _FilterButton(
-                            title: 'all'.tr,
+                            title: _filterTitle(FilterType.all),
                             isSelected: reportController.selectedFilter == FilterType.all,
                             onTap: () => reportController.setFilter(FilterType.all.name),
                           ),
@@ -124,7 +135,7 @@ class _EarningReportScreenState extends State<EarningReportScreen> {
                         const SizedBox(width: Dimensions.paddingSizeSmall),
                         Expanded(
                           child: _FilterButton(
-                            title: 'this_week'.tr,
+                            title: _filterTitle(FilterType.thisWeek),
                             isSelected: reportController.selectedFilter == FilterType.thisWeek,
                             onTap: () => reportController.setFilter(FilterType.thisWeek.name),
                           ),
@@ -132,7 +143,7 @@ class _EarningReportScreenState extends State<EarningReportScreen> {
                         const SizedBox(width: Dimensions.paddingSizeSmall),
                         Expanded(
                           child: _FilterButton(
-                            title: 'this_month'.tr,
+                            title: _filterTitle(FilterType.thisMonth),
                             isSelected: reportController.selectedFilter == FilterType.thisMonth,
                             onTap: () => reportController.setFilter(FilterType.thisMonth.name),
                           ),
@@ -141,7 +152,7 @@ class _EarningReportScreenState extends State<EarningReportScreen> {
 
                       const SizedBox(height: Dimensions.paddingSizeLarge),
                       Text(
-                        AppConstants.appMode == AppMode.delivery ? 'Transações recentes' : 'ride'.tr,
+                        AppConstants.appMode == AppMode.delivery ? 'Transações recentes' : 'Corridas recentes',
                         style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeDefault),
                       ),
                       const SizedBox(height: Dimensions.paddingSizeSmall),
@@ -157,11 +168,12 @@ class _EarningReportScreenState extends State<EarningReportScreen> {
                 else if(reportController.transactions!.isEmpty)
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: EdgeInsets.only(top: context.height * 0.2),
+                      padding: EdgeInsets.only(top: context.height * 0.12, left: Dimensions.paddingSizeDefault, right: Dimensions.paddingSizeDefault),
                       child: Center(child: Text(
-                        'no_transaction_found'.tr,
+                        'Nenhuma transação encontrada para este período.',
+                        textAlign: TextAlign.center,
                         style: robotoMedium.copyWith(
-                          fontSize: Dimensions.fontSizeLarge,
+                          fontSize: Dimensions.fontSizeDefault,
                           color: Theme.of(context).textTheme.bodyLarge!.color?.withValues(alpha: 0.6),
                         ),
                       )),
@@ -178,12 +190,12 @@ class _EarningReportScreenState extends State<EarningReportScreen> {
                             orderId: txn.orderId ?? txn.rideId ?? '',
                             dateTime: _formatTransactionDate(txn.date),
                             rows: [
-                              if ((txn.deliveryCharge ?? 0) > 0) OrderRow(label: 'delivery_charge', value: txn.deliveryCharge!),
+                              if ((txn.deliveryCharge ?? 0) > 0) OrderRow(label: 'Taxa de entrega', value: txn.deliveryCharge!),
                               if ((txn.incentive ?? 0) > 0) OrderRow(label: 'Incentivo', value: txn.incentive!),
-                              if ((txn.rideCost ?? 0) > 0) OrderRow(label: 'ride_cost', value: txn.rideCost!),
+                              if ((txn.rideCost ?? 0) > 0) OrderRow(label: 'Valor da corrida', value: txn.rideCost!),
                               if ((txn.commissionPaid ?? 0) > 0) OrderRow(label: 'Comissão paga', value: txn.commissionPaid!),
-                              if ((txn.vatTex ?? 0) > 0) OrderRow(label: 'vat_tax', value: txn.vatTex!),
-                              if ((txn.tips ?? 0) > 0) OrderRow(label: 'tips', value: txn.tips!),
+                              if ((txn.vatTex ?? 0) > 0) OrderRow(label: 'Impostos', value: txn.vatTex!),
+                              if ((txn.tips ?? 0) > 0) OrderRow(label: 'Gorjetas', value: txn.tips!),
                             ],
                             netProfitLabel: 'Receita líquida',
                             netProfitValue: txn.netProfit ?? 0,
