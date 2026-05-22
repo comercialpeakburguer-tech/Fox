@@ -9,6 +9,7 @@ import 'package:sixam_mart_delivery/helper/date_converter_helper.dart';
 import 'package:sixam_mart_delivery/util/app_constants.dart';
 import 'package:sixam_mart_delivery/util/dimensions.dart';
 import 'package:sixam_mart_delivery/util/enums.dart';
+import 'package:sixam_mart_delivery/util/images.dart';
 import 'package:sixam_mart_delivery/util/styles.dart';
 
 class EarningReportScreen extends StatefulWidget {
@@ -70,6 +71,8 @@ class _EarningReportScreenState extends State<EarningReportScreen> {
       appBar: CustomAppBarWidget(title: 'earning_report'.tr),
       body: SafeArea(
         child: GetBuilder<EarningReportController>(builder: (reportController) {
+          final report = reportController.getEarningReportModel;
+          final summary = report?.summary;
           return RefreshIndicator(
             onRefresh: () async => _refreshReport(reportController),
             child: CustomScrollView(
@@ -79,7 +82,7 @@ class _EarningReportScreenState extends State<EarningReportScreen> {
                   child: Padding(
                     padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      reportController.getEarningReportModel == null ?
+                      report == null ?
                       const Center(child: Padding(
                         padding: EdgeInsets.all(Dimensions.paddingSizeDefault),
                         child: CircularProgressIndicator(),
@@ -90,7 +93,23 @@ class _EarningReportScreenState extends State<EarningReportScreen> {
                           style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeDefault),
                         ),
                         const SizedBox(height: Dimensions.paddingSizeSmall),
-                        EarningCardWidget(earningReportModel: reportController.getEarningReportModel!),
+                        EarningCardWidget(
+                          cardColor: Theme.of(context).primaryColor.withValues(alpha: 0.10),
+                          icon: Images.dollerIcon,
+                          iconColor: Theme.of(context).primaryColor,
+                          title: 'total_earning'.tr,
+                          amount: summary?.totalEarnings ?? 0,
+                          data: reportController.getEarningData(),
+                          profitText: '${'net_income'.tr} = ${'total_earning'.tr} - ${'total_expense'.tr}',
+                        ),
+                        const SizedBox(height: Dimensions.paddingSizeSmall),
+                        EarningCardWidget(
+                          cardColor: const Color(0xFFEFF9EC),
+                          icon: Images.walletIconSign,
+                          iconColor: const Color(0xFF0D7A20),
+                          title: 'net_income'.tr,
+                          amount: summary?.netProfit ?? 0,
+                        ),
                       ]),
 
                       const SizedBox(height: Dimensions.paddingSizeLarge),
