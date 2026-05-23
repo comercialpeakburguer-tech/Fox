@@ -208,7 +208,7 @@ class _PaymentIncompleteBottomSheetState extends State<PaymentIncompleteBottomSh
                   TextButton(
                     onPressed: () {
                       Get.find<SplashController>().togglePaymentIncompleteBottomSheet(false);
-                      orderController.cancelOrder(orderID: int.parse(widget.paymentModel.orderID!), reason: 'Digital payment issue', isParcel: false, guestId: null).then((success) {
+                      orderController.cancelOrder(orderID: int.parse(widget.paymentModel.orderID!), reason: 'Problema no pagamento online', isParcel: false, guestId: null).then((success) {
                         if(success){
                           Get.offAllNamed(RouteHelper.getInitialRoute());
                         }

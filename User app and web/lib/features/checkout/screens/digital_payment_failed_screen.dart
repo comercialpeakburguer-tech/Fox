@@ -262,7 +262,7 @@ class PaymentIncompleteView extends StatelessWidget {
 
                     TextButton(
                       onPressed: () {
-                        orderController.cancelOrder(orderID: int.parse(orderController.paymentModel!.orderID!), reason: 'Digital payment issue', isParcel: false, guestId: orderController.paymentModel!.guestId).then((success) {
+                        orderController.cancelOrder(orderID: int.parse(orderController.paymentModel!.orderID!), reason: 'Problema no pagamento online', isParcel: false, guestId: orderController.paymentModel!.guestId).then((success) {
                           if(success){
                             Get.offAllNamed(RouteHelper.getInitialRoute());
                           }
