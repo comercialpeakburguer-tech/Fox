@@ -32,9 +32,9 @@ class AuthDialogWidgetState extends State<AuthDialogWidget> {
     return SizedBox(
       width: width,
       child: Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
         backgroundColor: Theme.of(context).cardColor,
-        elevation: 12,
+        elevation: 16,
         clipBehavior: Clip.antiAlias,
         insetPadding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault, vertical: Dimensions.paddingSizeDefault),
         child: Column(
@@ -62,7 +62,7 @@ class AuthDialogWidgetState extends State<AuthDialogWidget> {
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
                       color: Theme.of(context).primaryColor.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(24),
+                      borderRadius: BorderRadius.circular(26),
                     ),
                     child: Image.asset(Images.logo, width: 122),
                   ),

@@ -29,9 +29,9 @@ class OtpLoginWidget extends StatelessWidget {
       return Padding(
         padding: EdgeInsets.symmetric(horizontal: isDesktop ? Dimensions.paddingSizeLarge : 0),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Text('otp_login'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeExtraLarge + 2, height: 1.1), textAlign: TextAlign.center),
+          Text('otp_login'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeExtraLarge + 3, height: 1.1), textAlign: TextAlign.center),
           const SizedBox(height: Dimensions.paddingSizeExtraSmall),
-          Text('enter_phone_to_receive_code'.tr, style: robotoRegular.copyWith(color: Theme.of(context).hintColor, fontSize: Dimensions.fontSizeDefault, height: 1.35), textAlign: TextAlign.center),
+          Text('enter_phone_to_receive_code'.tr, style: robotoRegular.copyWith(color: Theme.of(context).hintColor, fontSize: Dimensions.fontSizeDefault, height: 1.38), textAlign: TextAlign.center),
           const SizedBox(height: Dimensions.paddingSizeExtraLarge),
 
           CustomTextField(
