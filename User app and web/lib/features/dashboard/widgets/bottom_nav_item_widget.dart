@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sixam_mart/util/dimensions.dart';
+import 'package:sixam_mart/util/foxgo_design.dart';
 import 'package:sixam_mart/util/styles.dart';
 
 class BottomNavItemWidget extends StatelessWidget {
@@ -17,33 +18,34 @@ class BottomNavItemWidget extends StatelessWidget {
 
     return Expanded(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 5),
         child: InkWell(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(FoxGoDesign.radiusMd),
           onTap: onTap as void Function()?,
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 220),
-            curve: Curves.easeOut,
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 7),
+            duration: const Duration(milliseconds: 240),
+            curve: Curves.easeOutCubic,
+            padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 5),
             decoration: BoxDecoration(
-              color: isSelected ? activeColor.withValues(alpha: 0.10) : Colors.transparent,
-              borderRadius: BorderRadius.circular(18),
+              color: isSelected ? activeColor.withValues(alpha: 0.09) : Colors.transparent,
+              borderRadius: BorderRadius.circular(FoxGoDesign.radiusMd),
             ),
             child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
 
               AnimatedContainer(
-                duration: const Duration(milliseconds: 220),
-                curve: Curves.easeOut,
-                height: isSelected ? 28 : 25,
-                width: isSelected ? 36 : 25,
+                duration: const Duration(milliseconds: 240),
+                curve: Curves.easeOutCubic,
+                height: isSelected ? 31 : 25,
+                width: isSelected ? 42 : 25,
                 decoration: BoxDecoration(
-                  color: isSelected ? activeColor.withValues(alpha: 0.12) : Colors.transparent,
-                  borderRadius: BorderRadius.circular(16),
+                  color: isSelected ? activeColor : Colors.transparent,
+                  borderRadius: BorderRadius.circular(18),
+                  boxShadow: isSelected ? [BoxShadow(color: activeColor.withValues(alpha: 0.24), blurRadius: 12, offset: const Offset(0, 5))] : null,
                 ),
                 alignment: Alignment.center,
                 child: Image.asset(
-                  isSelected ? selectedIcon : unSelectedIcon, height: 21, width: 21,
-                  color: isSelected ? activeColor : inactiveColor,
+                  isSelected ? selectedIcon : unSelectedIcon, height: isSelected ? 19 : 20, width: isSelected ? 19 : 20,
+                  color: isSelected ? Colors.white : inactiveColor,
                 ),
               ),
 
@@ -53,9 +55,10 @@ class BottomNavItemWidget extends StatelessWidget {
                 title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: (isSelected ? robotoMedium : robotoRegular).copyWith(
+                style: (isSelected ? robotoBold : robotoRegular).copyWith(
                   color: isSelected ? activeColor : inactiveColor,
-                  fontSize: 11.5,
+                  fontSize: 10.8,
+                  height: 1.05,
                 ),
               ),
 

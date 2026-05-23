@@ -235,11 +235,11 @@ class DashboardScreenState extends State<DashboardScreen> {
                                 const MenuScreen()
                               ];
                               return Container(
-                                width: size.width, height: GetPlatform.isIOS ? 88 : 74,
+                                width: size.width, height: GetPlatform.isIOS ? 94 : 84,
                                 decoration: BoxDecoration(
                                   color: Theme.of(context).cardColor,
-                                  borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-                                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.12), blurRadius: 22, spreadRadius: 0, offset: const Offset(0, -6))],
+                                  borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+                                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.13), blurRadius: 26, spreadRadius: 0, offset: const Offset(0, -8))],
                                 ),
                                 child: Stack(children: [
 
@@ -247,11 +247,11 @@ class DashboardScreenState extends State<DashboardScreen> {
                                     heightFactor: 0.6,
                                     child: ResponsiveHelper.isDesktop(context) ? null : (widget.fromSplash && Get.find<LocationController>().showLocationSuggestion && active) ? null
                                       : (orderController.showBottomSheet && orderController.runningOrderModel != null && orderController.runningOrderModel!.orders!.isNotEmpty && _isLogin) ? const SizedBox() : Container(
-                                        width: 64, height: 64,
+                                        width: 66, height: 66,
                                         decoration: BoxDecoration(
                                           border: Border.all(color: Theme.of(context).cardColor, width: 5),
-                                          borderRadius: BorderRadius.circular(32),
-                                          boxShadow: [BoxShadow(color: Theme.of(context).primaryColor.withValues(alpha: 0.35), blurRadius: 18, spreadRadius: 0, offset: const Offset(0, 8))],
+                                          borderRadius: BorderRadius.circular(33),
+                                          boxShadow: [BoxShadow(color: Theme.of(context).primaryColor.withValues(alpha: 0.34), blurRadius: 22, spreadRadius: 0, offset: const Offset(0, 10))],
                                         ),
                                         child: FloatingActionButton(
                                           backgroundColor: Theme.of(context).primaryColor,
@@ -284,6 +284,16 @@ class DashboardScreenState extends State<DashboardScreen> {
                                   ),
 
                                   ResponsiveHelper.isDesktop(context) ? const SizedBox() : (widget.fromSplash && Get.find<LocationController>().showLocationSuggestion && active) ? const SizedBox()
+                                  : (orderController.showBottomSheet && orderController.runningOrderModel != null && orderController.runningOrderModel!.orders!.isNotEmpty && _isLogin) ? const SizedBox() : Positioned(
+                                    bottom: 8,
+                                    left: 0,
+                                    right: 0,
+                                    child: Center(
+                                      child: Text('cart'.tr, style: robotoBold.copyWith(color: Theme.of(context).primaryColor, fontSize: 10.8, height: 1)),
+                                    ),
+                                  ),
+
+                                  ResponsiveHelper.isDesktop(context) ? const SizedBox() : (widget.fromSplash && Get.find<LocationController>().showLocationSuggestion && active) ? const SizedBox()
                                   : (orderController.showBottomSheet && orderController.runningOrderModel != null && orderController.runningOrderModel!.orders!.isNotEmpty && _isLogin) ? const SizedBox() : Center(
                                     child: SizedBox(
                                         width: size.width, height: 80,
@@ -294,10 +304,11 @@ class DashboardScreenState extends State<DashboardScreen> {
                                             onTap: () => _setPage(0),
                                           ),
                                           BottomNavItemWidget(
-                                            title: isParcel ? 'address'.tr : isTaxi ? 'wishlist'.tr : isRide ? 'my_activity'.tr  : 'favourite'.tr,
-                                            selectedIcon: isParcel ? Images.addressSelect : isRide ? Images.orderSelect : Images.favouriteSelect,
-                                            unSelectedIcon: isParcel ? Images.addressUnselect : isRide ? Images.orderUnselect : Images.favouriteUnselect,
-                                            isSelected: _pageIndex == 1, onTap: () => _setPage(1),
+                                            title: 'search'.tr,
+                                            selectedIcon: Images.searchIcon,
+                                            unSelectedIcon: Images.searchIcon,
+                                            isSelected: false,
+                                            onTap: () => Get.toNamed(RouteHelper.getSearchRoute()),
                                           ),
                                           Container(width: size.width * 0.2),
                                           BottomNavItemWidget(
@@ -307,7 +318,7 @@ class DashboardScreenState extends State<DashboardScreen> {
                                             isSelected: _pageIndex == 3, onTap: () => _setPage(3),
                                           ),
                                           BottomNavItemWidget(
-                                            title: 'menu'.tr, selectedIcon: Images.menu, unSelectedIcon: Images.menu,
+                                            title: 'profile'.tr, selectedIcon: Images.profileIcon, unSelectedIcon: Images.profileIcon,
                                             isSelected: _pageIndex == 4, onTap: () => _setPage(4),
                                           ),
                                         ]),
