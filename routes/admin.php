@@ -225,6 +225,16 @@ Route::group(['namespace' => 'Admin', 'as' => 'admin.'], function () {
         });
 
 
+
+        // Fox GO V3.9 - Central visual/admin da atualização
+        Route::group(['prefix' => 'foxgo-v39', 'as' => 'foxgo-v39.'], function () {
+            Route::get('/', 'FoxGoV39Controller@index')->name('index');
+            Route::post('reels/store', 'FoxGoV39Controller@reelsStore')->name('reels.store');
+            Route::post('reels/{reel}/status', 'FoxGoV39Controller@reelStatus')->name('reels.status');
+            Route::delete('reels/{reel}', 'FoxGoV39Controller@reelDestroy')->name('reels.destroy');
+            Route::post('store/{store}/verification', 'FoxGoV39Controller@storeVerificationStatus')->name('store.verification');
+        });
+
         Route::group(['prefix' => 'store', 'as' => 'store.'], function () {
             Route::get('get-stores-data/{store}', 'VendorController@get_store_data')->name('get-stores-data');
             Route::get('store-filter/{id}', 'VendorController@store_filter')->name('store-filter');

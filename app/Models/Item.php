@@ -6,6 +6,7 @@ use App\Scopes\ZoneScope;
 use App\Scopes\StoreScope;
 use Illuminate\Support\Str;
 use App\Traits\ReportFilter;
+use App\Traits\HasProductVideoPreview;
 use App\CentralLogics\Helpers;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Model;
@@ -15,7 +16,7 @@ use Modules\TaxModule\Entities\Taxable;
 
 class Item extends Model
 {
-    use HasFactory, ReportFilter;
+    use HasFactory, ReportFilter, HasProductVideoPreview;
     protected $guarded = ['id'];
     protected $with = ['translations','storage'];
     protected $casts = [
@@ -44,9 +45,24 @@ class Item extends Model
         'rating_count' => 'integer',
         'unit_id' => 'integer',
         'is_halal' => 'integer',
+        'low_stock_alert_quantity' => 'integer',
     ];
 
-    protected $appends = ['unit_type', 'image_full_url', 'images_full_url'];
+    protected $appends = [
+        'unit_type',
+        'image_full_url',
+        'images_full_url',
+        'video_full_url',
+        'video_size',
+        'video_preview_type',
+        'video_embed_url',
+        'video_preview_url',
+        'video_thumbnail_url',
+        'video_preview_modal_type',
+        'video_preview_modal_url',
+        'has_video_preview',
+        'has_video_source',
+    ];
 
     public function scopeRecommended($query)
     {
@@ -132,6 +148,12 @@ class Item extends Model
     public function scopeApproved($query)
     {
         return $query->where('is_approved', 1);
+    }
+
+    public function scopeLowStock($query)
+    {
+        return $query->whereNotNull('low_stock_alert_quantity')
+            ->whereColumn('stock', '<=', 'low_stock_alert_quantity');
     }
 
     public function reviews()
@@ -362,6 +384,19 @@ class Item extends Model
                     'data_type' => get_class($model),
                     'data_id' => $model->id,
                     'key' => 'images',
+                ], [
+                    'value' => $value,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+            if ($model->isDirty('video')) {
+                $value = Helpers::getDisk();
+
+                DB::table('storages')->updateOrInsert([
+                    'data_type' => get_class($model),
+                    'data_id' => $model->id,
+                    'key' => 'video',
                 ], [
                     'value' => $value,
                     'created_at' => now(),

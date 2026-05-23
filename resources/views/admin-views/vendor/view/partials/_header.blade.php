@@ -76,6 +76,8 @@
             </div>
         </div>
 
+        @includeif('admin-views.vendor.partials._foxgo_verified_store_card', ['store' => $store])
+
         @if ($store->vendor->status)
             <!-- Nav Scroller -->
             <div class="js-nav-scroller hs-nav-scroller-horizontal">

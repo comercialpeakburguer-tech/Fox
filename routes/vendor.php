@@ -238,6 +238,11 @@ Route::group(['namespace' => 'Vendor', 'as' => 'vendor.'], function () {
             Route::post('marca/update/{id}', 'FoxGoStoreCatalogController@updateBrand')->name('brand.update');
             Route::get('marca/status/{id}/{status}', 'FoxGoStoreCatalogController@statusBrand')->name('brand.status');
             Route::delete('marca/delete/{id}', 'FoxGoStoreCatalogController@deleteBrand')->name('brand.delete');
+
+            Route::get('reels', 'FoxGoStoreCatalogController@reels')->name('reels');
+            Route::post('reels/store', 'FoxGoStoreCatalogController@storeReel')->name('reels.store');
+            Route::post('reels/{id}/status', 'FoxGoStoreCatalogController@statusReel')->name('reels.status');
+            Route::delete('reels/{id}', 'FoxGoStoreCatalogController@destroyReel')->name('reels.destroy');
         });
 
 

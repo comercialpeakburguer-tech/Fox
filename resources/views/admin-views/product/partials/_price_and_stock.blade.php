@@ -118,6 +118,8 @@
                             </div>
                         </div>
 
+                        @includeif('admin-views.product.partials._foxgo_v39_product_fields')
+
                         @if (Config::get('module.current_module_type') != 'food')
                             <div class="col-sm-6 col-lg-3" id="stock_input">
                                 <div class="form-group mb-0 error-wrapper">

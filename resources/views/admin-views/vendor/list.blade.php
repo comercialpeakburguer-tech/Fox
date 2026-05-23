@@ -184,6 +184,9 @@
                                             >
                                         <div class="info"><div title="{{ $store?->name }}" class="text--title">
                                             {{Str::limit($store->name,20,'...')}}
+                                            @if((int)($store->is_verified ?? 0) === 1)
+                                                <span class="badge badge-soft-success ml-1">Verificada</span>
+                                            @endif
                                             </div>
                                             <div class="font-light">
                                                 {{translate('messages.id')}}:{{$store->id}}

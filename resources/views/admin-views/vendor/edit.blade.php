@@ -33,6 +33,8 @@ active
 
         <!-- End Page Header -->
 
+        @includeif('admin-views.vendor.partials._foxgo_verified_store_card', ['store' => $store])
+
         <form class="validate-form global-ajax-form" action="{{ route('admin.store.update', [$store['id']]) }}" enctype="multipart/form-data" method="post">
             <div class="card mb-20">
                 <div class="card-header">
