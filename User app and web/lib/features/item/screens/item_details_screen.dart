@@ -156,7 +156,7 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                         builder: (context) {
                           return ItemTitleViewWidget(
                             item: item, inStorePage: widget.inStorePage, isCampaign: item.availableDateStarts != null,
-                            inStock: (Get.find<SplashController>().configModel!.moduleConfig!.module!.stock! && stock! <= 0),
+                            isOutOfStock: (Get.find<SplashController>().configModel!.moduleConfig!.module!.stock! && stock! <= 0),
                           );
                         }
                       ),
