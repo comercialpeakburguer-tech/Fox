@@ -24,6 +24,7 @@ import 'package:sixam_mart/helper/route_helper.dart';
 import 'package:sixam_mart/helper/shallow_route_helper.dart';
 import 'package:sixam_mart/util/app_constants.dart';
 import 'package:sixam_mart/util/dimensions.dart';
+import 'package:sixam_mart/util/foxgo_design.dart';
 import 'package:sixam_mart/util/styles.dart';
 import 'package:sixam_mart/common/widgets/custom_app_bar.dart';
 import 'package:sixam_mart/common/widgets/custom_button.dart';
@@ -201,6 +202,7 @@ class CheckoutScreenState extends State<CheckoutScreen> {
     });
 
     return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: CustomAppBar(title: 'checkout'.tr),
       endDrawer: const MenuDrawer(),endDrawerEnableOpenDragGesture: false,
       body: guestCheckoutPermission || AuthHelper.isLoggedIn() ? GetBuilder<CheckoutController>(builder: (checkoutController) {
@@ -374,7 +376,7 @@ class CheckoutScreenState extends State<CheckoutScreen> {
               ResponsiveHelper.isDesktop(context) ? Container(
                 height: 64,
                 color: Theme.of(context).primaryColor.withValues(alpha: 0.10),
-                child: Center(child: Text('checkout'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeExtraLarge))),
+                child: Center(child: Text('checkout'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeExtraLarge + 1, color: FoxGoDesign.graphite))),
               ) : const SizedBox(),
 
               Expanded(child: SingleChildScrollView(
