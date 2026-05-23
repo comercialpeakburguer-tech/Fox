@@ -6,6 +6,7 @@ import 'package:sixam_mart/helper/date_converter.dart';
 import 'package:sixam_mart/helper/responsive_helper.dart';
 import 'package:sixam_mart/helper/route_helper.dart';
 import 'package:sixam_mart/util/dimensions.dart';
+import 'package:sixam_mart/util/foxgo_design.dart';
 import 'package:sixam_mart/util/images.dart';
 import 'package:sixam_mart/util/styles.dart';
 import 'package:sixam_mart/common/widgets/custom_image.dart';
@@ -65,12 +66,12 @@ class OrderViewWidget extends StatelessWidget {
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisSpacing: ResponsiveHelper.isDesktop(context) ? Dimensions.paddingSizeExtremeLarge : Dimensions.paddingSizeLarge,
                         mainAxisSpacing: ResponsiveHelper.isDesktop(context) ? Dimensions.paddingSizeExtremeLarge : 0,
-                        mainAxisExtent: ResponsiveHelper.isDesktop(context) ? 130 : 100,
+                        mainAxisExtent: ResponsiveHelper.isDesktop(context) ? 144 : 128,
                         crossAxisCount: ResponsiveHelper.isMobile(context) ? 1 : 2,
                       ),
                       physics: const NeverScrollableScrollPhysics(),
                       shrinkWrap: true,
-                      padding: ResponsiveHelper.isDesktop(context) ? const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeLarge) : const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeSmall),
+                      padding: ResponsiveHelper.isDesktop(context) ? const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeLarge) : const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault, Dimensions.paddingSizeLarge),
                       itemCount: paginatedOrderModel.orders!.length,
                       itemBuilder: (context, index) {
                         bool isParcel = paginatedOrderModel!.orders![index].orderType == 'parcel';
@@ -79,10 +80,12 @@ class OrderViewWidget extends StatelessWidget {
                         return Container(
                           padding: ResponsiveHelper.isDesktop(context) ? const EdgeInsets.all(Dimensions.paddingSizeSmall) : null,
                           margin: ResponsiveHelper.isDesktop(context) ? const EdgeInsets.only(bottom: Dimensions.paddingSizeSmall) : null,
-                          decoration: ResponsiveHelper.isDesktop(context) ? BoxDecoration(
-                            color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
-                            boxShadow: [BoxShadow(color: Theme.of(context).primaryColor.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 5))],
-                          ) : null,
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).cardColor,
+                            borderRadius: BorderRadius.circular(26),
+                            border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.06)),
+                            boxShadow: FoxGoDesign.premiumShadow(opacity: 0.07, blur: 18, offset: const Offset(0, 8)),
+                          ),
                           child: CustomInkWell(
                             onTap: () {
                               Get.toNamed(
@@ -93,25 +96,25 @@ class OrderViewWidget extends StatelessWidget {
                                 ),
                               );
                             },
-                            padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall),
+                            padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
                             child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
 
                               Row(children: [
 
                                 Stack(children: [
                                   Container(
-                                    height: ResponsiveHelper.isDesktop(context) ? 80 : 60, width: ResponsiveHelper.isDesktop(context) ? 80 : 60, alignment: Alignment.center,
+                                    height: ResponsiveHelper.isDesktop(context) ? 88 : 72, width: ResponsiveHelper.isDesktop(context) ? 88 : 72, alignment: Alignment.center,
                                     decoration: isParcel ? BoxDecoration(
-                                      borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+                                      borderRadius: BorderRadius.circular(20),
                                       color: Theme.of(context).primaryColor.withValues(alpha: 0.2),
                                     ) : null,
                                     child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+                                      borderRadius: BorderRadius.circular(20),
                                       child: CustomImage(
                                         image: isParcel ? '${paginatedOrderModel.orders![index].parcelCategory != null ? paginatedOrderModel.orders![index].parcelCategory!.imageFullUrl : ''}'
                                             : '${paginatedOrderModel.orders![index].store != null ? paginatedOrderModel.orders![index].store!.logoFullUrl : ''}',
-                                        height: isParcel ? 35 : ResponsiveHelper.isDesktop(context) ? 80 : 60,
-                                        width: isParcel ? 35 : ResponsiveHelper.isDesktop(context) ? 80 : 60, fit: isParcel ? null : BoxFit.cover,
+                                        height: isParcel ? 42 : ResponsiveHelper.isDesktop(context) ? 88 : 72,
+                                        width: isParcel ? 42 : ResponsiveHelper.isDesktop(context) ? 88 : 72, fit: isParcel ? null : BoxFit.cover,
                                       ),
                                     ),
                                   ),
@@ -144,7 +147,7 @@ class OrderViewWidget extends StatelessWidget {
                                     Row(children: [
                                       Text(
                                         '${isParcel ? 'delivery_id'.tr : 'order_id'.tr}:',
-                                        style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall),
+                                        style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).hintColor),
                                       ),
                                       const SizedBox(width: Dimensions.paddingSizeExtraSmall),
                                       Text('#${paginatedOrderModel.orders![index].id}', style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall)),
@@ -156,7 +159,7 @@ class OrderViewWidget extends StatelessWidget {
                                       child: Container(
                                         padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall, vertical: Dimensions.paddingSizeExtraSmall),
                                         decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+                                          borderRadius: BorderRadius.circular(20),
                                           color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
                                         ),
                                         child: Text(paginatedOrderModel.orders![index].orderStatus!.tr, style: robotoMedium.copyWith(
@@ -167,7 +170,7 @@ class OrderViewWidget extends StatelessWidget {
 
                                     Text(
                                       DateConverter.dateTimeStringToDateTime(paginatedOrderModel.orders![index].createdAt!),
-                                      style: robotoRegular.copyWith(color: Theme.of(context).disabledColor, fontSize: Dimensions.fontSizeSmall),
+                                      style: robotoRegular.copyWith(color: Theme.of(context).hintColor, fontSize: Dimensions.fontSizeSmall),
                                     ),
                                   ]),
                                 ),
@@ -177,7 +180,7 @@ class OrderViewWidget extends StatelessWidget {
                                   !ResponsiveHelper.isDesktop(context) ? Container(
                                     padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall, vertical: Dimensions.paddingSizeExtraSmall),
                                     decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+                                      borderRadius: BorderRadius.circular(20),
                                       color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
                                     ),
                                     child: Text(paginatedOrderModel.orders![index].orderStatus!.tr, style: robotoMedium.copyWith(
@@ -191,10 +194,10 @@ class OrderViewWidget extends StatelessWidget {
                                     child: Container(
                                       padding: EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall, vertical: ResponsiveHelper.isDesktop(context) ? Dimensions.fontSizeSmall : Dimensions.paddingSizeExtraSmall),
                                       decoration: ResponsiveHelper.isDesktop(context) ? BoxDecoration(
-                                        borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+                                        borderRadius: BorderRadius.circular(20),
                                         color: Theme.of(context).primaryColor,
                                       ) : BoxDecoration(
-                                        borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+                                        borderRadius: BorderRadius.circular(20),
                                         border: Border.all(width: 1, color: Theme.of(context).primaryColor),
                                       ),
                                       child: Row(children: [
@@ -215,9 +218,7 @@ class OrderViewWidget extends StatelessWidget {
 
                               (index == paginatedOrderModel.orders!.length-1 || ResponsiveHelper.isDesktop(context)) ? const SizedBox() : Padding(
                                 padding: const EdgeInsets.only(left: 70),
-                                child: Divider(
-                                  color: Theme.of(context).disabledColor, height: Dimensions.paddingSizeLarge,
-                                ),
+                                child: const SizedBox(),
                               ),
 
                             ]),
