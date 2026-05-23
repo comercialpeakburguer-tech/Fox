@@ -161,7 +161,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   },
                   child: Container(
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+                      borderRadius: BorderRadius.circular(22),
                       color: Theme.of(context).primaryColor,
                     ),
                     padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeSmall, horizontal: Dimensions.paddingSizeLarge),

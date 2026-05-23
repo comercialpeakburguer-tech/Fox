@@ -103,15 +103,15 @@ class OrderScreenState extends State<OrderScreen> with TickerProviderStateMixin 
                     color: Theme.of(context).cardColor,
                     boxShadow: [BoxShadow(color: Theme.of(context).disabledColor.withValues(alpha: 0.1), blurRadius: 5, offset: const Offset(0, 10))],
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall, vertical: Dimensions.paddingSizeSmall),
+                  padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall),
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
                     const SizedBox(height: Dimensions.paddingSizeSmall),
-                    Text('my_orders'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge)),
+                    Text('my_orders'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeExtraLarge + 2, height: 1.1)),
                     const SizedBox(height: Dimensions.paddingSizeDefault),
 
                     SizedBox(
-                      height: 30,
+                      height: 44,
                       child: ListView.builder(
                           itemCount: type.length,
                           scrollDirection: Axis.horizontal,
@@ -120,8 +120,9 @@ class OrderScreenState extends State<OrderScreen> with TickerProviderStateMixin 
                             return Container(
                               decoration: BoxDecoration(
                                 color: selected ? Theme.of(context).primaryColor : Theme.of(context).cardColor,
-                                borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
-                                border: Border.all(color: Theme.of(context).disabledColor, width: 0.3),
+                                borderRadius: BorderRadius.circular(22),
+                                border: Border.all(color: selected ? Theme.of(context).primaryColor : Theme.of(context).disabledColor.withValues(alpha: 0.25), width: 0.8),
+                                boxShadow: selected ? [BoxShadow(color: Theme.of(context).primaryColor.withValues(alpha: 0.22), blurRadius: 14, offset: const Offset(0, 6))] : null,
                               ),
                               alignment: Alignment.center,
                               margin: const EdgeInsets.only(right: Dimensions.paddingSizeSmall),
@@ -132,9 +133,9 @@ class OrderScreenState extends State<OrderScreen> with TickerProviderStateMixin 
                                   });
                                   initCall();
                                 },
-                                radius: Dimensions.radiusLarge,
+                                radius: 22,
                                 padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault),
-                                child: Text(type[index].tr, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge, color: selected ? Colors.white : Theme.of(context).textTheme.bodyLarge!.color!.withValues(alpha: 0.7))),
+                                child: Text(type[index].tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault, color: selected ? Colors.white : Theme.of(context).textTheme.bodyLarge!.color!.withValues(alpha: 0.72))),
                               ),
                             );
                           }),
@@ -165,11 +166,11 @@ class OrderScreenState extends State<OrderScreen> with TickerProviderStateMixin 
                                 child: TabBar(
                                   controller: _tabController,
                                   indicatorColor: Theme.of(context).primaryColor,
-                                  indicatorWeight: 3,
+                                  indicatorWeight: 4,
                                   labelColor: Theme.of(context).primaryColor,
                                   unselectedLabelColor: Theme.of(context).disabledColor,
                                   unselectedLabelStyle: robotoRegular.copyWith(color: Theme.of(context).disabledColor, fontSize: Dimensions.fontSizeSmall),
-                                  labelStyle: robotoBold.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).primaryColor),
+                                  labelStyle: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault, color: Theme.of(context).primaryColor),
                                   tabs: [
                                     Tab(text: 'running'.tr),
                                     Tab(text: 'history'.tr),
@@ -190,11 +191,11 @@ class OrderScreenState extends State<OrderScreen> with TickerProviderStateMixin 
                           padding: EdgeInsets.zero,
                           tabAlignment: haveTaxiModule ? TabAlignment.start : null,
                           indicatorColor: Theme.of(context).primaryColor,
-                          indicatorWeight: 3,
+                          indicatorWeight: 4,
                           labelColor: Theme.of(context).primaryColor,
                           unselectedLabelColor: Theme.of(context).disabledColor,
                           unselectedLabelStyle: robotoRegular.copyWith(color: Theme.of(context).disabledColor, fontSize: Dimensions.fontSizeSmall),
-                          labelStyle: robotoBold.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).primaryColor),
+                          labelStyle: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault, color: Theme.of(context).primaryColor),
                           tabs: [
                             Tab(text: 'running'.tr),
                             Tab(text: 'history'.tr),
