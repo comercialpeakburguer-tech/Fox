@@ -11,6 +11,7 @@ import 'package:sixam_mart/helper/auth_helper.dart';
 import 'package:sixam_mart/helper/responsive_helper.dart';
 import 'package:sixam_mart/helper/route_helper.dart';
 import 'package:sixam_mart/util/dimensions.dart';
+import 'package:sixam_mart/util/foxgo_design.dart';
 import 'package:sixam_mart/util/styles.dart';
 import 'package:sixam_mart/common/widgets/custom_app_bar.dart';
 import 'package:sixam_mart/common/widgets/footer_view.dart';
@@ -85,7 +86,7 @@ class _LoyaltyScreenState extends State<LoyaltyScreen> {
         }
       },
       child: Scaffold(
-        backgroundColor: Theme.of(context).cardColor,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         endDrawer: const MenuDrawer(),endDrawerEnableOpenDragGesture: false,
         appBar: CustomAppBar(title: 'loyalty_points'.tr, backButton: true, onBackPressed: () {
           if(widget.fromNotification) {
@@ -97,7 +98,7 @@ class _LoyaltyScreenState extends State<LoyaltyScreen> {
         floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
         floatingActionButton: isLoggedIn && !ResponsiveHelper.isDesktop(context) ? FloatingActionButton.extended(
           backgroundColor: Theme.of(context).primaryColor,
-          label: Text( 'convert_to_wallet_money'.tr, style: robotoBold.copyWith(color: Colors.white, fontSize: Dimensions.fontSizeDefault)),
+          label: Text('convert_to_wallet_money'.tr, style: robotoBold.copyWith(color: Colors.white, fontSize: Dimensions.fontSizeDefault)),
           onPressed: (){
             Get.dialog(
               Dialog(backgroundColor: Colors.transparent, child: LoyaltyBottomSheetWidget(
@@ -130,8 +131,8 @@ class _LoyaltyScreenState extends State<LoyaltyScreen> {
                                             Container(
                                               decoration: ResponsiveHelper.isDesktop(context) ? BoxDecoration(
                                                 color: Theme.of(context).cardColor,
-                                                borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
-                                                boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
+                                                borderRadius: BorderRadius.circular(28),
+                                                boxShadow: FoxGoDesign.premiumShadow(opacity: 0.07, blur: 18, offset: const Offset(0, 8)),
                                               ) : null,
                                               padding: const EdgeInsets.all(Dimensions.paddingSizeLarge),
                                               child: LoyaltyCardWidget(tooltipController: tooltipController),
@@ -156,12 +157,12 @@ class _LoyaltyScreenState extends State<LoyaltyScreen> {
                                : Column(children: [
 
                                   Padding(
-                                    padding: const EdgeInsets.only(top: Dimensions.paddingSizeDefault, left: Dimensions.paddingSizeDefault, right: Dimensions.paddingSizeDefault),
+                                    padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeLarge, Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall),
                                     child: LoyaltyCardWidget(tooltipController: tooltipController),
                                   ),
 
                                   const Padding(
-                                    padding: EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeLarge),
+                                    padding: EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall, Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault),
                                     child: LoyaltyHistoryWidget(),
                                   )
 
