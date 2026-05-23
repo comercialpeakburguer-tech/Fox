@@ -40,8 +40,10 @@ class ManualLoginWidget extends StatelessWidget {
       }
       
       return Column(mainAxisSize: MainAxisSize.min, children: [
-        Text('hey_there_welcome_back'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeExtraLarge)),
-        const SizedBox(height: Dimensions.paddingSizeExtraOverLarge),
+        Text('login_signup'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeExtraLarge + 2, height: 1.1), textAlign: TextAlign.center),
+        const SizedBox(height: Dimensions.paddingSizeExtraSmall),
+        Text('log_in_or_sign_up_to_enjoy_a_personalized_experience'.tr, style: robotoRegular.copyWith(color: Theme.of(context).hintColor, fontSize: Dimensions.fontSizeDefault, height: 1.35), textAlign: TextAlign.center),
+        const SizedBox(height: Dimensions.paddingSizeExtraLarge),
 
         CustomTextField(
           onCountryChanged: (countryCode) => authController.countryDialCode = countryCode.dialCode!,
