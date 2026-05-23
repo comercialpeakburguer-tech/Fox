@@ -49,7 +49,7 @@ class BottomSection extends StatelessWidget {
     required this.discount, required this.couponController, required this.taxIncluded, required this.tax,
     required this.deliveryCharge, required this.todayClosed, required this.tomorrowClosed,
     required this.orderAmount, this.maxCodOrderAmount, this.storeId, this.taxPercent, required this.price,
-    required this.addOns, this.checkoutButton, required this.isPrescriptionRequired, required this.referralDiscount, 
+    required this.addOns, this.checkoutButton, required this.isPrescriptionRequired, required this.referralDiscount,
     required this.variationPrice, required this.extraDiscount, required this.tooltipController1, required this.tooltipController2});
 
   @override
@@ -60,7 +60,8 @@ class BottomSection extends StatelessWidget {
     return Container(
       decoration: ResponsiveHelper.isDesktop(context) ? BoxDecoration(
         color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(26),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.07)),
         boxShadow: FoxGoDesign.premiumShadow(opacity: 0.08, blur: 20, offset: const Offset(0, 10)),
       ) : null,
       padding: const EdgeInsets.only(top: Dimensions.paddingSizeSmall),
@@ -79,9 +80,9 @@ class BottomSection extends StatelessWidget {
         Container(
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(26),
+            borderRadius: BorderRadius.circular(30),
             border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.08)),
-            boxShadow: FoxGoDesign.premiumShadow(opacity: 0.07, blur: 18, offset: const Offset(0, 8)),
+            boxShadow: FoxGoDesign.premiumShadow(opacity: 0.075, blur: 18, offset: const Offset(0, 8)),
           ),
           padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -113,7 +114,7 @@ class BottomSection extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      Text('total_amount'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge + 1, color: FoxGoDesign.graphite)),
+                      Text('total_amount'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge + 2, color: FoxGoDesign.graphite)),
                       storeId == null ? const SizedBox() : Text(
                         'Once_your_order_is_confirmed_you_will_receive'.tr,
                         style: robotoRegular.copyWith(
@@ -132,7 +133,7 @@ class BottomSection extends StatelessWidget {
               ),
               PriceConverter.convertAnimationPrice(
                 checkoutController.viewTotalPrice,
-                textStyle: robotoBold.copyWith(fontSize: Dimensions.fontSizeExtraLarge, color: checkoutController.isPartialPay ? Theme.of(context).textTheme.bodyMedium!.color : Theme.of(context).primaryColor),
+                textStyle: robotoBold.copyWith(fontSize: Dimensions.fontSizeExtraLarge + 1, color: checkoutController.isPartialPay ? Theme.of(context).textTheme.bodyMedium!.color : Theme.of(context).primaryColor),
               ),
             ]) : const SizedBox(),
           ]),
@@ -154,7 +155,7 @@ class BottomSection extends StatelessWidget {
         alignment: Alignment.topLeft,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault, vertical: Dimensions.paddingSizeSmall),
-          child: Text('order_summary'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge + 1, color: FoxGoDesign.graphite)),
+          child: Text('order_summary'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge + 2, color: FoxGoDesign.graphite)),
         ),
       ) : const SizedBox(),
 

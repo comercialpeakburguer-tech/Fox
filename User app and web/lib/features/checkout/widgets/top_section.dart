@@ -83,7 +83,8 @@ class TopSection extends StatelessWidget {
     return Container(
       decoration: ResponsiveHelper.isDesktop(context) ? BoxDecoration(
         color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(26),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.07)),
         boxShadow: FoxGoDesign.premiumShadow(opacity: 0.08, blur: 20, offset: const Offset(0, 10)),
       ) : null,
       child: Column(children: [
@@ -101,11 +102,11 @@ class TopSection extends StatelessWidget {
         Container(
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(26),
+            borderRadius: BorderRadius.circular(28),
             border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.08)),
-            boxShadow: FoxGoDesign.premiumShadow(opacity: 0.06, blur: 16, offset: const Offset(0, 7)),
+            boxShadow: FoxGoDesign.premiumShadow(opacity: 0.065, blur: 16, offset: const Offset(0, 7)),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeLarge, vertical: Dimensions.paddingSizeSmall),
+          padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeLarge, Dimensions.paddingSizeDefault, Dimensions.paddingSizeLarge, Dimensions.paddingSizeDefault),
           width: double.infinity,
           child: Column(crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -176,9 +177,9 @@ class TopSection extends StatelessWidget {
         Container(
           decoration: isDesktop ? const BoxDecoration() : BoxDecoration(
             color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(26),
+            borderRadius: BorderRadius.circular(28),
             border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.08)),
-            boxShadow: FoxGoDesign.premiumShadow(opacity: 0.06, blur: 16, offset: const Offset(0, 7)),
+            boxShadow: FoxGoDesign.premiumShadow(opacity: 0.065, blur: 16, offset: const Offset(0, 7)),
           ),
           padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
           child: Column(children: [
