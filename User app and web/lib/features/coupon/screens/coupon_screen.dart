@@ -3,6 +3,7 @@ import 'package:sixam_mart/features/coupon/controllers/coupon_controller.dart';
 import 'package:sixam_mart/helper/auth_helper.dart';
 import 'package:sixam_mart/helper/responsive_helper.dart';
 import 'package:sixam_mart/util/dimensions.dart';
+import 'package:sixam_mart/util/foxgo_design.dart';
 import 'package:sixam_mart/common/widgets/custom_app_bar.dart';
 import 'package:sixam_mart/common/widgets/footer_view.dart';
 import 'package:sixam_mart/common/widgets/menu_drawer.dart';
@@ -69,16 +70,16 @@ class _CouponScreenState extends State<CouponScreen> {
                   child: SizedBox(width: Dimensions.webMaxWidth, child: GridView.builder(
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: ResponsiveHelper.isDesktop(context) ? 3 : ResponsiveHelper.isTab(context) ? 2 : 1,
-                      mainAxisSpacing: Dimensions.paddingSizeSmall, crossAxisSpacing: Dimensions.paddingSizeSmall,
-                      childAspectRatio: ResponsiveHelper.isMobile(context) ? 3 : 3,
+                      mainAxisSpacing: Dimensions.paddingSizeDefault, crossAxisSpacing: Dimensions.paddingSizeDefault,
+                      childAspectRatio: ResponsiveHelper.isMobile(context) ? 2.85 : 3.05,
                     ),
                     itemCount: couponController.couponList!.length,
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    padding: const EdgeInsets.all(Dimensions.paddingSizeLarge),
+                    padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeLarge, Dimensions.paddingSizeDefault, Dimensions.paddingSizeLarge),
                     itemBuilder: (context, index) {
                       return JustTheTooltip(
-                        backgroundColor: Get.isDarkMode ? Colors.white : Colors.black87,
+                        backgroundColor: FoxGoDesign.graphite,
                         controller: _availableToolTipControllerList![index],
                         preferredDirection: AxisDirection.up,
                         tailLength: 14,
@@ -86,7 +87,7 @@ class _CouponScreenState extends State<CouponScreen> {
                         triggerMode: TooltipTriggerMode.manual,
                         content: Padding(
                           padding: const EdgeInsets.all(8.0),
-                          child: Text('${'code_copied'.tr} !',style: robotoRegular.copyWith(color: Theme.of(context).cardColor)),
+                          child: Text('${'code_copied'.tr} !',style: robotoMedium.copyWith(color: Theme.of(context).cardColor)),
                         ),
                         child: InkWell(
                           onTap: () {
