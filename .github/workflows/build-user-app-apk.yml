@@ -1,0 +1,66 @@
+name: Build User App APK
+
+on:
+  push:
+    branches:
+      - foxgo/user-app-apk-build
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - 'User app and web/**'
+      - '.github/workflows/build-user-app-apk.yml'
+  workflow_dispatch:
+
+jobs:
+  build-user-app-apk:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: User app and web
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate Flutter Android project files
+        run: |
+          if [ ! -f "pubspec.yaml" ]; then
+            echo "pubspec.yaml não encontrado em 'User app and web'."
+            exit 1
+          fi
+          if [ ! -d "android" ]; then
+            echo "Pasta android não encontrada em 'User app and web'."
+            exit 1
+          fi
+          if [ ! -f "android/app/build.gradle.kts" ] && [ ! -f "android/app/build.gradle" ]; then
+            echo "Gradle app não encontrado em 'User app and web/android/app'."
+            exit 1
+          fi
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Show Flutter version
+        run: flutter --version
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build User Debug APK
+        run: flutter build apk --debug
+
+      - name: Upload User APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: user-app-debug-apk
+          path: User app and web/build/app/outputs/flutter-apk/*.apk
+          if-no-files-found: error
