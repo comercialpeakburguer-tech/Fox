@@ -35,7 +35,7 @@ class StoreBannerWidget extends StatelessWidget {
               }
             },
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+              borderRadius: BorderRadius.circular(22),
               child: CustomImage(
                 image: '${storeController.storeBanners![index].imageFullUrl}',
               ),

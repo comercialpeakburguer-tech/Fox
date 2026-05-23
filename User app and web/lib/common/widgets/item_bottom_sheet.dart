@@ -198,7 +198,7 @@ class _ItemBottomSheetState extends State<ItemBottomSheet> {
                               width: productMediaSize,
                               height: productMediaSize,
                               child: ClipRRect(
-                                borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+                                borderRadius: BorderRadius.circular(18),
                                 child: ResponsiveHelper.isMobile(context) ? InkWell(
                                   onTap: widget.isCampaign ? null : () {
                                     if(!widget.isCampaign) {
@@ -302,7 +302,7 @@ class _ItemBottomSheetState extends State<ItemBottomSheet> {
                             Expanded(
                               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                                 Text(
-                                  item.name!, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge),
+                                  item.name!, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge),
                                   maxLines: 2, overflow: TextOverflow.ellipsis,
                                 ),
                                 InkWell(
@@ -337,12 +337,12 @@ class _ItemBottomSheetState extends State<ItemBottomSheet> {
                                   '${PriceConverter.convertPrice(startingPrice, discount: initialDiscount, discountType: discountType)}'
                                       '${endingPrice != null ? ' - ${PriceConverter.convertPrice(endingPrice, discount: initialDiscount,
                                       discountType: discountType)}' : ''}',
-                                  style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge), textDirection: TextDirection.ltr,
+                                  style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge), textDirection: TextDirection.ltr,
                                 ),
                                 price > priceWithDiscount ? Text(
                                   '${PriceConverter.convertPrice(startingPrice)}'
                                       '${endingPrice != null ? ' - ${PriceConverter.convertPrice(endingPrice)}' : ''}', textDirection: TextDirection.ltr,
-                                  style: robotoMedium.copyWith(color: Theme.of(context).disabledColor, decoration: TextDecoration.lineThrough),
+                                  style: robotoBold.copyWith(color: Theme.of(context).disabledColor, decoration: TextDecoration.lineThrough),
                                 ) : const SizedBox(),
                               ]),
                             ),
@@ -360,7 +360,7 @@ class _ItemBottomSheetState extends State<ItemBottomSheet> {
                                   },
                                   child: Container(
                                     decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+                                        borderRadius: BorderRadius.circular(22),
                                         color: Theme.of(context).primaryColor.withValues(alpha: 0.05)
                                     ),
                                     padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
@@ -407,12 +407,12 @@ class _ItemBottomSheetState extends State<ItemBottomSheet> {
                                   ),
                                   child: Get.find<SplashController>().configModel!.moduleConfig!.module!.unit! ? Text(
                                     item.unitType ?? '',
-                                    style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).primaryColor),
+                                    style: robotoBold.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).primaryColor),
                                   ) : Row(children: [
                                     Image.asset(item.veg == 1 ? Images.vegLogo : Images.nonVegLogo, height: 20, width: 20),
                                     const SizedBox(width: Dimensions.paddingSizeSmall),
 
-                                    Text(item.veg == 1 ? 'veg'.tr : 'non_veg'.tr, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeDefault)),
+                                    Text(item.veg == 1 ? 'veg'.tr : 'non_veg'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault)),
                                   ]),
                                 ) : const SizedBox(),
 
@@ -491,11 +491,11 @@ class _ItemBottomSheetState extends State<ItemBottomSheet> {
                             padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
                             margin: const EdgeInsets.only(bottom: Dimensions.paddingSizeSmall),
                             decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+                              borderRadius: BorderRadius.circular(18),
                               color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
                             ),
                             child: Column(children: [
-                              Text('not_available_now'.tr, style: robotoMedium.copyWith(
+                              Text('not_available_now'.tr, style: robotoBold.copyWith(
                                 color: Theme.of(context).primaryColor, fontSize: Dimensions.fontSizeLarge,
                               )),
                               Text(
@@ -516,7 +516,7 @@ class _ItemBottomSheetState extends State<ItemBottomSheet> {
                   decoration: BoxDecoration(
                     color: Theme.of(context).cardColor,
                     borderRadius: GetPlatform.isWeb ? const BorderRadius.only(bottomLeft: Radius.circular(20), bottomRight: Radius.circular(40)) : const BorderRadius.all(Radius.circular(0)),
-                    boxShadow: ResponsiveHelper.isDesktop(context) ? null : const [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
+                    boxShadow: ResponsiveHelper.isDesktop(context) ? null : const [BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 18, spreadRadius: 0, offset: const Offset(0, 8))],
                   ),
                   padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault, vertical: Dimensions.paddingSizeDefault),
                   child: Column(children: [
@@ -526,7 +526,7 @@ class _ItemBottomSheetState extends State<ItemBottomSheet> {
                           double? cost = PriceConverter.convertWithDiscount((price! * itemController.quantity!), discount, discountType);
                           double withAddonCost = cost! + addonsCost;
                           return Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                            Text('${'total_amount'.tr}:', style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeDefault, color: Theme.of(context).primaryColor)),
+                            Text('${'total_amount'.tr}:', style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault, color: Theme.of(context).primaryColor)),
                             const SizedBox(width: Dimensions.paddingSizeExtraSmall),
 
                             Row(children: [
@@ -559,7 +559,7 @@ class _ItemBottomSheetState extends State<ItemBottomSheet> {
                             isIncrement: false,
                             fromSheet: true,
                           ),
-                          Text(itemController.quantity.toString(), style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge)),
+                          Text(itemController.quantity.toString(), style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge)),
                           QuantityButton(
                             onTap: () => itemController.setQuantity(true, stock, item.quantityLimit, getxSnackBar: true),
                             isIncrement: true,
@@ -799,12 +799,12 @@ class AddonView extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          Text('addons'.tr, style: robotoMedium),
+          Text('addons'.tr, style: robotoBold),
 
           Container(
             decoration: BoxDecoration(
               color: Theme.of(context).disabledColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+              borderRadius: BorderRadius.circular(18),
             ),
             padding: const EdgeInsets.all(Dimensions.paddingSizeExtraSmall),
             child: Text(
@@ -838,7 +838,7 @@ class AddonView extends StatelessWidget {
                       Checkbox(
                         value: itemController.addOnActiveList[index],
                         activeColor: Theme.of(context).primaryColor,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Dimensions.radiusSmall)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
                         onChanged:(bool? newValue) {
                           if (!itemController.addOnActiveList[index]) {
                             itemController.addAddOn(true, index);
@@ -869,7 +869,7 @@ class AddonView extends StatelessWidget {
 
                     itemController.addOnActiveList[index] ? Container(
                       height: 25, width: 90,
-                      decoration: BoxDecoration(borderRadius: BorderRadius.circular(Dimensions.radiusSmall), color: Theme.of(context).cardColor),
+                      decoration: BoxDecoration(borderRadius: BorderRadius.circular(18), color: Theme.of(context).cardColor),
                       child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                         Expanded(
                           child: InkWell(
@@ -888,7 +888,7 @@ class AddonView extends StatelessWidget {
                         ),
                         Text(
                           itemController.addOnQtyList[index].toString(),
-                          style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeDefault),
+                          style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault),
                         ),
                         Expanded(
                           child: InkWell(
@@ -926,11 +926,11 @@ class VariationView extends StatelessWidget {
       padding: EdgeInsets.only(bottom: item!.choiceOptions!.isNotEmpty ? Dimensions.paddingSizeLarge : 0),
       itemBuilder: (context, index) {
         return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(item!.choiceOptions![index].title!, style: robotoMedium),
+          Text(item!.choiceOptions![index].title!, style: robotoBold),
           const SizedBox(height: Dimensions.paddingSizeSmall),
           Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+              borderRadius: BorderRadius.circular(18),
               color: Theme.of(context).cardColor,
             ),
             padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
@@ -1006,17 +1006,17 @@ class NewVariationView extends StatelessWidget {
           decoration: BoxDecoration(
             color: itemController.selectedVariations[index].contains(true) ? Theme.of(context).primaryColor.withValues(alpha: 0.01) : Theme.of(context).disabledColor.withValues(alpha: 0.05),
             border: Border.all(color: itemController.selectedVariations[index].contains(true) ? Theme.of(context).primaryColor : Theme.of(context).disabledColor, width: 0.5),
-            borderRadius: BorderRadius.circular(Dimensions.radiusDefault)
+            borderRadius: BorderRadius.circular(22)
           ),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
             Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, crossAxisAlignment: CrossAxisAlignment.center, children: [
-              Text(item!.foodVariations![index].name!, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge)),
+              Text(item!.foodVariations![index].name!, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge)),
 
               Container(
                 decoration: BoxDecoration(
                   color: item!.foodVariations![index].required! && (item!.foodVariations![index].multiSelect! ? item!.foodVariations![index].min! : 1) > selectedCount ? Theme.of(context).colorScheme.error.withValues(alpha: 0.1) : Theme.of(context).disabledColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+                  borderRadius: BorderRadius.circular(18),
                 ),
                 padding: const EdgeInsets.all(Dimensions.paddingSizeExtraSmall),
 
@@ -1038,10 +1038,10 @@ class NewVariationView extends StatelessWidget {
             item!.foodVariations![index].multiSelect! ? Text(
               '${'select_minimum'.tr} ${'${item!.foodVariations![index].min}'
                   ' ${'and_up_to'.tr} ${item!.foodVariations![index].max} ${'options'.tr}'}',
-              style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).disabledColor),
+              style: robotoBold.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).disabledColor),
             ) : Text(
               'select_one'.tr,
-              style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).primaryColor),
+              style: robotoBold.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).primaryColor),
             ),
             SizedBox(height: item!.foodVariations![index].multiSelect! ? Dimensions.paddingSizeExtraSmall : 0),
 
@@ -1064,7 +1064,7 @@ class NewVariationView extends StatelessWidget {
 
                       Text(
                         '${'view'.tr} ${item!.foodVariations![index].variationValues!.length - 4} ${'more_option'.tr}',
-                        style: robotoMedium.copyWith(color: Theme.of(context).primaryColor),
+                        style: robotoBold.copyWith(color: Theme.of(context).primaryColor),
                       ),
                     ]),
                   ),
@@ -1084,7 +1084,7 @@ class NewVariationView extends StatelessWidget {
                           item!.foodVariations![index].multiSelect! ? Checkbox(
                             value: itemController.selectedVariations[index][i],
                             activeColor: Theme.of(context).primaryColor,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Dimensions.radiusSmall)),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
                             onChanged:(bool? newValue) {
                               itemController.setNewCartVariationIndex(index, i, item!);
                             },

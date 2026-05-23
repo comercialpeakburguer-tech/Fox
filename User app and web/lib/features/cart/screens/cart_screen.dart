@@ -167,12 +167,14 @@ class _CartScreenState extends State<CartScreen> {
                     }
                   },
                   child: Container(
-                    color: Theme.of(context).cardColor,
+                    color: Colors.transparent,
+                    padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault),
                     child: Container(
-                      constraints: const BoxConstraints.expand(height: 30),
+                      constraints: const BoxConstraints.expand(height: 34),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).disabledColor.withValues(alpha: 0.3),
-                        borderRadius: const BorderRadius.only(topLeft: Radius.circular(Dimensions.radiusDefault), topRight: Radius.circular(Dimensions.radiusDefault)),
+                        color: Theme.of(context).cardColor,
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 14, offset: const Offset(0, -4))],
                       ),
                       child: Icon(Icons.drag_handle, color: Theme.of(context).hintColor, size: 25),
                     ),
@@ -205,15 +207,14 @@ class _CartScreenState extends State<CartScreen> {
                                       Container(
                                         decoration: BoxDecoration(
                                           color: Theme.of(context).cardColor,
-                                          boxShadow: !ResponsiveHelper.isMobile(context) ? [const BoxShadow()] : [const BoxShadow(
-                                            color: Colors.black12, blurRadius: 10, spreadRadius: 0,
-                                          )],
+                                          borderRadius: BorderRadius.circular(24),
+                                          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.07), blurRadius: 18, spreadRadius: 0, offset: const Offset(0, 8))],
                                         ),
                                         child: ListView.builder(
                                           physics: const NeverScrollableScrollPhysics(),
                                           shrinkWrap: true,
                                           itemCount: cartController.cartList.length,
-                                          padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
+                                          padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall),
                                           itemBuilder: (context, index) {
                                             return CartItemWidget(cart: cartController.cartList[index], cartIndex: index, addOns: cartController.addOnsList.isNotEmpty ? cartController.addOnsList[index] : [], isAvailable: cartController.availableList.isNotEmpty ? cartController.availableList[index] : false, showDivider: index != cartController.cartList.length - 1);
                                           },
@@ -233,7 +234,7 @@ class _CartScreenState extends State<CartScreen> {
                                             Get.offNamed(RouteHelper.getStoreRoute(id: cartController.cartList[0].item!.storeId, page: 'item', slug: Get.find<StoreController>().store?.slug??''));
                                           },
                                           icon: Icon(Icons.add_circle_outline_sharp, color: Theme.of(context).primaryColor),
-                                          label: Text('add_more_items'.tr, style: robotoMedium.copyWith(color: Theme.of(context).primaryColor, fontSize: Dimensions.fontSizeDefault)),
+                                          label: Text('add_more_items'.tr, style: robotoBold.copyWith(color: Theme.of(context).primaryColor, fontSize: Dimensions.fontSizeDefault)),
                                         ),
                                       ),
 
@@ -407,7 +408,7 @@ class _CartScreenState extends State<CartScreen> {
                 boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 2, spreadRadius: 1, offset: const Offset(0, 1))],
                 // border: Border.all(color: Theme.of(context).primaryColor, width: 0.5),
               ),
-              padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
+              padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall),
               margin: isDesktop ? const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault, vertical: Dimensions.paddingSizeSmall) : EdgeInsets.only(bottom: Dimensions.paddingSizeLarge),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -676,7 +677,7 @@ class CheckoutButton extends StatelessWidget {
                   color: Theme.of(context).cardColor,
                   border: Border.all(color: Theme.of(context).disabledColor.withValues(alpha: 0.2), width: 0.5),
                 ),
-                padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
+                padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,

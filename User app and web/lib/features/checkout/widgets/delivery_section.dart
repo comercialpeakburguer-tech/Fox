@@ -100,7 +100,7 @@ class _DeliverySectionState extends State<DeliverySection> {
             Container(
               constraints: const BoxConstraints(minHeight:  90),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+                borderRadius: BorderRadius.circular(22),
                 color: Theme.of(context).disabledColor.withValues(alpha: 0.1),
               ),
               child: Container(
@@ -221,27 +221,27 @@ class _DeliverySectionState extends State<DeliverySection> {
                   decoration: InputDecoration(
                     hintText: 'delivery_address'.tr,
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+                      borderRadius: BorderRadius.circular(22),
                       borderSide: BorderSide(style: BorderStyle.solid, width: ResponsiveHelper.isDesktop(context) ? 0.7 : 0.3, color: Theme.of(context).disabledColor),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+                      borderRadius: BorderRadius.circular(22),
                       borderSide: BorderSide(style: BorderStyle.solid, width: 1, color: Theme.of(context).primaryColor),
                     ),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+                      borderRadius: BorderRadius.circular(22),
                       borderSide: BorderSide(style: BorderStyle.solid, width: 0.3, color: Theme.of(context).primaryColor),
                     ),
                     errorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+                      borderRadius: BorderRadius.circular(22),
                       borderSide: BorderSide(style: BorderStyle.solid, color: Theme.of(context).colorScheme.error),
                     ),
                     focusedErrorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+                      borderRadius: BorderRadius.circular(22),
                       borderSide: BorderSide(style: BorderStyle.solid, color: Theme.of(context).colorScheme.error),
                     ),
                     disabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+                      borderRadius: BorderRadius.circular(22),
                       borderSide: BorderSide(style: BorderStyle.solid, color: Theme.of(context).disabledColor.withValues(alpha: 0.2)),
                     ),
                     hintStyle: Theme.of(context).textTheme.displayMedium!.copyWith(

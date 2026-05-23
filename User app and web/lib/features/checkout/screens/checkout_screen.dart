@@ -374,7 +374,7 @@ class CheckoutScreenState extends State<CheckoutScreen> {
               ResponsiveHelper.isDesktop(context) ? Container(
                 height: 64,
                 color: Theme.of(context).primaryColor.withValues(alpha: 0.10),
-                child: Center(child: Text('checkout'.tr, style: robotoMedium)),
+                child: Center(child: Text('checkout'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeExtraLarge))),
               ) : const SizedBox(),
 
               Expanded(child: SingleChildScrollView(

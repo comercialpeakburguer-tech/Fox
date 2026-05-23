@@ -180,15 +180,15 @@ class _StoreScreenState extends State<StoreScreen> {
                     ))),
                   ),
                 ) : SliverAppBar(
-                  expandedHeight: 300, toolbarHeight: 100,
+                  expandedHeight: 320, toolbarHeight: 104,
                   pinned: true, floating: false, elevation: 0.5,
                   backgroundColor: Theme.of(context).cardColor,
                   leading: IconButton(
                     icon: Container(
                       height: 50, width: 50,
-                      decoration: BoxDecoration(shape: BoxShape.circle, color: Theme.of(context).primaryColor),
+                      decoration: BoxDecoration(shape: BoxShape.circle, color: Theme.of(context).cardColor, boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.18), blurRadius: 12, offset: const Offset(0, 5))]),
                       alignment: Alignment.center,
-                      child: Icon(Icons.chevron_left, color: Theme.of(context).cardColor),
+                      child: Icon(Icons.chevron_left, color: Theme.of(context).primaryColor),
                     ),
                     onPressed: () {
                       if(Get.find<SplashController>().deeplinkRoute != null) {
@@ -209,7 +209,7 @@ class _StoreScreenState extends State<StoreScreen> {
                           height: store!.discount != null ? 165 : 100,
                           decoration: BoxDecoration(
                             color: Theme.of(context).cardColor,
-                            borderRadius: const BorderRadius.vertical(top: Radius.circular(Dimensions.radiusLarge)),
+                            borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
                           ),
                           child: Column(
                             children: [
@@ -217,7 +217,7 @@ class _StoreScreenState extends State<StoreScreen> {
                                 width: double.infinity,
                                 decoration: BoxDecoration(
                                   color: Theme.of(context).primaryColor.withValues(alpha: 1 - scrollingRate),
-                                  borderRadius: const BorderRadius.vertical(top: Radius.circular(Dimensions.radiusLarge)),
+                                  borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
                                 ),
                                 padding: EdgeInsets.all(Dimensions.paddingSizeSmall - (GetPlatform.isAndroid ? (scrollingRate * Dimensions.paddingSizeSmall) : 0)),
                                 child: Text('${store.discount!.discountType == 'percent' ? '${store.discount!.discount}%'
@@ -248,7 +248,7 @@ class _StoreScreenState extends State<StoreScreen> {
                                     ),
                                     child: Row(children: [
                                       ClipRRect(
-                                        borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+                                        borderRadius: BorderRadius.circular(18),
                                         child: Stack(children: [
                                           CustomImage(
                                             image: '${store.logoFullUrl}',
@@ -277,7 +277,7 @@ class _StoreScreenState extends State<StoreScreen> {
                                       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start,mainAxisAlignment: MainAxisAlignment.center, children: [
                                         Row(children: [
                                           Expanded(child: Text(
-                                            store.name!, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge - (scrollingRate * 3), color: Theme.of(context).textTheme.bodyMedium!.color),
+                                            store.name!, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge - (scrollingRate * 3), color: Theme.of(context).textTheme.bodyMedium!.color),
                                             maxLines: 1, overflow: TextOverflow.ellipsis,
                                           )),
                                           const SizedBox(width: Dimensions.paddingSizeSmall),
@@ -519,7 +519,7 @@ class _StoreScreenState extends State<StoreScreen> {
                                                   contentPadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
                                                   hintText: 'search_for_items'.tr,
                                                   hintStyle: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).disabledColor),
-                                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(Dimensions.radiusSmall), borderSide: BorderSide.none),
+                                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(18), borderSide: BorderSide.none),
                                                   filled: true, fillColor:Theme.of(context).cardColor,
                                                   isDense: true,
                                                   prefixIcon: Icon(Icons.search, color: Theme.of(context).primaryColor.withValues(alpha: 0.50)),
@@ -850,7 +850,7 @@ class _StoreScreenState extends State<StoreScreen> {
               child: Container(
                 decoration: BoxDecoration(
                   color: Theme.of(context).cardColor,
-                  borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+                  borderRadius: BorderRadius.circular(18),
                   boxShadow: [BoxShadow(color: Theme.of(context).primaryColor.withValues(alpha: 0.5), blurRadius: 10, offset: const Offset(2, 2))],
                 ),
                 child: Row(mainAxisSize: MainAxisSize.min, children: [
@@ -880,7 +880,7 @@ class _StoreScreenState extends State<StoreScreen> {
                     child: Container(
                       decoration: BoxDecoration(
                         color: Theme.of(context).primaryColor,
-                        borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+                        borderRadius: BorderRadius.circular(18),
                       ),
                       padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
                       child: Image.asset(Images.prescriptionIcon, height: 25, width: 25),

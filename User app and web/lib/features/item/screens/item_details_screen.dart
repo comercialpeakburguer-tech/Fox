@@ -168,7 +168,7 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                         margin: const EdgeInsets.only(bottom: Dimensions.paddingSizeSmall),
                         decoration: BoxDecoration(
                           color: Theme.of(context).colorScheme.error.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+                          borderRadius: BorderRadius.circular(18),
                         ),
                         child: Text(
                           '* ${'prescription_required'.tr}',
@@ -179,7 +179,7 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                       (item.description != null && item.description!.isNotEmpty) ? Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('description'.tr, style: robotoMedium),
+                          Text('description'.tr, style: robotoBold),
                           const SizedBox(height: Dimensions.paddingSizeExtraSmall),
                           ReadMoreText(
                             item.description!,
@@ -200,7 +200,7 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                       (item.nutritionsName != null && item.nutritionsName!.isNotEmpty) ? Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('nutrition_details'.tr, style: robotoMedium),
+                          Text('nutrition_details'.tr, style: robotoBold),
                           const SizedBox(height: Dimensions.paddingSizeExtraSmall),
 
                           Wrap(children: List.generate(item.nutritionsName!.length, (index) {
@@ -216,7 +216,7 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                       (item.allergiesName != null && item.allergiesName!.isNotEmpty) ? Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('allergic_ingredients'.tr, style: robotoMedium),
+                          Text('allergic_ingredients'.tr, style: robotoBold),
                           const SizedBox(height: Dimensions.paddingSizeExtraSmall),
 
                           Wrap(children: List.generate(item.allergiesName!.length, (index) {

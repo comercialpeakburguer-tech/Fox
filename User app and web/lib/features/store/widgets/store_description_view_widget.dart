@@ -36,7 +36,7 @@ class StoreDescriptionViewWidget extends StatelessWidget {
     return Column(children: [
       ResponsiveHelper.isDesktop(context) ? Row(children: [
         ClipRRect(
-          borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+          borderRadius: BorderRadius.circular(22),
           child: Stack(children: [
             CustomImage(
               image: '${store!.logoFullUrl}',
@@ -72,7 +72,7 @@ class StoreDescriptionViewWidget extends StatelessWidget {
             //   onTap: () => Get.toNamed(RouteHelper.getSearchStoreItemRoute(store!.id)),
             //   child: ResponsiveHelper.isDesktop(context) ? Container(
             //     padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
-            //     decoration: BoxDecoration(borderRadius: BorderRadius.circular(Dimensions.radiusDefault), color: Theme.of(context).primaryColor),
+            //     decoration: BoxDecoration(borderRadius: BorderRadius.circular(22), color: Theme.of(context).primaryColor),
             //     child: const Center(child: Icon(Icons.search, color: Colors.white)),
             //   ) : Icon(Icons.search, color: Theme.of(context).primaryColor),
             // ) : const SizedBox(),
@@ -90,7 +90,7 @@ class StoreDescriptionViewWidget extends StatelessWidget {
                 },
                 child: ResponsiveHelper.isDesktop(context) ? Container(
                   padding: const EdgeInsets.all(Dimensions.paddingSizeExtraSmall),
-                  decoration: BoxDecoration(borderRadius: BorderRadius.circular(Dimensions.radiusSmall), border : Border.all(color: Colors.white)),
+                  decoration: BoxDecoration(borderRadius: BorderRadius.circular(18), border : Border.all(color: Colors.white)),
                   child: Center(
                     child: Row(
                       children: [
@@ -124,7 +124,7 @@ class StoreDescriptionViewWidget extends StatelessWidget {
               child: Container(
                 decoration: BoxDecoration(
                   color: Theme.of(context).primaryColor.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+                  borderRadius: BorderRadius.circular(22),
                 ),
                 padding: const EdgeInsets.all(Dimensions.paddingSizeExtraSmall),
                 child: const Icon(Icons.share, size: 24, color: Colors.white),

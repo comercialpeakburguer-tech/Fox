@@ -80,7 +80,7 @@ class _CartItemWidgetState extends State<CartItemWidget> {
         child: Container(
           decoration: BoxDecoration(
             color: showAddonsVariations ? Theme.of(context).disabledColor.withValues(alpha: 0.05) : Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+            borderRadius: BorderRadius.circular(22),
             // boxShadow: !ResponsiveHelper.isMobile(context) ? [const BoxShadow()] : [const BoxShadow(
             //   color: Colors.black12, blurRadius: 5, spreadRadius: 1,
             // )],
@@ -107,7 +107,7 @@ class _CartItemWidgetState extends State<CartItemWidget> {
                   Stack(
                     children: [
                       ClipRRect(
-                        borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+                        borderRadius: BorderRadius.circular(22),
                         child: CustomImage(
                           image: '${widget.cart.item!.imageFullUrl}',
                           height: ResponsiveHelper.isDesktop(context) ? 90 : 60, width: ResponsiveHelper.isDesktop(context) ? 90 : 60, fit: BoxFit.cover,
@@ -117,7 +117,7 @@ class _CartItemWidgetState extends State<CartItemWidget> {
                         top: 0, left: 0, bottom: 0, right: 0,
                         child: Container(
                           alignment: Alignment.center,
-                          decoration: BoxDecoration(borderRadius: BorderRadius.circular(Dimensions.radiusSmall), color: Colors.black.withValues(alpha: 0.6)),
+                          decoration: BoxDecoration(borderRadius: BorderRadius.circular(18), color: Colors.black.withValues(alpha: 0.6)),
                           child: Text('not_available_now_break'.tr, textAlign: TextAlign.center, style: robotoRegular.copyWith(
                             color: Colors.white, fontSize: 8,
                           )),
@@ -133,7 +133,7 @@ class _CartItemWidgetState extends State<CartItemWidget> {
                         Flexible(
                           child: Text(
                             widget.cart.item!.name!,
-                            style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall),
+                            style: robotoBold.copyWith(fontSize: Dimensions.fontSizeSmall),
                             maxLines: 1, overflow: TextOverflow.ellipsis,
                           ),
                         ),
@@ -149,12 +149,12 @@ class _CartItemWidgetState extends State<CartItemWidget> {
                           ) : Container(
                             padding: const EdgeInsets.symmetric(vertical: 2, horizontal: Dimensions.paddingSizeExtraSmall),
                             decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+                              borderRadius: BorderRadius.circular(18),
                               color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
                             ),
                             child: Text(
                               widget.cart.item!.unitType ?? '',
-                              style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeOverSmall, color: Theme.of(context).primaryColor),
+                              style: robotoBold.copyWith(fontSize: Dimensions.fontSizeOverSmall, color: Theme.of(context).primaryColor),
                             ),
                           ) : const SizedBox(),
                         ),
@@ -172,7 +172,7 @@ class _CartItemWidgetState extends State<CartItemWidget> {
                           Flexible(
                             child: Text(
                               genericName,
-                              style: robotoMedium.copyWith(
+                              style: robotoBold.copyWith(
                                 fontSize: Dimensions.fontSizeSmall,
                                 color: Theme.of(context).disabledColor,
                               ),
@@ -257,7 +257,7 @@ class _CartItemWidgetState extends State<CartItemWidget> {
 
                           Text(
                             widget.cart.quantity.toString(),
-                            style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeExtraLarge),
+                            style: robotoBold.copyWith(fontSize: Dimensions.fontSizeExtraLarge),
                           ),
 
                           QuantityButton(
@@ -289,7 +289,7 @@ class _CartItemWidgetState extends State<CartItemWidget> {
                       addOnText.isNotEmpty ? Padding(
                         padding: const EdgeInsets.only(top: Dimensions.paddingSizeExtraSmall),
                         child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          Text('${'addons'.tr}: ', style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall)),
+                          Text('${'addons'.tr}: ', style: robotoBold.copyWith(fontSize: Dimensions.fontSizeSmall)),
                           Flexible(child: Text(
                             addOnText,
                             style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).disabledColor),
@@ -300,7 +300,7 @@ class _CartItemWidgetState extends State<CartItemWidget> {
                       variationText!.isNotEmpty ? Padding(
                         padding: const EdgeInsets.only(top: Dimensions.paddingSizeExtraSmall),
                         child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          Text('${'variations'.tr}: ', style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall)),
+                          Text('${'variations'.tr}: ', style: robotoBold.copyWith(fontSize: Dimensions.fontSizeSmall)),
                           Flexible(child: Text(
                             variationText,
                             style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).disabledColor),
