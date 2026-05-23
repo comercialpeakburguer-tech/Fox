@@ -68,6 +68,11 @@ class RouteServiceProvider extends ServiceProvider
                 ->namespace($this->namespace)
                 ->group(base_path('routes/api/v1/api.php'));
 
+            Route::prefix('api/v1')
+                ->middleware('api')
+                ->namespace($this->namespace)
+                ->group(base_path('routes/api/v1/foxgo.php'));
+
             Route::prefix('api/v2')
                 ->middleware('api')
                 ->namespace($this->namespace)
