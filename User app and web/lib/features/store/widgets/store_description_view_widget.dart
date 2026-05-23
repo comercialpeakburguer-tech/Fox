@@ -9,6 +9,7 @@ import 'package:sixam_mart/helper/responsive_helper.dart';
 import 'package:sixam_mart/helper/route_helper.dart';
 import 'package:sixam_mart/util/app_constants.dart';
 import 'package:sixam_mart/util/dimensions.dart';
+import 'package:sixam_mart/util/foxgo_design.dart';
 import 'package:sixam_mart/util/images.dart';
 import 'package:sixam_mart/util/styles.dart';
 import 'package:sixam_mart/common/widgets/custom_image.dart';
@@ -36,7 +37,7 @@ class StoreDescriptionViewWidget extends StatelessWidget {
     return Column(children: [
       ResponsiveHelper.isDesktop(context) ? Row(children: [
         ClipRRect(
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(28),
           child: Stack(children: [
             CustomImage(
               image: '${store!.logoFullUrl}',
@@ -63,7 +64,7 @@ class StoreDescriptionViewWidget extends StatelessWidget {
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
             Expanded(child: Text(
-              store!.name!, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge, color: textColor),
+              store!.name!, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge + 1, color: textColor),
               maxLines: 1, overflow: TextOverflow.ellipsis,
             )),
             const SizedBox(width: Dimensions.paddingSizeSmall),
@@ -72,7 +73,7 @@ class StoreDescriptionViewWidget extends StatelessWidget {
             //   onTap: () => Get.toNamed(RouteHelper.getSearchStoreItemRoute(store!.id)),
             //   child: ResponsiveHelper.isDesktop(context) ? Container(
             //     padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
-            //     decoration: BoxDecoration(borderRadius: BorderRadius.circular(22), color: Theme.of(context).primaryColor),
+            //     decoration: BoxDecoration(borderRadius: BorderRadius.circular(28), color: Theme.of(context).primaryColor),
             //     child: const Center(child: Icon(Icons.search, color: Colors.white)),
             //   ) : Icon(Icons.search, color: Theme.of(context).primaryColor),
             // ) : const SizedBox(),
@@ -90,7 +91,7 @@ class StoreDescriptionViewWidget extends StatelessWidget {
                 },
                 child: ResponsiveHelper.isDesktop(context) ? Container(
                   padding: const EdgeInsets.all(Dimensions.paddingSizeExtraSmall),
-                  decoration: BoxDecoration(borderRadius: BorderRadius.circular(18), border : Border.all(color: Colors.white)),
+                  decoration: BoxDecoration(borderRadius: BorderRadius.circular(22), color: Colors.white.withValues(alpha: 0.14), border : Border.all(color: Colors.white.withValues(alpha: 0.40))),
                   child: Center(
                     child: Row(
                       children: [
@@ -113,7 +114,7 @@ class StoreDescriptionViewWidget extends StatelessWidget {
             Expanded(
               child: Text(
                 store!.address ?? '', maxLines: 1, overflow: TextOverflow.ellipsis,
-                style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).disabledColor),
+                style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).hintColor),
               ),
             ),
 
@@ -123,8 +124,8 @@ class StoreDescriptionViewWidget extends StatelessWidget {
               },
               child: Container(
                 decoration: BoxDecoration(
-                  color: Theme.of(context).primaryColor.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(22),
+                  color: Colors.white.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(28),
                 ),
                 padding: const EdgeInsets.all(Dimensions.paddingSizeExtraSmall),
                 child: const Icon(Icons.share, size: 24, color: Colors.white),

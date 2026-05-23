@@ -17,6 +17,7 @@ import 'package:sixam_mart/helper/price_converter.dart';
 import 'package:sixam_mart/helper/responsive_helper.dart';
 import 'package:sixam_mart/helper/route_helper.dart';
 import 'package:sixam_mart/util/dimensions.dart';
+import 'package:sixam_mart/util/foxgo_design.dart';
 import 'package:sixam_mart/util/images.dart';
 import 'package:sixam_mart/util/styles.dart';
 import 'package:sixam_mart/common/widgets/custom_image.dart';
@@ -73,9 +74,10 @@ class ItemWidget extends StatelessWidget {
         Container(
           margin: ResponsiveHelper.isDesktop(context) ? null : const EdgeInsets.only(bottom: Dimensions.paddingSizeSmall),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(24),
             color: Theme.of(context).cardColor,
-            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.07), blurRadius: 16, spreadRadius: 0, offset: const Offset(0, 6))],
+            border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.06)),
+            boxShadow: FoxGoDesign.premiumShadow(opacity: 0.06, blur: 16, offset: const Offset(0, 7)),
           ),
           child: CustomInkWell(
             onTap: () {
@@ -106,7 +108,7 @@ class ItemWidget extends StatelessWidget {
                 Get.find<ItemController>().navigateToItemPage(item, context, inStore: inStore, isCampaign: isCampaign);
               }
             },
-            radius: 22,
+            radius: 24,
             padding: ResponsiveHelper.isDesktop(context) ? EdgeInsets.all(fromCartSuggestion ? Dimensions.paddingSizeExtraSmall : Dimensions.paddingSizeSmall) : const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall, vertical: Dimensions.paddingSizeExtraSmall),
             child: TextHover(
               builder: (hovered) {
@@ -118,7 +120,7 @@ class ItemWidget extends StatelessWidget {
 
                       Stack(children: [
                         ClipRRect(
-                          borderRadius: BorderRadius.circular(18),
+                          borderRadius: BorderRadius.circular(20),
                           child: CustomImage(
                             isHovered: hovered,
                             image: '${isStore ? store != null ? store!.logoFullUrl : '' : item!.imageFullUrl}',
@@ -157,7 +159,7 @@ class ItemWidget extends StatelessWidget {
                             Flexible(
                               child: Text(
                                 isStore ? store!.name! : item!.name!,
-                                style: robotoBold.copyWith(fontSize: Dimensions.fontSizeSmall + 1, height: 1.15),
+                                style: robotoBold.copyWith(fontSize: Dimensions.fontSizeSmall + 1, height: 1.15, color: FoxGoDesign.graphite),
                                 maxLines: 1, overflow: TextOverflow.ellipsis,
                               ),
                             ),
@@ -185,7 +187,7 @@ class ItemWidget extends StatelessWidget {
                             isStore ? store!.address ?? '' : item!.storeName ?? '',
                             style: robotoRegular.copyWith(
                               fontSize: Dimensions.fontSizeExtraSmall,
-                              color: Theme.of(context).disabledColor,
+                              color: Theme.of(context).hintColor,
                             ),
                             maxLines: 1, overflow: TextOverflow.ellipsis,
                           ) : const SizedBox(),
@@ -197,7 +199,7 @@ class ItemWidget extends StatelessWidget {
                                 genericName,
                                 style: robotoMedium.copyWith(
                                   fontSize: Dimensions.fontSizeSmall,
-                                  color: Theme.of(context).disabledColor,
+                                  color: Theme.of(context).hintColor,
                                 ),
                                 maxLines: 1, overflow: TextOverflow.ellipsis,
                               ),
@@ -244,7 +246,7 @@ class ItemWidget extends StatelessWidget {
                           ]) : Row(children: [
                             Text(
                               PriceConverter.convertPrice(item!.price, discount: discount, discountType: discountType),
-                              style: robotoBold.copyWith(fontSize: Dimensions.fontSizeSmall + 1), textDirection: TextDirection.ltr,
+                              style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault, color: Theme.of(context).primaryColor), textDirection: TextDirection.ltr,
                             ),
                             SizedBox(width: discount! > 0 ? Dimensions.paddingSizeExtraSmall : 0),
 
@@ -252,7 +254,7 @@ class ItemWidget extends StatelessWidget {
                               PriceConverter.convertPrice(item!.price),
                               style: robotoMedium.copyWith(
                                 fontSize: Dimensions.fontSizeExtraSmall,
-                                color: Theme.of(context).disabledColor,
+                                color: Theme.of(context).hintColor,
                                 decoration: TextDecoration.lineThrough,
                               ), textDirection: TextDirection.ltr,
                             ) : const SizedBox(),
