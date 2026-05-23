@@ -10,6 +10,7 @@ import 'package:sixam_mart/helper/address_helper.dart';
 import 'package:sixam_mart/helper/auth_helper.dart';
 import 'package:sixam_mart/helper/responsive_helper.dart';
 import 'package:sixam_mart/util/dimensions.dart';
+import 'package:sixam_mart/util/foxgo_design.dart';
 import 'package:sixam_mart/util/styles.dart';
 import 'package:sixam_mart/common/widgets/custom_image.dart';
 import 'package:sixam_mart/common/widgets/custom_loader.dart';
@@ -35,7 +36,7 @@ class ModuleView extends StatelessWidget {
       splashController.moduleList != null ? splashController.moduleList!.isNotEmpty ? GridView.builder(
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 3, mainAxisSpacing: Dimensions.paddingSizeSmall,
-          crossAxisSpacing: Dimensions.paddingSizeSmall, childAspectRatio: (1.10/1),
+          crossAxisSpacing: Dimensions.paddingSizeSmall, childAspectRatio: (1.04/1),
         ),
         padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall, Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault),
         itemCount: splashController.moduleList!.length,
@@ -43,10 +44,10 @@ class ModuleView extends StatelessWidget {
         itemBuilder: (context, index) {
           return Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(26),
               color: Theme.of(context).cardColor,
-              border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.06), width: 0.8),
-              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.07), spreadRadius: 0, blurRadius: 18, offset: const Offset(0, 8))],
+              border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.08), width: 0.9),
+              boxShadow: FoxGoDesign.premiumShadow(opacity: 0.08, blur: 18, offset: const Offset(0, 8)),
             ),
             child: CustomInkWell(
               onTap: () => splashController.switchModule(index, true),
@@ -54,7 +55,7 @@ class ModuleView extends StatelessWidget {
               child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
 
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(18),
+                  borderRadius: BorderRadius.circular(20),
                   child: CustomImage(
                     image: '${splashController.moduleList![index].iconFullUrl}',
                     height: 48, width: 48,
@@ -65,7 +66,7 @@ class ModuleView extends StatelessWidget {
                 Center(child: Text(
                   splashController.moduleList![index].moduleName!,
                   textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis,
-                  style: robotoBold.copyWith(fontSize: Dimensions.fontSizeSmall + 1, height: 1.10),
+                  style: robotoBold.copyWith(fontSize: Dimensions.fontSizeSmall + 1, height: 1.08, color: FoxGoDesign.graphite),
                 )),
 
               ]),
@@ -172,7 +173,7 @@ class ModuleShimmer extends StatelessWidget {
 
               Container(
                 height: 48, width: 48,
-                decoration: BoxDecoration(borderRadius: BorderRadius.circular(18), color: Colors.grey[300]),
+                decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), color: Colors.grey[300]),
               ),
               const SizedBox(height: Dimensions.paddingSizeSmall),
 
@@ -218,7 +219,7 @@ class AddressShimmer extends StatelessWidget {
                       : Dimensions.paddingSizeSmall),
                   decoration: BoxDecoration(
                     color: Theme.of(context).cardColor,
-                    borderRadius: BorderRadius.circular(18),
+                    borderRadius: BorderRadius.circular(20),
                     boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
                   ),
                   child: Row(mainAxisSize: MainAxisSize.min, children: [

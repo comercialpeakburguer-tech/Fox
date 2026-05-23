@@ -42,6 +42,7 @@ import 'package:sixam_mart/helper/responsive_helper.dart';
 import 'package:sixam_mart/helper/route_helper.dart';
 import 'package:sixam_mart/util/app_constants.dart';
 import 'package:sixam_mart/util/dimensions.dart';
+import 'package:sixam_mart/util/foxgo_design.dart';
 import 'package:sixam_mart/util/images.dart';
 import 'package:sixam_mart/util/styles.dart';
 import 'package:sixam_mart/common/widgets/item_view.dart';
@@ -50,6 +51,7 @@ import 'package:sixam_mart/common/widgets/paginated_list_view.dart';
 import 'package:sixam_mart/common/widgets/web_menu_bar.dart';
 import 'package:sixam_mart/features/home/screens/web_new_home_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:sixam_mart/features/home/widgets/module_view.dart';
 import 'package:sixam_mart/features/parcel/screens/parcel_category_screen.dart';
@@ -323,13 +325,24 @@ class _HomeScreenState extends State<HomeScreen> {
                   /// App Bar
                   SliverAppBar(
                     floating: true,
+                    toolbarHeight: 86,
                     elevation: 0,
                     automaticallyImplyLeading: false,
                     surfaceTintColor: Theme.of(context).colorScheme.surface,
                     backgroundColor: ResponsiveHelper.isDesktop(context) ? Colors.transparent : Theme.of(context).colorScheme.surface,
                     title: Center(child: Container(
-                      width: Dimensions.webMaxWidth, height: Get.find<LocalizationController>().isLtr ? 60 : 70, color: Theme.of(context).colorScheme.surface,
+                      width: Dimensions.webMaxWidth, height: 86, padding: const EdgeInsets.fromLTRB(14, 10, 14, 8), color: Theme.of(context).colorScheme.surface,
                       child: Row(children: [
+                        Container(
+                          width: 48, height: 48,
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: FoxGoDesign.softRed,
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                          child: SvgPicture.asset(Images.foxGoMark),
+                        ),
+                        const SizedBox(width: 10),
                         (splashController.module != null && splashController.configModel!.module == null && splashController.moduleList != null && splashController.moduleList!.length != 1) ? InkWell(
                           onTap: () {
                             splashController.removeModule();
@@ -351,7 +364,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                                     Text(
                                       AuthHelper.isLoggedIn() ? AddressHelper.getUserAddressFromSharedPref()?.addressType?.tr ?? '' : 'my_location'.tr,
-                                      style: robotoMedium.copyWith(color: Theme.of(context).textTheme.bodyLarge!.color, fontSize: Dimensions.fontSizeDefault),
+                                      style: robotoBold.copyWith(color: FoxGoDesign.graphite, fontSize: Dimensions.fontSizeDefault + 1, height: 1.05),
                                       maxLines: 1, overflow: TextOverflow.ellipsis,
                                     ),
 
@@ -359,7 +372,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       Flexible(
                                         child: Text(
                                           AddressHelper.getUserAddressFromSharedPref()!.address!,
-                                          style: robotoRegular.copyWith(color: Theme.of(context).disabledColor, fontSize: Dimensions.fontSizeSmall),
+                                          style: robotoRegular.copyWith(color: Theme.of(context).hintColor, fontSize: Dimensions.fontSizeSmall, height: 1.1),
                                           maxLines: 1, overflow: TextOverflow.ellipsis,
                                         ),
                                       ),
@@ -413,7 +426,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         InkWell(
                           child: GetBuilder<NotificationController>(builder: (notificationController) {
                             return Stack(children: [
-                              Icon(CupertinoIcons.bell, size: 25, color: Theme.of(context).textTheme.bodyLarge!.color),
+                              Container(width: 42, height: 42, decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(16), boxShadow: FoxGoDesign.premiumShadow(opacity: 0.06, blur: 14, offset: const Offset(0, 6))), child: Icon(CupertinoIcons.bell, size: 22, color: FoxGoDesign.graphite)),
                               notificationController.hasNotification ? Positioned(top: 0, right: 0, child: Container(
                                 height: 10, width: 10, decoration: BoxDecoration(
                                 color: Theme.of(context).primaryColor, shape: BoxShape.circle,
@@ -433,9 +446,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   !showMobileModule && !isTaxi && !isRide ? SliverPersistentHeader(
                     pinned: true,
                     delegate: SliverDelegate(callback: (val){}, child: Center(child: Container(
-                      height: 62, width: Dimensions.webMaxWidth,
+                      height: 72, width: Dimensions.webMaxWidth,
                       color: searchBgShow ? Get.find<ThemeController>().darkTheme ? Theme.of(context).colorScheme.surface : Theme.of(context).cardColor : null,
-                      padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall),
+                      padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault),
                       child: isTaxi? Container(color: Theme.of(context).primaryColor): InkWell(
                         onTap: () => Get.toNamed(RouteHelper.getSearchRoute()),
                         child: Container(
@@ -444,8 +457,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           decoration: BoxDecoration(
                             color: Theme.of(context).cardColor,
                             border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.08), width: 0.8),
-                            borderRadius: BorderRadius.circular(28),
-                            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 18, spreadRadius: 0, offset: const Offset(0, 8))],
+                            borderRadius: BorderRadius.circular(30),
+                            boxShadow: FoxGoDesign.premiumShadow(opacity: 0.09, blur: 20, offset: const Offset(0, 8)),
                           ),
                           child: Row(children: [
                             Icon(
@@ -459,7 +472,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 fontSize: Dimensions.fontSizeDefault, color: Theme.of(context).hintColor,
                               ),
                             )),
-                            Icon(Icons.keyboard_voice_sharp, size: 22, color: Theme.of(context).disabledColor)
+                            Container(width: 34, height: 34, decoration: BoxDecoration(color: FoxGoDesign.softRed, borderRadius: BorderRadius.circular(14)), child: Icon(Icons.tune_rounded, size: 18, color: Theme.of(context).primaryColor))
                           ]),
                         ),
                       ),
@@ -479,7 +492,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             : isRide ? const RideHomeScreen()
                             : const SizedBox(),
 
-                      ]) : ModuleView(splashController: splashController),
+                      ]) : Column(children: [const _FoxGoPremiumHomeHero(), ModuleView(splashController: splashController)]),
                     )),
                   ),
 
@@ -574,5 +587,92 @@ class SliverDelegate extends SliverPersistentHeaderDelegate {
   @override
   bool shouldRebuild(SliverDelegate oldDelegate) {
     return oldDelegate.maxExtent != height || oldDelegate.minExtent != height || child != oldDelegate.child;
+  }
+}
+
+
+class _FoxGoPremiumHomeHero extends StatelessWidget {
+  const _FoxGoPremiumHomeHero();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, 8, Dimensions.paddingSizeDefault, 12),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: FoxGoDesign.redGradient(),
+          borderRadius: BorderRadius.circular(30),
+          boxShadow: FoxGoDesign.premiumShadow(opacity: 0.14, blur: 26, offset: const Offset(0, 12)),
+        ),
+        child: Stack(children: [
+          Positioned(
+            right: -22,
+            bottom: -30,
+            child: Opacity(
+              opacity: 0.18,
+              child: SvgPicture.asset(Images.foxGoMark, width: 145, height: 145),
+            ),
+          ),
+          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: const Text(
+                  'Fox GO Premium',
+                  style: TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.w800),
+                ),
+              ),
+              const Spacer(),
+              SvgPicture.asset(Images.foxGoLogoLight, width: 92),
+            ]),
+            const SizedBox(height: 18),
+            const Text(
+              'Tudo que você precisa,\nem um só app.',
+              style: TextStyle(color: Colors.white, fontSize: 25, height: 1.05, fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Restaurantes, mercado, farmácia, entregas e ofertas com a experiência Fox GO.',
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.88), fontSize: 14.5, height: 1.35, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 18),
+            Wrap(spacing: 8, runSpacing: 8, children: const [
+              _FoxGoHeroChip(icon: Icons.flash_on_rounded, text: 'Rápido'),
+              _FoxGoHeroChip(icon: Icons.verified_rounded, text: 'Seguro'),
+              _FoxGoHeroChip(icon: Icons.local_offer_rounded, text: 'Ofertas'),
+            ]),
+          ]),
+        ]),
+      ),
+    );
+  }
+}
+
+class _FoxGoHeroChip extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  const _FoxGoHeroChip({required this.icon, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.18),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
+      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(icon, size: 15, color: Colors.white),
+        const SizedBox(width: 5),
+        Text(text, style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.w800)),
+      ]),
+    );
   }
 }

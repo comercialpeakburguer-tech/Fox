@@ -399,7 +399,7 @@
   "prescription": "Receita",
   "are_you_sure_want_to_switch": "Tem certeza que deseja alterar em",
   "select_the_type_of_modules_for_your_order": "Selecione o tipo de módulos para seu pedido",
-  "parcel": "Encomenda",
+  "parcel": "Entregas",
   "instant_same_day_delivery": "Entrega instantânea no mesmo dia",
   "send_things_to_your_destination_instantly_and_safely": "Envie coisas para seu destino instantaneamente e com segurança",
   "what_are_you_sending": "O que você está enviando?",
@@ -1717,5 +1717,8 @@
   "choose_an_option": "Escolha uma opção",
   "remove_it_from_my_cart": "Remover do carrinho",
   "call_me": "Me ligar",
-  "continue_shopping": "Continuar comprando"
+  "continue_shopping": "Continuar comprando",
+  "grocery": "Mercado",
+  "pharmacy": "Farmácia",
+  "ecommerce": "Compras"
 }
