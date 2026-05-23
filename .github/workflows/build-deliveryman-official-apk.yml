@@ -1,0 +1,57 @@
+name: Build Deliveryman Official APK
+
+on:
+  push:
+    branches:
+      - foxgo/deliveryman-official-apk-build
+  workflow_dispatch:
+
+jobs:
+  build-deliveryman-official-apk:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Delivery Man App
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate Delivery Man App files
+        run: |
+          if [ ! -f "pubspec.yaml" ]; then
+            echo "pubspec.yaml não encontrado em 'Delivery Man App'."
+            exit 1
+          fi
+          if [ ! -d "android" ]; then
+            echo "Pasta android não encontrada em 'Delivery Man App'."
+            exit 1
+          fi
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Show Flutter version
+        run: flutter --version
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build Deliveryman Debug APK
+        run: flutter build apk --debug
+
+      - name: Upload Deliveryman APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: deliveryman-official-debug-apk
+          path: Delivery Man App/build/app/outputs/flutter-apk/*.apk
+          if-no-files-found: error
