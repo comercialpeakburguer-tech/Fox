@@ -2,14 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-if (trait_exists(\Modules\RideShare\Traits\TransactionManagement\TransactionTrait::class)) {
-    class_alias(
-        \Modules\RideShare\Traits\TransactionManagement\TransactionTrait::class,
-        __NAMESPACE__ . '\ConditionalTransactionTrait'
-    );
-} else {
-    trait ConditionalTransactionTrait {}
-}
+use Modules\RideShare\Traits\TransactionManagement\TransactionTrait;
 
 
 
@@ -26,7 +19,6 @@ use App\Mail\WithdrawRequestMail;
 use App\Models\AccountTransaction;
 use App\Models\Admin;
 use App\Models\BusinessSetting;
-use App\Models\DataSetting;
 use App\Models\DeliveryHistory;
 use App\Models\DeliveryMan;
 use App\Models\DeliverymanLoyaltyPointHistory;
@@ -64,19 +56,19 @@ use Modules\RideShare\Interface\UserManagement\Service\UserLastLocationServiceIn
 
 class DeliverymanController extends Controller
 {
-    use ConditionalTransactionTrait;
+    //TODO: need to uncomment this when rideshare enabled
+    // use TransactionTrait;
 
     public function get_profile(Request $request)
     {
         $dm = DeliveryMan::with(['rating','userinfo'])->where(['auth_token' => $request['token']])->first();
 
-        
+        $min_amount_to_pay_dm = BusinessSetting::where('key', 'min_amount_to_pay_dm')->first()->value ?? 0;
+
         if(addon_published_status('RideShare')){
-            $min_amount_to_pay_dm = DataSetting::where('key', 'min_amount_to_pay_rider')->first()->value ?? 0;
             $dm['avg_rating'] = (float) (($dm->combinedRating->average) ? $dm->combinedRating->average : (!empty($dm->rating[0]) ? $dm->rating[0]->average : 0));
             $dm['rating_count'] = (float) (($dm->combinedRating->total) ? $dm->combinedRating->total : (!empty($dm->rating[0]) ? $dm->rating[0]->rating_count : 0));
-            }else{
-            $min_amount_to_pay_dm = BusinessSetting::where('key', 'min_amount_to_pay_dm')->first()->value ?? 0;
+        }else{
             $dm['avg_rating'] = (float) (!empty($dm->rating[0]) ? $dm->rating[0]->average : 0);
             $dm['rating_count'] = (float) (!empty($dm->rating[0]) ? $dm->rating[0]->rating_count : 0);
         }
@@ -490,7 +482,7 @@ class DeliverymanController extends Controller
             });
         }
         if (isset($dm->vehicle_id)) {
-            $orders = $orders->where('dm_vehicle_id', $dm->vehicle_id);
+            $orders = $orders->whereIn('dm_vehicle_id', $this->foxgoCompatibleOrderVehicleIdsForDeliveryMan($dm->vehicle_id));
         }
         $orders = $orders->dmOrder()
             ->Notpos()
@@ -499,10 +491,154 @@ class DeliverymanController extends Controller
             ->whereNull('delivery_man_id')
             ->orderBy('schedule_at', 'desc')
             ->get();
+
+        // Fox GO Logistics: guarda 4min apos aceite/preparo da loja.
+        // Regra: pedido delivery só entra em chamada depois de 4 minutos do processing;
+        // fallback para confirmed/created_at quando processing não existir em pedido legado.
+        if (isset($orders) && $orders instanceof \Illuminate\Support\Collection) {
+            $orders = $orders->filter(function ($foxgoOrderForDispatchDelay) {
+                $foxgoOrderTypeForDispatchDelay = $foxgoOrderForDispatchDelay->order_type ?? null;
+
+                if ($foxgoOrderTypeForDispatchDelay !== 'delivery') {
+                    return true;
+                }
+
+                $foxgoDelayReference = $foxgoOrderForDispatchDelay->processing
+                    ?? $foxgoOrderForDispatchDelay->confirmed
+                    ?? $foxgoOrderForDispatchDelay->created_at
+                    ?? null;
+
+                if (empty($foxgoDelayReference)) {
+                    return true;
+                }
+
+                try {
+                    return \Carbon\Carbon::parse($foxgoDelayReference)->diffInMinutes(now()) >= 4;
+                } catch (\Throwable $e) {
+                    return true;
+                }
+            })->values();
+        }
+
+
+
+        $this->foxgoLogisticsRecordLatestOrders($orders, $dm);
+
+        $this->foxgoAttachLatestOrderOfferPayload($orders, $dm);
+
         $orders = Helpers::order_data_formatting($orders, true);
 
         return response()->json($orders, 200);
     }
+
+
+    // Fox GO Logistics: Solicitações disponíveis backend readonly.
+    public function available_requests(Request $request)
+    {
+        $dm = DeliveryMan::where(['auth_token' => $request['token']])->first();
+
+        if (!$dm) {
+            return response()->json([
+                'errors' => [
+                    ['code' => 'unauthorized', 'message' => translate('messages.unauthorized')],
+                ],
+            ], 401);
+        }
+
+        $limit = (int) ($request->input('limit') ?? 20);
+        $limit = max(1, min($limit, 50));
+
+        $orders = Order::with(['customer', 'store', 'parcel_category'])
+            ->whereIn('order_status', ['processing', 'handover'])
+            ->where('payment_status', 'paid')
+            ->where('order_type', 'delivery')
+            ->whereNull('delivery_man_id')
+            ->whereNull('delivered')
+            ->dmOrder()
+            ->Notpos()
+            ->NotDigitalOrder()
+            ->OrderScheduledIn(30);
+
+        if ($dm->type == 'zone_wise') {
+            $orders = $orders->where('zone_id', $dm->zone_id)
+                ->where(function ($query) {
+                    $query->whereNull('store_id')
+                        ->orWhere(function ($query) {
+                            $query->whereHas('store', function ($q) {
+                                $q->where('store_business_model', 'subscription')->whereHas('store_sub', function ($q1) {
+                                    $q1->where('self_delivery', 0);
+                                });
+                            })
+                            ->orWhereHas('store', function ($qu) {
+                                $qu->where('store_business_model', 'commission')->where('self_delivery_system', 0);
+                            });
+                        });
+                });
+        } else {
+            $orders = $orders->where('store_id', $dm->store_id);
+        }
+
+        if (isset($dm->vehicle_id)) {
+            $orders = $orders->whereIn('dm_vehicle_id', $this->foxgoCompatibleOrderVehicleIdsForDeliveryMan($dm->vehicle_id));
+        }
+
+        $orders = $orders->orderBy('schedule_at', 'desc')->limit(80)->get();
+
+        $orders = $orders->filter(function ($order) use ($dm) {
+            if (!$order || !$order->id) {
+                return false;
+            }
+
+            $pendingOrAccepted = $this->foxgoActiveDispatchOfferQuery(
+                \App\Models\FoxGoDispatchOffer::where('order_id', $order->id)
+                    ->whereIn('status', ['pending', 'accepted'])
+            )->exists();
+
+            if ($pendingOrAccepted) {
+                return false;
+            }
+
+            $hasTimeoutOrRejected = \App\Models\FoxGoDispatchOffer::where('order_id', $order->id)
+                ->whereIn('status', ['timed_out', 'rejected'])
+                ->exists();
+
+            if (!$hasTimeoutOrRejected) {
+                return false;
+            }
+
+            $foxgoDelayReference = $order->processing
+                ?? $order->confirmed
+                ?? $order->created_at
+                ?? null;
+
+            if (!empty($foxgoDelayReference)) {
+                try {
+                    if (\Carbon\Carbon::parse($foxgoDelayReference)->diffInMinutes(now()) < 4) {
+                        return false;
+                    }
+                } catch (\Throwable $e) {
+                    // Se data legada vier inválida, não bloqueia por segurança operacional.
+                }
+            }
+
+            if ((int) ($dm->active ?? 0) !== 1 || (int) ($dm->status ?? 0) !== 1) {
+                return false;
+            }
+
+            if ((int) ($dm->current_orders ?? 0) >= (int) (config('dm_maximum_orders') ?? 2)) {
+                return false;
+            }
+
+            return true;
+        })->take($limit)->values();
+
+        $this->foxgoLogisticsRecordAvailableRequests($orders, $dm);
+
+        $orders = Helpers::order_data_formatting($orders, true);
+
+        return response()->json($orders, 200);
+    }
+
 
     public function accept_order(Request $request)
     {
@@ -587,22 +723,51 @@ class DeliverymanController extends Controller
             ], 405);
         }
 
-        if ($order->order_type == 'parcel' && $order->order_status == 'confirmed') {
-            $order->order_status = 'handover';
-            $order->handover = now();
-            $order->processing = now();
-        } else {
-            $order->order_status = in_array($order->order_status, ['pending', 'confirmed']) ? 'accepted' : $order->order_status;
+        $foxgoAcceptLock = \Illuminate\Support\Facades\Cache::lock('foxgo:dispatch:accept:order:' . (int) $request['order_id'], 10);
+
+        if (!$foxgoAcceptLock->get()) {
+            return response()->json([
+                'errors' => [
+                    ['code' => 'foxgo_accept_lock', 'message' => translate('messages.can_not_accept')],
+                ],
+            ], 409);
         }
 
-        $order->delivery_man_id = $dm->id;
-        $order->accepted = now();
-        $order->save();
+        try {
+            $order = Order::where('id', $request['order_id'])
+                ->whereNull('delivery_man_id')
+                ->dmOrder()
+                ->first();
 
-        $dm->current_orders = $dm->current_orders + 1;
-        $dm->save();
+            if (!$order) {
+                return response()->json([
+                    'errors' => [
+                        ['code' => 'order', 'message' => translate('messages.can_not_accept')],
+                    ],
+                ], 404);
+            }
 
-        $dm->increment('assigned_order_count');
+            if ($order->order_type == 'parcel' && $order->order_status == 'confirmed') {
+                $order->order_status = 'handover';
+                $order->handover = now();
+                $order->processing = now();
+            } else {
+                $order->order_status = in_array($order->order_status, ['pending', 'confirmed']) ? 'accepted' : $order->order_status;
+            }
+
+            $order->delivery_man_id = $dm->id;
+            $order->accepted = now();
+            $order->save();
+
+            $dm->current_orders = $dm->current_orders + 1;
+            $dm->save();
+
+            $dm->increment('assigned_order_count');
+
+            $this->foxgoLogisticsRecordAcceptedOrder($order, $dm);
+        } finally {
+            $foxgoAcceptLock->release();
+        }
 
         $fcm_token = $order->is_guest == 0 ? $order?->customer?->cm_firebase_token : $order?->guest?->fcm_token;
 
@@ -729,6 +894,165 @@ class DeliverymanController extends Controller
         return response()->json([], 200);
     }
 
+
+    public function foxgo_release_to_another_deliveryman(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'order_id' => 'required|exists:orders,id',
+            'reason' => 'nullable|string|max:255',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => Helpers::error_processor($validator)], 403);
+        }
+
+        $dm = DeliveryMan::where(['auth_token' => $request['token']])->first();
+
+        if (!$dm) {
+            return response()->json([
+                'errors' => [
+                    ['code' => 'delivery_man', 'message' => translate('messages.deliveryman_not_found')],
+                ],
+            ], 404);
+        }
+
+        $lock = \Illuminate\Support\Facades\Cache::lock('foxgo:release-to-another:order:' . (int) $request['order_id'], 10);
+
+        if (!$lock->get()) {
+            return response()->json([
+                'errors' => [
+                    ['code' => 'release_lock', 'message' => translate('messages.can_not_accept')],
+                ],
+            ], 409);
+        }
+
+        try {
+            return DB::transaction(function () use ($request, $dm) {
+                $order = Order::where('id', $request['order_id'])
+                    ->where('delivery_man_id', $dm->id)
+                    ->whereIn('order_status', ['accepted', 'confirmed', 'processing', 'handover'])
+                    ->whereNull('picked_up')
+                    ->whereNull('delivered')
+                    ->whereNull('canceled')
+                    ->lockForUpdate()
+                    ->first();
+
+                if (!$order) {
+                    return response()->json([
+                        'errors' => [
+                            ['code' => 'order', 'message' => 'Esta entrega não pode ser liberada para outro entregador neste momento.'],
+                        ],
+                    ], 403);
+                }
+
+                $reason = $request->input('reason') ?: 'driver_release_to_another_deliveryman';
+
+                $offer = \App\Models\FoxGoDispatchOffer::where('order_id', $order->id)
+                    ->where('delivery_man_id', $dm->id)
+                    ->whereIn('status', ['pending', 'accepted'])
+                    ->orderByDesc('id')
+                    ->first();
+
+                if ($offer) {
+                    \App\Services\FoxGo\DispatchOfferService::markReleasedToAnotherDriver(
+                        $offer,
+                        $reason,
+                        'deliveryman_release_to_another'
+                    );
+                }
+
+                $oldDeliveryManId = $order->delivery_man_id;
+                $oldStatus = $order->order_status;
+
+                $payload = is_array($order->foxgo_logistics_payload ?? null)
+                    ? $order->foxgo_logistics_payload
+                    : [];
+
+                $payload['release_to_another_deliveryman'][] = [
+                    'released_by_delivery_man_id' => $dm->id,
+                    'reason' => $reason,
+                    'released_at' => now()->toDateTimeString(),
+                    'source' => 'deliveryman_release_to_another',
+                    'no_customer_order_cancel' => true,
+                    'old_order_status' => $oldStatus,
+                ];
+
+                $order->delivery_man_id = null;
+                $order->foxgo_logistics_payload = $payload;
+                $order->save();
+
+                if ((int) ($dm->current_orders ?? 0) > 0) {
+                    $dm->decrement('current_orders');
+                }
+
+                \App\Services\FoxGo\LogisticsEventService::record('DELIVERYMAN_RELEASED_ORDER_TO_ANOTHER_DRIVER', [
+                    'mission_type' => strtoupper((string) ($order->order_type ?: 'delivery')),
+                    'subject_type' => 'order',
+                    'subject_id' => $order->id,
+                    'order_id' => $order->id,
+                    'store_id' => $order->store_id,
+                    'user_id' => $order->user_id,
+                    'delivery_man_id' => $oldDeliveryManId,
+                    'actor_type' => 'delivery_man',
+                    'actor_id' => $dm->id,
+                    'source' => 'deliveryman_release_to_another',
+                    'status_from' => $oldStatus,
+                    'status_to' => $order->order_status,
+                    'queue_name' => 'logistics',
+                    'payload' => [
+                        'reason' => $reason,
+                        'old_delivery_man_id' => $oldDeliveryManId,
+                        'new_delivery_man_id' => null,
+                        'no_customer_order_cancel' => true,
+                        'available_for_redispatch' => true,
+                    ],
+                ]);
+
+                \App\Services\FoxGo\LogisticsStatusService::upsertStatus([
+                    'mission_type' => strtoupper((string) ($order->order_type ?: 'delivery')),
+                    'subject_type' => 'order',
+                    'subject_id' => $order->id,
+                    'order_id' => $order->id,
+                    'store_id' => $order->store_id,
+                    'user_id' => $order->user_id,
+                    'delivery_man_id' => null,
+                    'current_offer_id' => $offer?->id,
+                    'operational_status' => 'redispatch_required',
+                    'payment_status' => $order->payment_status,
+                    'dispatch_status' => 'unassigned',
+                    'pickup_status' => $order->order_status === 'handover' ? 'handover' : 'not_started',
+                    'dropoff_status' => 'not_started',
+                    'support_status' => 'nina_triage',
+                    'risk_level' => 'attention',
+                    'driver_earning_amount' => $offer?->driver_earning_amount,
+                    'distance_to_pickup_km' => $offer?->distance_to_pickup_km,
+                    'total_distance_km' => $offer?->total_distance_km,
+                    'eta_to_pickup_seconds' => $offer?->eta_to_pickup_seconds,
+                    'eta_total_seconds' => $offer?->eta_total_seconds,
+                    'last_event_at' => now(),
+                    'status_updated_at' => now(),
+                    'source' => 'deliveryman_release_to_another',
+                    'payload' => [
+                        'order_status' => $order->order_status,
+                        'payment_status' => $order->payment_status,
+                        'old_delivery_man_id' => $oldDeliveryManId,
+                        'reason' => $reason,
+                    ],
+                ]);
+
+                return response()->json([
+                    'message' => 'Entrega liberada para outro entregador com segurança.',
+                    'order_id' => $order->id,
+                    'order_status' => $order->order_status,
+                    'delivery_man_id' => null,
+                ], 200);
+            });
+        } finally {
+            optional($lock)->release();
+        }
+    }
+
+
     public function update_order_status(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -749,7 +1073,95 @@ class DeliverymanController extends Controller
 
         $order = Order::where(['id' => $request['order_id'], 'delivery_man_id' => $dm['id']])->dmOrder()->first();
 
-        if (!$order || (!$order->store && $order->order_type != 'parcel')) {
+        
+        
+        // Fox GO Logistics: OTP de retirada obrigatorio no picked_up.
+        // Fox GO Logistics: status efetivo para OTP de retirada.
+        $foxgoEffectivePickupStatus = (string) ($request->input('status') ?? $request->input('order_status') ?? '');
+
+        if ($foxgoEffectivePickupStatus === 'picked_up') {
+            $foxgoExpectedPickupOtp = $order->foxgo_pickup_otp ?? null;
+            $foxgoPickupOtp = $request->input('otp') ?? $request->input('foxgo_pickup_otp');
+
+            if (empty($foxgoExpectedPickupOtp)) {
+                return response()->json([
+                    'errors' => [
+                        [
+                            'code' => 'pickup_otp_not_generated',
+                            'message' => 'Código de retirada ainda não foi gerado pela loja. Peça para a loja marcar o pedido como pronto novamente.'
+                        ]
+                    ]
+                ], 403);
+            }
+
+            if (!$foxgoPickupOtp) {
+                return response()->json([
+                    'errors' => [
+                        [
+                            'code' => 'pickup_otp_required',
+                            'message' => 'Código de retirada obrigatório. Informe o OTP de 4 dígitos antes de retirar o pedido.'
+                        ]
+                    ]
+                ], 403);
+            }
+
+            if ((string) $foxgoPickupOtp !== (string) $foxgoExpectedPickupOtp) {
+                return response()->json([
+                    'errors' => [
+                        [
+                            'code' => 'pickup_otp_invalid',
+                            'message' => 'Código de retirada inválido. Confira o OTP com a loja.'
+                        ]
+                    ]
+                ], 403);
+            }
+
+            $foxgoPickupDmId = isset($dm) ? ($dm->id ?? null) : null;
+
+            $order->foxgo_pickup_otp_verified_at = now();
+            $order->foxgo_pickup_otp_verified_by = $foxgoPickupDmId;
+
+            $foxgoPayload = is_array($order->foxgo_logistics_payload ?? null)
+                ? $order->foxgo_logistics_payload
+                : [];
+
+            $foxgoPayload['pickup_otp'] = array_merge($foxgoPayload['pickup_otp'] ?? [], [
+                'verified' => true,
+                'verified_by' => $foxgoPickupDmId,
+                'verified_at' => now()->toDateTimeString(),
+                'source' => 'deliveryman_update_order_status',
+            ]);
+
+            $order->foxgo_logistics_payload = $foxgoPayload;
+        }
+
+// Fox GO Logistics: suporte OTP de retirada no picked_up.
+        // Fase suporte: registra quando o app enviar otp correto, sem bloquear app antigo.
+        if (($request->order_status ?? null) === 'picked_up' && $order && !empty($order->otp)) {
+            $foxgoPickupOtp = $request->input('otp');
+
+            if ($foxgoPickupOtp && (string) $foxgoPickupOtp === (string) $order->otp) {
+                $foxgoPickupDmId = isset($dm) ? ($dm->id ?? null) : null;
+
+                $order->foxgo_pickup_otp_verified_at = now();
+                $order->foxgo_pickup_otp_verified_by = $foxgoPickupDmId;
+
+                $foxgoPayload = is_array($order->foxgo_logistics_payload ?? null)
+                    ? $order->foxgo_logistics_payload
+                    : [];
+
+                $foxgoPayload['pickup_otp'] = [
+                    'verified' => true,
+                    'verified_by' => $foxgoPickupDmId,
+                    'verified_at' => now()->toDateTimeString(),
+                    'source' => 'deliveryman_update_order_status',
+                ];
+
+                $order->foxgo_logistics_payload = $foxgoPayload;
+            }
+        }
+
+if (!$order || (!$order->store && $order->order_type != 'parcel')) {
             return response()->json([
                 'errors' => [
                     ['code' => 'not_found', 'message' => translate('messages.you_can_not_change_the_status_of_this_order')],
@@ -907,10 +1319,393 @@ class DeliverymanController extends Controller
         $order[$request['status']] = now();
         $order->save();
 
+        $this->foxgoLogisticsRecordOrderStatus($order, $dm, $request['status']);
+
         Helpers::send_order_notification($order);
 
         return response()->json(['message' => translate('Status updated')], 200);
     }
+
+
+
+
+    /**
+     * Fox GO App Entregador:
+     * anexa dados da offer ativa no Order antes de Helpers::order_data_formatting().
+     * O formatter preserva atributos dinamicos, entao o app passa a receber estes campos
+     * sem alterar schema, sem alterar banco e sem mexer no helper global.
+     */
+    private function foxgoAttachLatestOrderOfferPayload($orders, $dm): void
+    {
+        try {
+            if (!$dm || !$orders) {
+                return;
+            }
+
+            foreach ($orders as $order) {
+                if (!$order || !$order->id) {
+                    continue;
+                }
+
+                $offer = $this->foxgoActiveDispatchOfferQuery(
+                    \App\Models\FoxGoDispatchOffer::where('order_id', $order->id)
+                        ->where('delivery_man_id', $dm->id)
+                        ->whereIn('status', ['pending', 'accepted'])
+                )
+                    ->orderByDesc('id')
+                    ->first();
+
+                if (!$offer) {
+                    continue;
+                }
+
+                $expiresAt = $offer->expires_at ? \Carbon\Carbon::parse($offer->expires_at) : null;
+                $offeredAt = $offer->offered_at ? \Carbon\Carbon::parse($offer->offered_at) : null;
+
+                $remainingSeconds = $expiresAt ? max(0, now()->diffInSeconds($expiresAt, false)) : null;
+                $ttlSeconds = ($expiresAt && $offeredAt) ? max(0, $offeredAt->diffInSeconds($expiresAt, false)) : $remainingSeconds;
+
+                $order->setAttribute('foxgo_offer_id', $offer->id);
+                $order->setAttribute('foxgo_offer_uuid', $offer->offer_uuid);
+                $order->setAttribute('foxgo_offer_status', $offer->status);
+                $order->setAttribute('foxgo_offer_expires_at', $expiresAt?->toDateTimeString());
+                $order->setAttribute('foxgo_offer_remaining_seconds', $remainingSeconds);
+                $order->setAttribute('foxgo_offer_ttl_seconds', $ttlSeconds);
+                $order->setAttribute('foxgo_driver_earning_amount', $offer->driver_earning_amount);
+            }
+        } catch (\Throwable $e) {
+            info('FoxGoLogistics attach latest-order offer payload erro: ' . $e->getMessage());
+        }
+    }
+
+
+    private function foxgoLogisticsRecordAvailableRequests($orders, $dm): void
+    {
+        try {
+            if (!$dm || !$orders) {
+                return;
+            }
+
+            foreach ($orders as $order) {
+                if (!$order || !$order->id) {
+                    continue;
+                }
+
+                \App\Services\FoxGo\LogisticsEventService::record('AVAILABLE_REQUEST_VISIBLE', [
+                    'mission_type' => strtoupper((string) ($order->order_type ?: 'delivery')),
+                    'subject_type' => 'order',
+                    'subject_id' => $order->id,
+                    'order_id' => $order->id,
+                    'store_id' => $order->store_id,
+                    'user_id' => $order->user_id,
+                    'delivery_man_id' => $dm->id,
+                    'source' => 'deliveryman_available_requests',
+                    'queue_name' => 'logistics',
+                    'payload' => [
+                        'reason' => 'no_pending_or_accepted_offer_after_timeout_or_rejection',
+                        'label' => 'Solicitação disponível',
+                    ],
+                ]);
+            }
+        } catch (\Throwable $e) {
+            info('FoxGoLogistics available-requests erro: ' . $e->getMessage());
+        }
+    }
+
+
+    private function foxgoLogisticsRecordLatestOrders($orders, $dm): void
+    {
+        try {
+            if (!$dm || !$orders) {
+                return;
+            }
+
+            foreach ($orders as $order) {
+                if (!$order || !$order->id) {
+                    continue;
+                }
+
+                $existingOffer = $this->foxgoActiveDispatchOfferQuery(
+                    \App\Models\FoxGoDispatchOffer::where('order_id', $order->id)
+                        ->where('delivery_man_id', $dm->id)
+                        ->whereIn('status', ['pending', 'accepted'])
+                )
+                    ->orderByDesc('id')
+                    ->first();
+
+                if ($existingOffer) {
+                    \App\Services\FoxGo\LogisticsStatusService::fromOffer($existingOffer, [
+                        'payment_status' => $order->payment_status,
+                        'pickup_status' => 'not_started',
+                        'dropoff_status' => 'not_started',
+                        'support_status' => 'none',
+                    ]);
+                    continue;
+                }
+
+                // Fox GO Logistics: nao repetir offer para mesmo entregador apos timeout/recusa.
+                $foxgoAlreadyTriedThisDriver = \App\Models\FoxGoDispatchOffer::where('order_id', $order->id)
+                    ->where('delivery_man_id', $dm->id)
+                    ->whereIn('status', ['timed_out', 'rejected'])
+                    ->exists();
+
+                if ($foxgoAlreadyTriedThisDriver) {
+                    \App\Services\FoxGo\LogisticsEventService::record('DISPATCH_OFFER_SKIPPED_SAME_DRIVER_RETRY', [
+                        'mission_type' => strtoupper((string) ($order->order_type ?: 'delivery')),
+                        'subject_type' => 'order',
+                        'subject_id' => $order->id,
+                        'order_id' => $order->id,
+                        'store_id' => $order->store_id,
+                        'user_id' => $order->user_id,
+                        'delivery_man_id' => $dm->id,
+                        'source' => 'deliveryman_latest_orders',
+                        'queue_name' => 'logistics',
+                        'payload' => [
+                            'reason' => 'driver_already_timed_out_or_rejected_this_order',
+                        ],
+                    ]);
+
+                    continue;
+                }
+
+                $distanceKm = (float) ($order->distance ?? 0);
+                $score = \App\Services\FoxGo\DispatchScoringService::calculateCandidate([
+                    'active' => (int) $dm->active === 1,
+                    'online' => (int) $dm->active === 1,
+                    'approved' => ($dm->application_status ?? 'approved') === 'approved' && (int) $dm->status === 1,
+                    'has_push_token' => !empty($dm->fcm_token),
+                    'distance_to_pickup_km' => 0,
+                    'total_distance_km' => $distanceKm,
+                    'eta_to_pickup_seconds' => 0,
+                    'current_orders' => (int) ($dm->current_orders ?? 0),
+                    'max_orders' => (int) (config('dm_maximum_orders') ?? 2),
+                    'recent_rejects' => 0,
+                    'late_risk_percent' => 0,
+                    'route_compatibility' => 0,
+                    'priority_bonus' => 0,
+                ]);
+
+                $earning = \App\Services\FoxGo\DispatchScoringService::estimateDriverEarning([
+                    'total_distance_km' => $distanceKm,
+                ]);
+
+                $driverEarning = (float) ($order->original_delivery_charge ?? 0);
+                if ($driverEarning <= 0) {
+                    $driverEarning = (float) ($order->delivery_charge ?? 0);
+                }
+                if ($driverEarning <= 0) {
+                    $driverEarning = (float) $earning['driver_earning_amount'];
+                }
+
+                $offer = \App\Services\FoxGo\DispatchOfferService::createOffer([
+                    'mission_type' => strtoupper((string) ($order->order_type ?: 'delivery')),
+                    'offer_type' => 'real_latest_order',
+                    'order_id' => $order->id,
+                    'store_id' => $order->store_id,
+                    'user_id' => $order->user_id,
+                    'delivery_man_id' => $dm->id,
+                    'source' => 'deliveryman_latest_orders',
+                    'score' => $score['score'],
+                    'distance_to_pickup_km' => $score['distance_to_pickup_km'],
+                    'total_distance_km' => $distanceKm,
+                    'eta_to_pickup_seconds' => $score['eta_to_pickup_seconds'],
+                    'driver_earning_amount' => $driverEarning,
+                    'ttl_seconds' => 45,
+                    'auto_timeout' => true,
+                    'payload' => [
+                        'order_id' => $order->id,
+                        'order_status' => $order->order_status,
+                        'payment_status' => $order->payment_status,
+                        'payment_method' => $order->payment_method,
+                        'module_type' => $order->module?->module_type ?? null,
+                        'candidate_score' => $score,
+                        'earning' => [
+                            'driver_earning_amount' => $driverEarning,
+                            'label' => 'Você recebe',
+                        ],
+                    ],
+                    'metadata' => [
+                        'controller' => 'DeliverymanController',
+                        'method' => 'get_latest_orders',
+                    ],
+                ]);
+
+                \App\Services\FoxGo\LogisticsStatusService::fromOffer($offer, [
+                    'payment_status' => $order->payment_status,
+                    'pickup_status' => 'not_started',
+                    'dropoff_status' => 'not_started',
+                    'support_status' => 'none',
+                ]);
+            }
+        } catch (\Throwable $e) {
+            info('FoxGoLogistics latest-orders erro: ' . $e->getMessage());
+        }
+    }
+
+    private function foxgoLogisticsRecordAcceptedOrder($order, $dm): void
+    {
+        try {
+            if (!$order || !$dm) {
+                return;
+            }
+
+            $offer = $this->foxgoActiveDispatchOfferQuery(
+                \App\Models\FoxGoDispatchOffer::where('order_id', $order->id)
+                    ->where('delivery_man_id', $dm->id)
+                    ->whereIn('status', ['pending', 'accepted'])
+            )
+                ->orderByDesc('id')
+                ->first();
+
+            if (!$offer) {
+                $distanceKm = (float) ($order->distance ?? 0);
+                $earning = \App\Services\FoxGo\DispatchScoringService::estimateDriverEarning([
+                    'total_distance_km' => $distanceKm,
+                ]);
+
+                $driverEarning = (float) ($order->original_delivery_charge ?? 0);
+                if ($driverEarning <= 0) {
+                    $driverEarning = (float) ($order->delivery_charge ?? 0);
+                }
+                if ($driverEarning <= 0) {
+                    $driverEarning = (float) $earning['driver_earning_amount'];
+                }
+
+                $offer = \App\Services\FoxGo\DispatchOfferService::createOffer([
+                    'mission_type' => strtoupper((string) ($order->order_type ?: 'delivery')),
+                    'offer_type' => 'real_accept_order',
+                    'order_id' => $order->id,
+                    'store_id' => $order->store_id,
+                    'user_id' => $order->user_id,
+                    'delivery_man_id' => $dm->id,
+                    'source' => 'deliveryman_accept_order',
+                    'score' => 0,
+                    'total_distance_km' => $distanceKm,
+                    'driver_earning_amount' => $driverEarning,
+                    'ttl_seconds' => 60,
+                    'auto_timeout' => false,
+                    'payload' => [
+                        'order_id' => $order->id,
+                        'order_status' => $order->order_status,
+                        'payment_status' => $order->payment_status,
+                        'payment_method' => $order->payment_method,
+                        'earning' => [
+                            'driver_earning_amount' => $driverEarning,
+                            'label' => 'Você recebe',
+                        ],
+                    ],
+                    'metadata' => [
+                        'controller' => 'DeliverymanController',
+                        'method' => 'accept_order',
+                    ],
+                ]);
+            }
+
+            if ($offer->status === 'pending') {
+                $offer = \App\Services\FoxGo\DispatchOfferService::markAcceptedAlreadyLocked($offer, 'deliveryman_accept_order');
+            }
+
+            \App\Services\FoxGo\LogisticsStatusService::fromOffer($offer, [
+                'payment_status' => $order->payment_status,
+                'operational_status' => 'assigned',
+                'dispatch_status' => 'offer_accepted',
+                'pickup_status' => 'not_started',
+                'dropoff_status' => 'not_started',
+                'support_status' => 'none',
+            ]);
+        } catch (\Throwable $e) {
+            info('FoxGoLogistics accept-order erro: ' . $e->getMessage());
+        }
+    }
+
+    private function foxgoLogisticsRecordOrderStatus($order, $dm, string $status): void
+    {
+        try {
+            if (!$order || !$dm) {
+                return;
+            }
+
+            \App\Services\FoxGo\LogisticsEventService::record('DELIVERYMAN_ORDER_STATUS_UPDATED', [
+                'mission_type' => strtoupper((string) ($order->order_type ?: 'delivery')),
+                'subject_type' => 'order',
+                'subject_id' => $order->id,
+                'order_id' => $order->id,
+                'store_id' => $order->store_id,
+                'user_id' => $order->user_id,
+                'delivery_man_id' => $dm->id,
+                'actor_type' => 'delivery_man',
+                'actor_id' => $dm->id,
+                'source' => 'deliveryman_update_order_status',
+                'status_to' => $status,
+                'queue_name' => 'sync',
+                'payload' => [
+                    'order_status' => $order->order_status,
+                    'payment_status' => $order->payment_status,
+                    'payment_method' => $order->payment_method,
+                ],
+            ]);
+
+            $offer = \App\Models\FoxGoDispatchOffer::where('order_id', $order->id)
+                ->where('delivery_man_id', $dm->id)
+                ->orderByDesc('id')
+                ->first();
+
+            $pickupStatus = match ($status) {
+                'handover' => 'handover',
+                'picked_up', 'delivered' => 'picked_up',
+                default => 'not_started',
+            };
+
+            $dropoffStatus = match ($status) {
+                'delivered' => 'delivered',
+                'canceled' => 'cancelled',
+                default => 'not_started',
+            };
+
+            $operationalStatus = match ($status) {
+                'confirmed' => 'confirmed',
+                'handover' => 'handover',
+                'picked_up' => 'picked_up',
+                'delivered' => 'delivered',
+                'canceled' => 'cancelled',
+                default => $status,
+            };
+
+            \App\Services\FoxGo\LogisticsStatusService::upsertStatus([
+                'mission_type' => strtoupper((string) ($order->order_type ?: 'delivery')),
+                'subject_type' => 'order',
+                'subject_id' => $order->id,
+                'order_id' => $order->id,
+                'store_id' => $order->store_id,
+                'user_id' => $order->user_id,
+                'delivery_man_id' => $dm->id,
+                'current_offer_id' => $offer?->id,
+                'operational_status' => $operationalStatus,
+                'payment_status' => $order->payment_status,
+                'dispatch_status' => $order->delivery_man_id ? 'assigned' : 'unassigned',
+                'pickup_status' => $pickupStatus,
+                'dropoff_status' => $dropoffStatus,
+                'support_status' => 'none',
+                'risk_level' => $status === 'canceled' ? 'attention' : 'normal',
+                'driver_earning_amount' => $offer?->driver_earning_amount,
+                'distance_to_pickup_km' => $offer?->distance_to_pickup_km,
+                'total_distance_km' => $offer?->total_distance_km,
+                'eta_to_pickup_seconds' => $offer?->eta_to_pickup_seconds,
+                'eta_total_seconds' => $offer?->eta_total_seconds,
+                'last_event_at' => now(),
+                'status_updated_at' => now(),
+                'source' => 'deliveryman_update_order_status',
+                'payload' => [
+                    'order_status' => $order->order_status,
+                    'payment_status' => $order->payment_status,
+                    'payment_method' => $order->payment_method,
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            info('FoxGoLogistics update-order-status erro: ' . $e->getMessage());
+        }
+    }
+
 
     public function get_order_details(Request $request)
     {
@@ -1164,12 +1959,6 @@ class DeliverymanController extends Controller
             'business_name' => BusinessSetting::where(['key' => 'business_name'])->first()?->value,
             'business_logo' => \App\CentralLogics\Helpers::get_full_url('business', $store_logo?->value, $store_logo?->storage[0]?->value ?? 'public'),
         ];
-
-        if($dm->is_ride == 1){
-            $attribute = 'rider_collect_cash_payments';
-        }else{
-            $attribute = 'deliveryman_collect_cash_payments';
-        }
         $payment_info = new PaymentInfo(
             success_hook: 'collect_cash_success',
             failure_hook: 'collect_cash_fail',
@@ -1181,7 +1970,7 @@ class DeliverymanController extends Controller
             additional_data: $additional_data,
             payment_amount: $request->amount,
             external_redirect_link: $request->has('callback') ? $request['callback'] : session('callback'),
-            attribute: $attribute,
+            attribute: 'deliveryman_collect_cash_payments',
             attribute_id: $dm->id,
         );
 
@@ -1799,28 +2588,6 @@ class DeliverymanController extends Controller
         return response()->json($data, 200);
     }
 
-    public function income_statement(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'limit' => 'required',
-            'offset' => 'required'
-        ]);
-        if ($validator->fails()) {
-            return response()->json(['errors' => Helpers::error_processor($validator)], 403);
-        }
-        $dm = DeliveryMan::where(['auth_token' => $request['token']])->first();
-        $orders = OrderTransaction::where(['delivery_man_id' => $dm['id']])->paginate($request['limit'], ['*'], 'page', $request['offset']);
-
-        $data = [
-            'total_size' => $orders->total(),
-            'limit' => $request['limit'],
-            'offset' => $request['offset'],
-            'data' => $orders->items(),
-        ];
-        
-        return response()->json($data, 200);
-    }
-
     public function withdraw_list(Request $request)
     {
         $dm = DeliveryMan::where(['auth_token' => $request['token']])->first();
@@ -2011,6 +2778,79 @@ class DeliverymanController extends Controller
 
         return response()->json(['message' => translate('messages.Loyalty_point_converted_successfully')], 200);
 
+    }
+
+
+    /**
+     * Fox GO Logistics:
+     * uma offer pending/accepted só deve contar como ativa
+     * se o pedido relacionado ainda estiver operacionalmente ativo.
+     * Offers antigas de pedidos delivered/canceled/failed/refunded
+     * permanecem como histórico, mas não podem travar/poluir o app.
+     */
+    private function foxgoActiveDispatchOfferQuery($query)
+    {
+        return $query->whereExists(function ($foxgoActiveOrderQuery) {
+            $foxgoActiveOrderQuery
+                ->select(\Illuminate\Support\Facades\DB::raw(1))
+                ->from('orders as foxgo_active_offer_orders')
+                ->whereColumn('foxgo_active_offer_orders.id', 'foxgo_dispatch_offers.order_id')
+                ->whereIn('foxgo_active_offer_orders.order_status', [
+                    'pending',
+                    'confirmed',
+                    'accepted',
+                    'processing',
+                    'handover',
+                    'picked_up',
+                ]);
+        });
+    }
+
+
+    /**
+     * Fox GO: fallback global de veículo para despacho.
+     * Regra: pedido classificado como Bike pode ser recebido por Moto quando não houver Bike elegível.
+     * Não é focado em um entregador específico.
+     */
+    private function foxgoCompatibleDeliveryVehicleIds($orderVehicleId): array
+    {
+        $id = (int) $orderVehicleId;
+
+        if ($id <= 0) {
+            return [];
+        }
+
+        // Regra inicial global validada em teste real:
+        // 1 = bike_delivery, 2 = moto_delivery.
+        // Moto pode cobrir pedido Bike; Bike não cobre pedido Moto.
+        if ($id === 1) {
+            return [1, 2];
+        }
+
+        return [$id];
+    }
+
+
+    /**
+     * Fox GO: veículos de pedido compatíveis com o veículo do entregador.
+     * Regra global inicial:
+     * - Bike recebe Bike.
+     * - Moto recebe Bike e Moto.
+     * - Outros veículos recebem somente o próprio tipo.
+     */
+    private function foxgoCompatibleOrderVehicleIdsForDeliveryMan($deliveryManVehicleId): array
+    {
+        $id = (int) $deliveryManVehicleId;
+
+        if ($id <= 0) {
+            return [];
+        }
+
+        if ($id === 2) {
+            return [1, 2];
+        }
+
+        return [$id];
     }
 
 }
