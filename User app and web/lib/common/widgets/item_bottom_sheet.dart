@@ -516,7 +516,7 @@ class _ItemBottomSheetState extends State<ItemBottomSheet> {
                   decoration: BoxDecoration(
                     color: Theme.of(context).cardColor,
                     borderRadius: GetPlatform.isWeb ? const BorderRadius.only(bottomLeft: Radius.circular(20), bottomRight: Radius.circular(40)) : const BorderRadius.all(Radius.circular(0)),
-                    boxShadow: ResponsiveHelper.isDesktop(context) ? null : const [BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 18, spreadRadius: 0, offset: const Offset(0, 8))],
+                    boxShadow: ResponsiveHelper.isDesktop(context) ? null : [BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 18, spreadRadius: 0, offset: const Offset(0, 8))],
                   ),
                   padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault, vertical: Dimensions.paddingSizeDefault),
                   child: Column(children: [

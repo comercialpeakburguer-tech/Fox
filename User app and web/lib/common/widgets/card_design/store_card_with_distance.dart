@@ -294,7 +294,7 @@ class StoreCardWithDistance extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: Theme.of(context).cardColor,
                     borderRadius: BorderRadius.circular(24),
-                    boxShadow: const [BoxShadow(color: Colors.black.withValues(alpha: 0.07), blurRadius: 16, spreadRadius: 0, offset: const Offset(0, 7))],
+                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.07), blurRadius: 16, spreadRadius: 0, offset: const Offset(0, 7))],
                   ),
                   child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                     Text(store.avgRating!.toStringAsFixed(1), style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall)),

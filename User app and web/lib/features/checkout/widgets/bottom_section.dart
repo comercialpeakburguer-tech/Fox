@@ -60,7 +60,7 @@ class BottomSection extends StatelessWidget {
       decoration: ResponsiveHelper.isDesktop(context) ? BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(18),
-        boxShadow: const [BoxShadow(color: Colors.black.withValues(alpha: 0.07), blurRadius: 18, spreadRadius: 0, offset: const Offset(0, 8))],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.07), blurRadius: 18, spreadRadius: 0, offset: const Offset(0, 8))],
       ) : null,
       padding: const EdgeInsets.only(top: Dimensions.paddingSizeSmall),
       child: Column(children: [
