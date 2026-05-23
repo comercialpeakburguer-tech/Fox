@@ -23,6 +23,7 @@ import 'package:sixam_mart/helper/responsive_helper.dart';
 import 'package:sixam_mart/helper/route_helper.dart';
 import 'package:sixam_mart/helper/validate_check.dart';
 import 'package:sixam_mart/util/dimensions.dart';
+import 'package:sixam_mart/util/foxgo_design.dart';
 import 'package:sixam_mart/util/images.dart';
 import 'package:sixam_mart/util/styles.dart';
 
@@ -69,9 +70,11 @@ class SignUpWidgetState extends State<SignUpWidget> {
         width: context.width > 700 ? 700 : context.width,
         decoration: context.width > 700 ? BoxDecoration(
           color: Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+          borderRadius: BorderRadius.circular(32),
+          border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.07)),
+          boxShadow: FoxGoDesign.premiumShadow(opacity: 0.10, blur: 24, offset: const Offset(0, 12)),
         ) : null,
-        padding: EdgeInsets.symmetric(horizontal: isDesktop ? Dimensions.paddingSizeDefault : 0),
+        padding: EdgeInsets.symmetric(horizontal: isDesktop ? Dimensions.paddingSizeDefault : Dimensions.paddingSizeLarge),
         child: GetBuilder<AuthController>(builder: (authController) {
           return Column(mainAxisSize: MainAxisSize.min, children: [
 
@@ -86,12 +89,12 @@ class SignUpWidgetState extends State<SignUpWidget> {
 
                   isDesktop ? Padding(
                     padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeLarge),
-                    child: Image.asset(Images.logo, width: 125),
+                    child: Container(height: 84, width: 84, padding: const EdgeInsets.all(15), decoration: BoxDecoration(color: FoxGoDesign.softRed, borderRadius: BorderRadius.circular(26)), child: Image.asset(Images.logo, fit: BoxFit.contain)),
                   ) : const SizedBox(),
 
                   isDesktop ? Align(
                     alignment: Alignment.topLeft,
-                    child: Text('sign_up'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeExtraLarge)),
+                    child: Text('sign_up'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeExtraLarge + 2, color: FoxGoDesign.graphite)),
                   ) : const SizedBox(),
 
                 SizedBox(height: isDesktop ? Dimensions.paddingSizeExtraLarge : Dimensions.paddingSizeSmall),
@@ -266,9 +269,9 @@ class SignUpWidgetState extends State<SignUpWidget> {
                   CustomButton(
                     height: isDesktop ? 50 : null,
                     width:  isDesktop ? 250 : null,
-                    radius: isDesktop ? Dimensions.radiusSmall : Dimensions.radiusDefault,
+                    radius: isDesktop ? 20 : 24,
                     isBold: !isDesktop,
-                    fontSize: isDesktop ? Dimensions.fontSizeSmall : null,
+                    fontSize: isDesktop ? Dimensions.fontSizeDefault : null,
                     buttonText: 'sign_up'.tr,
                     isLoading: authController.isLoading,
                     onPressed: authController.acceptTerms ? () => _register(authController, _countryDialCode!) : null,

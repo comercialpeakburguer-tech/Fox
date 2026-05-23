@@ -12,6 +12,7 @@ import 'package:sixam_mart/helper/responsive_helper.dart';
 import 'package:sixam_mart/helper/route_helper.dart';
 import 'package:sixam_mart/helper/validate_check.dart';
 import 'package:sixam_mart/util/dimensions.dart';
+import 'package:sixam_mart/util/foxgo_design.dart';
 import 'package:sixam_mart/util/images.dart';
 import 'package:sixam_mart/util/styles.dart';
 
@@ -34,15 +35,15 @@ class ManualLoginWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     bool isDesktop = ResponsiveHelper.isDesktop(context);
     return GetBuilder<AuthController>(builder: (authController) {
-      
+
       if(isDesktop) {
         return webView(isDesktop, context, authController);
       }
-      
+
       return Column(mainAxisSize: MainAxisSize.min, children: [
-        Text('Bem-vindo ao Fox GO', style: robotoBold.copyWith(fontSize: Dimensions.fontSizeExtraLarge + 4, height: 1.08), textAlign: TextAlign.center),
+        Text('Bem-vindo ao Fox GO', style: robotoBold.copyWith(fontSize: Dimensions.fontSizeExtraLarge + 5, height: 1.05, color: FoxGoDesign.graphite), textAlign: TextAlign.center),
         const SizedBox(height: Dimensions.paddingSizeExtraSmall),
-        Text('log_in_or_sign_up_to_enjoy_a_personalized_experience'.tr, style: robotoRegular.copyWith(color: Theme.of(context).hintColor, fontSize: Dimensions.fontSizeDefault, height: 1.38), textAlign: TextAlign.center),
+        Text('log_in_or_sign_up_to_enjoy_a_personalized_experience'.tr, style: robotoMedium.copyWith(color: Theme.of(context).hintColor, fontSize: Dimensions.fontSizeDefault, height: 1.38), textAlign: TextAlign.center),
         const SizedBox(height: Dimensions.paddingSizeExtraLarge),
 
         CustomTextField(
@@ -127,7 +128,7 @@ class ManualLoginWidget extends StatelessWidget {
                 ),
                 const SizedBox(width: Dimensions.paddingSizeSmall),
 
-                Text('remember_me'.tr, style: robotoRegular),
+                Text('remember_me'.tr, style: robotoMedium.copyWith(color: FoxGoDesign.graphite)),
               ],
             ),
           ),
@@ -137,7 +138,7 @@ class ManualLoginWidget extends StatelessWidget {
             onPressed: () {
               Get.toNamed(RouteHelper.getForgotPassRoute());
             },
-            child: Text('${'forgot_password'.tr}?', style: robotoRegular.copyWith(color: Theme.of(context).primaryColor)),
+            child: Text('${'forgot_password'.tr}?', style: robotoBold.copyWith(color: Theme.of(context).primaryColor)),
           ),
         ]),
 
@@ -150,7 +151,7 @@ class ManualLoginWidget extends StatelessWidget {
           height: isDesktop ? 50 : null,
           width:  isDesktop ? 250 : null,
           buttonText: 'login_signup'.tr,
-          radius: isDesktop ? 18 : 22,
+          radius: isDesktop ? 20 : 24,
           isBold: isDesktop ? false : true,
           isLoading: authController.isLoading,
           onPressed: onClickLoginButton,
@@ -177,7 +178,7 @@ class ManualLoginWidget extends StatelessWidget {
         socialEnable ? SocialLoginWidget(onlySocialLogin: false, backFromThis: backFromThis) : const SizedBox(),
 
         Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          Text('do_not_have_account'.tr, style: robotoRegular.copyWith(color: Theme.of(context).hintColor)),
+          Text('do_not_have_account'.tr, style: robotoMedium.copyWith(color: Theme.of(context).hintColor)),
 
           InkWell(
             onTap: authController.isLoading ? null : () {
@@ -185,7 +186,7 @@ class ManualLoginWidget extends StatelessWidget {
             },
             child: Padding(
               padding: const EdgeInsets.all(Dimensions.paddingSizeExtraSmall),
-              child: Text('sign_up'.tr, style: robotoMedium.copyWith(color: Theme.of(context).primaryColor)),
+              child: Text('sign_up'.tr, style: robotoBold.copyWith(color: Theme.of(context).primaryColor)),
             ),
           ),
         ]),
@@ -320,7 +321,7 @@ class ManualLoginWidget extends StatelessWidget {
             onlyManualLoginEnable ? Padding(
               padding: const EdgeInsets.only(top: Dimensions.paddingSizeSmall),
               child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                Text('do_not_have_account'.tr, style: robotoRegular.copyWith(color: Theme.of(context).hintColor)),
+                Text('do_not_have_account'.tr, style: robotoMedium.copyWith(color: Theme.of(context).hintColor)),
 
                 InkWell(
                   onTap: () {
@@ -329,7 +330,7 @@ class ManualLoginWidget extends StatelessWidget {
                       SizedBox(
                         width: 700,
                         child: Dialog(
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Dimensions.radiusSmall)),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                           backgroundColor: Theme.of(context).cardColor,
                           insetPadding: EdgeInsets.zero,
                           child: const SignUpWidget(),
@@ -339,7 +340,7 @@ class ManualLoginWidget extends StatelessWidget {
                   },
                   child: Padding(
                     padding: const EdgeInsets.all(Dimensions.paddingSizeExtraSmall),
-                    child: Text('sign_up'.tr, style: robotoMedium.copyWith(color: Theme.of(context).primaryColor)),
+                    child: Text('sign_up'.tr, style: robotoBold.copyWith(color: Theme.of(context).primaryColor)),
                   ),
                 ),
               ]),
@@ -392,8 +393,9 @@ class ManualLoginWidget extends StatelessWidget {
             padding: const EdgeInsets.all(1),
             decoration: BoxDecoration(
               color: Theme.of(context).cardColor,
-              borderRadius: const BorderRadius.all(Radius.circular(Dimensions.radiusDefault)),
-              boxShadow: [BoxShadow(color: Colors.grey[Get.isDarkMode ? 700 : 300]!, spreadRadius: 1, blurRadius: 5, offset: const Offset(2, 2))],
+              borderRadius: const BorderRadius.all(Radius.circular(24)),
+              border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.08)),
+              boxShadow: FoxGoDesign.premiumShadow(opacity: 0.06, blur: 16, offset: const Offset(0, 7)),
             ),
             child: CustomInkWell(
               onTap: onOtpViewClick!,
@@ -412,7 +414,7 @@ class ManualLoginWidget extends StatelessWidget {
           const SizedBox(height: Dimensions.paddingSizeLarge),
 
           Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-            Text('do_not_have_account'.tr, style: robotoRegular.copyWith(color: Theme.of(context).hintColor)),
+            Text('do_not_have_account'.tr, style: robotoMedium.copyWith(color: Theme.of(context).hintColor)),
 
             InkWell(
               onTap: () {
@@ -431,7 +433,7 @@ class ManualLoginWidget extends StatelessWidget {
               },
               child: Padding(
                 padding: const EdgeInsets.all(Dimensions.paddingSizeExtraSmall),
-                child: Text('sign_up'.tr, style: robotoMedium.copyWith(color: Theme.of(context).primaryColor)),
+                child: Text('sign_up'.tr, style: robotoBold.copyWith(color: Theme.of(context).primaryColor)),
               ),
             ),
           ]),
