@@ -1,5 +1,8 @@
 class Images {
   static const String logo = 'assets/image/logo.png';
+  static const String foxGoMark = 'assets/image/foxgo_mark.svg';
+  static const String foxGoLogoDark = 'assets/image/foxgo_logo_dark.svg';
+  static const String foxGoLogoLight = 'assets/image/foxgo_logo_light.svg';
   static const String placeholder = 'assets/image/placeholder.jpg';
   static const String notificationPlaceholder = 'assets/image/notification_placeholder.jpg';
   static const String arabic = 'assets/image/arabic.png';
