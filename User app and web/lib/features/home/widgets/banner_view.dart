@@ -32,8 +32,8 @@ class BannerView extends StatelessWidget {
 
       return (bannerList != null && bannerList.isEmpty) ? const SizedBox() : Container(
         width: MediaQuery.of(context).size.width,
-        height: GetPlatform.isDesktop ? 500 : MediaQuery.of(context).size.width * 0.45,
-        padding: const EdgeInsets.only(top: Dimensions.paddingSizeDefault),
+        height: GetPlatform.isDesktop ? 500 : MediaQuery.of(context).size.width * 0.50,
+        padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault, 0),
         child: bannerList != null ? Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -91,12 +91,12 @@ class BannerView extends StatelessWidget {
                     child: Container(
                       decoration: BoxDecoration(
                         color: Theme.of(context).cardColor,
-                        borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-                        boxShadow: [BoxShadow(offset : Offset(0, 2), color: Theme.of(context).disabledColor.withValues(alpha: 0.2), blurRadius: 8, spreadRadius: 2),],
+                        borderRadius: BorderRadius.circular(26),
+                        boxShadow: [BoxShadow(offset: const Offset(0, 8), color: Colors.black.withValues(alpha: 0.12), blurRadius: 20, spreadRadius: 0)],
                       ),
-                      margin: const EdgeInsets.all(Dimensions.paddingSizeSmall),
+                      margin: const EdgeInsets.symmetric(horizontal: 2, vertical: Dimensions.paddingSizeSmall),
                       child: ClipRRect(
-                        borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+                        borderRadius: BorderRadius.circular(26),
                         child: GetBuilder<SplashController>(builder: (splashController) {
                           return CustomImage(
                             image: '${bannerList[index]}',
@@ -116,8 +116,8 @@ class BannerView extends StatelessWidget {
               Center(
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Theme.of(context).disabledColor.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+                    color: Theme.of(context).primaryColor.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(999),
                   ),
                   padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall, vertical: 1),
                   child: Text('${(bannerController.currentIndex) + 1}/${bannerList.length}',
@@ -132,7 +132,7 @@ class BannerView extends StatelessWidget {
           duration: const Duration(seconds: 2),
           enabled: bannerList == null,
           child: Container(margin: const EdgeInsets.symmetric(horizontal: 10), decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+            borderRadius: BorderRadius.circular(26),
             color: Colors.grey[300],
           )),
         ),
