@@ -55,12 +55,12 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Build User Debug APK
-        run: flutter build apk --debug --android-skip-build-dependency-validation
+      - name: Build User Release APK
+        run: flutter build apk --release --android-skip-build-dependency-validation
 
       - name: Upload User APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: user-app-debug-apk
+          name: foxgo-user-client-release-apk
           path: User app and web/build/app/outputs/flutter-apk/*.apk
           if-no-files-found: error

@@ -21,15 +21,17 @@ class CustomButton extends StatelessWidget {
   final Color? iconColor;
   final TextStyle? textStyle;
   const CustomButton({super.key, this.onPressed, required this.buttonText, this.transparent = false, this.margin, this.width, this.height,
-    this.fontSize, this.radius = 10, this.icon, this.color, this.textColor, this.isLoading = false, this.isBold = true, this.isBorder = false, this.iconColor, this.textStyle});
+    this.fontSize, this.radius = 16, this.icon, this.color, this.textColor, this.isLoading = false, this.isBold = true, this.isBorder = false, this.iconColor, this.textStyle});
 
   @override
   Widget build(BuildContext context) {
     final ButtonStyle flatButtonStyle = TextButton.styleFrom(
       backgroundColor: onPressed == null ? Color(0xff93A2AE) : transparent
           ? Colors.transparent : color ?? Theme.of(context).primaryColor,
-      minimumSize: Size(width != null ? width! : Dimensions.webMaxWidth, height != null ? height! : 50),
+      minimumSize: Size(width != null ? width! : Dimensions.webMaxWidth, height != null ? height! : 54),
       padding: EdgeInsets.zero,
+      elevation: onPressed == null || transparent ? 0 : 3,
+      shadowColor: (color ?? Theme.of(context).primaryColor).withValues(alpha: 0.28),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(radius),
         side: isBorder ? BorderSide(color: Theme.of(context).disabledColor.withValues(alpha: 0.5)) : BorderSide.none,

@@ -38,12 +38,13 @@ class ItemCard extends StatelessWidget {
         Container(
           width: 200,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
+            borderRadius: BorderRadius.circular(24),
             color: Theme.of(context).cardColor,
+            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.07), blurRadius: 16, spreadRadius: 0, offset: const Offset(0, 7))],
           ),
           child: CustomInkWell(
             onTap: () => Get.find<ItemController>().navigateToItemPage(item, context),
-            radius: Dimensions.radiusLarge,
+            radius: 24,
             child: TextHover(
               builder: (isHovered) {
                 return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -56,10 +57,10 @@ class ItemCard extends StatelessWidget {
                             right: isPopularItem ? Dimensions.paddingSizeExtraSmall : 0),
                         child: ClipRRect(
                           borderRadius: BorderRadius.only(
-                            topLeft: const Radius.circular(Dimensions.radiusLarge),
-                            topRight: const Radius.circular(Dimensions.radiusLarge),
-                            bottomLeft: Radius.circular(isPopularItem ? Dimensions.radiusLarge : 0),
-                            bottomRight: Radius.circular(isPopularItem ? Dimensions.radiusLarge : 0),
+                            topLeft: const Radius.circular(24),
+                            topRight: const Radius.circular(24),
+                            bottomLeft: Radius.circular(isPopularItem ? 24 : 0),
+                            bottomRight: Radius.circular(isPopularItem ? 24 : 0),
                           ),
                           child: CustomImage(
                             isHovered: isHovered,
@@ -133,7 +134,7 @@ class ItemCard extends StatelessWidget {
                             (isFood || isShop) ? Flexible(
                               child: Text(
                                 item.name ?? '',
-                                style: robotoBold, maxLines: 1, overflow: TextOverflow.ellipsis,
+                                style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault, height: 1.15), maxLines: 1, overflow: TextOverflow.ellipsis,
                               ),
                             ) : item.ratingCount! > 0 ? Row(mainAxisAlignment: isPopularItem ? MainAxisAlignment.center : MainAxisAlignment.start, children: [
                               Icon(Icons.star, size: 14, color: Colors.orange),
@@ -174,7 +175,7 @@ class ItemCard extends StatelessWidget {
                                 Get.find<ItemController>().getStartingPrice(item), discount: discount,
                                 discountType: discountType,
                               ),
-                              textDirection: TextDirection.ltr, style: robotoMedium,
+                              textDirection: TextDirection.ltr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault),
                             ),
 
                             const SizedBox(height: Dimensions.paddingSizeExtraSmall),

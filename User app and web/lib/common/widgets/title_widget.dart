@@ -19,9 +19,11 @@ class TitleWidget extends StatelessWidget {
 
     final bool ltr = Get.find<LocalizationController>().isLtr;
 
-    return Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 2),
+      child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
       Row(children: [
-        Text(title, style: robotoBold.copyWith(fontSize: ResponsiveHelper.isDesktop(context) ? (titleFontSize ?? Dimensions.fontSizeLarge) : (titleFontSize ?? Dimensions.fontSizeLarge))),
+        Text(title, style: robotoBold.copyWith(fontSize: ResponsiveHelper.isDesktop(context) ? (titleFontSize ?? Dimensions.fontSizeExtraLarge) : (titleFontSize ?? Dimensions.fontSizeLarge + 1), height: 1.1)),
         const SizedBox(width: Dimensions.paddingSizeSmall),
 
         image != null ? Image.asset(image!, height: 20, width: 20) : const SizedBox(),
@@ -33,10 +35,10 @@ class TitleWidget extends StatelessWidget {
           padding: EdgeInsets.fromLTRB(ltr ? 10 : 0, 5, ltr ? 0 : 10, 5),
           child: Text(
             'see_all'.tr,
-            style: robotoMedium.copyWith(fontSize: (seeAllFontSize ?? Dimensions.fontSizeSmall), color: Theme.of(context).primaryColor, decoration: seeAllUnderline ? TextDecoration.underline : TextDecoration.none),
+            style: robotoBold.copyWith(fontSize: (seeAllFontSize ?? Dimensions.fontSizeSmall), color: Theme.of(context).primaryColor, decoration: TextDecoration.none),
           ),
         ),
       ) : const SizedBox(),
-    ]);
+    ]));
   }
 }

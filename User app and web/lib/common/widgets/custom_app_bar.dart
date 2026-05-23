@@ -23,10 +23,10 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return ResponsiveHelper.isDesktop(context) ? const WebMenuBar() : AppBar(
-      title: Text(title, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge, fontWeight: FontWeight.w600, color: Theme.of(context).textTheme.bodyLarge!.color)),
+      title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeExtraLarge, color: Theme.of(context).textTheme.bodyLarge!.color)),
       centerTitle: true,
       leading: backButton ? IconButton(
-        icon: leadingIcon != null ? Image.asset(leadingIcon!, height: 22, width: 22) : const Icon(Icons.arrow_back_ios),
+        icon: leadingIcon != null ? Image.asset(leadingIcon!, height: 22, width: 22) : const Icon(Icons.arrow_back_ios_new_rounded, size: 21),
         color: Theme.of(context).textTheme.bodyLarge!.color,
         onPressed: () => onBackPressed != null ? onBackPressed!() : Navigator.pop(context),
       ) : const SizedBox(),
@@ -39,8 +39,8 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       ) : null,
       backgroundColor: Theme.of(context).cardColor,
       surfaceTintColor: Theme.of(context).cardColor,
-      shadowColor: Theme.of(context).disabledColor.withValues(alpha: 0.5),
-      elevation: 2,
+      shadowColor: Colors.black.withValues(alpha: 0.10),
+      elevation: 0.8,
       actions: showCart || onVegFilterTap != null ? [
         showCart ? IconButton(
           onPressed: () => Get.toNamed(RouteHelper.getCartRoute()),
@@ -58,5 +58,5 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 
   @override
-  Size get preferredSize => Size(Get.width, GetPlatform.isDesktop ? 100 : subtitle != null ? 60 : 50);
+  Size get preferredSize => Size(Get.width, GetPlatform.isDesktop ? 100 : subtitle != null ? 68 : 56);
 }
