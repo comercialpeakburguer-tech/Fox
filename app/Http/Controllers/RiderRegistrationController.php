@@ -12,17 +12,10 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rules\Password;
-use Modules\RideShare\Interface\UserManagement\Service\DriverLevelServiceInterface;
 use Modules\RideShare\Entities\UserManagement\RiderDetail;
 
 class RiderRegistrationController extends Controller
 {
-    public function __construct(
-        protected DriverLevelServiceInterface $driverLevelService,
-    )
-    {
-    }
-
     public function create()
     {
         if (!addon_published_status('RideShare')) {
@@ -120,7 +113,14 @@ class RiderRegistrationController extends Controller
             $identity_image = json_encode([]);
         }
 
-        $firstLevel = $this->driverLevelService->findOneBy(criteria: ['user_type' => DRIVER, 'sequence' => 1]);
+        try {
+            $driverLevelService = app('Modules\\RideShare\\Interface\\UserManagement\\Service\\DriverLevelServiceInterface');
+            $firstLevel = $driverLevelService->findOneBy(criteria: ['user_type' => DRIVER, 'sequence' => 1]);
+        } catch (\Throwable $e) {
+            info('FoxGO RideShare driver level service unavailable: '.$e->getMessage());
+            Toastr::error(translate('messages.rider_level_service_not_available'));
+            return back();
+        }
         if (!$firstLevel) {
             Toastr::error(translate('messages.rider_level_not_found'));
             return back();
