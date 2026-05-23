@@ -25,6 +25,7 @@ Route::group(['namespace' => 'Api\\V1', 'middleware' => 'localization'], functio
         Route::get('reels', 'FoxGoReelController@vendorList');
         Route::post('reels/store', 'FoxGoReelController@vendorStore');
         Route::put('reels/status', 'FoxGoReelController@vendorStatus');
+        Route::get('inventory/low-stock', 'FoxGoInventoryController@vendorLowStockItems');
     });
 
     Route::group(['prefix' => 'customer', 'middleware' => ['auth:api']], function () {
