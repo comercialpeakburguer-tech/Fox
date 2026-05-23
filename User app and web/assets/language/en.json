@@ -61,7 +61,7 @@
   "reset_password": "Redefinir Senha",
   "cancel": "Cancelar",
   "history": "Histórico",
-  "clear_all": "Limpar Tudo",
+  "clear_all": "Limpar tudo",
   "suggestions": "Sugestões",
   "item_name": "Nome do Item",
   "approximately": "Aproximadamente",
@@ -1250,11 +1250,11 @@
   "choose_your_language": "Escolha seu idioma",
   "choose_your_language_to_proceed": "Escolha seu idioma para continuar",
   "language_updated_successfully": "Idioma actualizado exitosamente",
-  "your_last_search": "Sua última busca",
+  "your_last_search": "Suas últimas buscas",
   "no_suggestions_found": "No se encontraron sugerencias",
   "this_charge_include_extra_vehicle_charge": "Esta cobrança inclui taxa extra do veículo.",
   "and_bad_weather_charge": "y cargo por mal tiempo",
-  "popular_categories": "Categorías populares",
+  "popular_categories": "Categorias em alta",
   "no_category_available": "No hay categorías disponibles",
   "restaurants_near_you": "restaurantes cerca de ti",
   "stores_near_you": "Lojas perto de você",
@@ -1720,5 +1720,6 @@
   "continue_shopping": "Continuar comprando",
   "grocery": "Mercado",
   "pharmacy": "Farmácia",
-  "ecommerce": "Compras"
+  "ecommerce": "Compras",
+  "suggested_for_you": "Sugestões para você"
 }

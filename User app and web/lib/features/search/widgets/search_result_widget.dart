@@ -2,6 +2,7 @@ import 'package:sixam_mart/features/search/controllers/search_controller.dart' a
 import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
 import 'package:sixam_mart/helper/responsive_helper.dart';
 import 'package:sixam_mart/util/dimensions.dart';
+import 'package:sixam_mart/util/foxgo_design.dart';
 import 'package:sixam_mart/util/styles.dart';
 import 'package:sixam_mart/features/search/widgets/filter_widget.dart';
 import 'package:sixam_mart/features/search/widgets/item_view_widget.dart';
@@ -49,16 +50,16 @@ class SearchResultWidgetState extends State<SearchResultWidget> with TickerProvi
           }
         }
         return isNull ? const SizedBox() : Center(child: SizedBox(width: Dimensions.webMaxWidth, child: Padding(
-          padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
+          padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall, Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall),
           child: Row(children: [
             Text(
               length.toString(),
-              style: robotoBold.copyWith(color: Theme.of(context).primaryColor, fontSize: Dimensions.fontSizeSmall),
+              style: robotoBold.copyWith(color: Theme.of(context).primaryColor, fontSize: Dimensions.fontSizeDefault),
             ),
             const SizedBox(width: Dimensions.paddingSizeExtraSmall),
             Expanded(child: Text(
               'results_found'.tr,
-              style: robotoRegular.copyWith(color: Theme.of(context).disabledColor, fontSize: Dimensions.fontSizeSmall),
+              style: robotoRegular.copyWith(color: Theme.of(context).hintColor, fontSize: Dimensions.fontSizeSmall),
             )),
             ( ResponsiveHelper.isMobile(context)  && widget.searchText.isNotEmpty) ? InkWell(
               onTap: () {
@@ -81,15 +82,21 @@ class SearchResultWidgetState extends State<SearchResultWidget> with TickerProvi
       ResponsiveHelper.isDesktop(context) ? const SizedBox() :
       Center(child: Container(
         width: Dimensions.webMaxWidth,
-        color: Theme.of(context).cardColor,
+        margin: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault, vertical: Dimensions.paddingSizeSmall),
+        padding: const EdgeInsets.all(5),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(22),
+          boxShadow: FoxGoDesign.premiumShadow(opacity: 0.06, blur: 16, offset: const Offset(0, 7)),
+        ),
         child: TabBar(
           controller: _tabController,
-          indicatorColor: Theme.of(context).primaryColor,
-          indicatorWeight: 3,
+          indicatorColor: Colors.transparent,
+          indicatorWeight: 0,
           labelColor: Theme.of(context).primaryColor,
           unselectedLabelColor: Theme.of(context).disabledColor,
           unselectedLabelStyle: robotoRegular.copyWith(color: Theme.of(context).disabledColor, fontSize: Dimensions.fontSizeSmall),
-          labelStyle: robotoBold.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).primaryColor),
+          labelStyle: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault, color: Theme.of(context).primaryColor),
 
           tabs: [
             Tab(text: 'item'.tr),

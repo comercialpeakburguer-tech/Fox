@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:sixam_mart/util/dimensions.dart';
+import 'package:sixam_mart/util/foxgo_design.dart';
 import 'package:sixam_mart/util/styles.dart';
 import 'package:flutter/material.dart';
 
@@ -37,15 +38,16 @@ class _SearchFieldWidgetState extends State<SearchFieldWidget> {
       ],
       decoration: InputDecoration(
         hintText: widget.hint,
-        hintStyle: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).disabledColor),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(widget.radius ?? Dimensions.radiusSmall), borderSide: BorderSide.none),
+        hintStyle: robotoRegular.copyWith(fontSize: Dimensions.fontSizeDefault, color: Theme.of(context).hintColor),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(widget.radius ?? FoxGoDesign.radiusLg), borderSide: BorderSide.none),
         filled: true, fillColor: widget.filledColor ?? Theme.of(context).cardColor,
         isDense: true,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 17),
         suffixIcon: widget.suffixIcon != null ? IconButton(
           onPressed: widget.iconPressed as void Function()?,
           icon: Icon(widget.suffixIcon, color: widget.iconColor ?? Theme.of(context).textTheme.bodyLarge!.color),
         ) : null,
-        prefixIcon: widget.prefixIcon != null ? Icon(widget.prefixIcon, size: 24, color: Theme.of(context).disabledColor) : null,
+        prefixIcon: widget.prefixIcon != null ? Icon(widget.prefixIcon, size: 22, color: Theme.of(context).primaryColor) : null,
       ),
       onSubmitted: widget.onSubmit as void Function(String)?,
       onChanged: widget.onChanged as void Function(String)?,
