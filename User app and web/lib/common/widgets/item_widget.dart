@@ -73,9 +73,9 @@ class ItemWidget extends StatelessWidget {
         Container(
           margin: ResponsiveHelper.isDesktop(context) ? null : const EdgeInsets.only(bottom: Dimensions.paddingSizeSmall),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+            borderRadius: BorderRadius.circular(22),
             color: Theme.of(context).cardColor,
-            boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
+            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.07), blurRadius: 16, spreadRadius: 0, offset: const Offset(0, 6))],
           ),
           child: CustomInkWell(
             onTap: () {
@@ -106,7 +106,7 @@ class ItemWidget extends StatelessWidget {
                 Get.find<ItemController>().navigateToItemPage(item, context, inStore: inStore, isCampaign: isCampaign);
               }
             },
-            radius: Dimensions.radiusDefault,
+            radius: 22,
             padding: ResponsiveHelper.isDesktop(context) ? EdgeInsets.all(fromCartSuggestion ? Dimensions.paddingSizeExtraSmall : Dimensions.paddingSizeSmall) : const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall, vertical: Dimensions.paddingSizeExtraSmall),
             child: TextHover(
               builder: (hovered) {
@@ -118,11 +118,11 @@ class ItemWidget extends StatelessWidget {
 
                       Stack(children: [
                         ClipRRect(
-                          borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+                          borderRadius: BorderRadius.circular(18),
                           child: CustomImage(
                             isHovered: hovered,
                             image: '${isStore ? store != null ? store!.logoFullUrl : '' : item!.imageFullUrl}',
-                            height: imageHeight ?? (desktop ? 120 : length == null ? 100 : 90), width: imageWidth ?? (desktop ? 120 : 90), fit: BoxFit.cover,
+                            height: imageHeight ?? (desktop ? 124 : length == null ? 104 : 94), width: imageWidth ?? (desktop ? 124 : 94), fit: BoxFit.cover,
                           ),
                         ),
 
@@ -157,7 +157,7 @@ class ItemWidget extends StatelessWidget {
                             Flexible(
                               child: Text(
                                 isStore ? store!.name! : item!.name!,
-                                style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall),
+                                style: robotoBold.copyWith(fontSize: Dimensions.fontSizeSmall + 1, height: 1.15),
                                 maxLines: 1, overflow: TextOverflow.ellipsis,
                               ),
                             ),
@@ -244,7 +244,7 @@ class ItemWidget extends StatelessWidget {
                           ]) : Row(children: [
                             Text(
                               PriceConverter.convertPrice(item!.price, discount: discount, discountType: discountType),
-                              style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall), textDirection: TextDirection.ltr,
+                              style: robotoBold.copyWith(fontSize: Dimensions.fontSizeSmall + 1), textDirection: TextDirection.ltr,
                             ),
                             SizedBox(width: discount! > 0 ? Dimensions.paddingSizeExtraSmall : 0),
 
