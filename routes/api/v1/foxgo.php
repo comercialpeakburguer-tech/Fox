@@ -16,4 +16,10 @@ Route::group(['namespace' => 'Api\\V1', 'middleware' => 'localization'], functio
     Route::group(['prefix' => 'vendor', 'namespace' => 'Vendor', 'middleware' => ['vendor.api', 'actch:vendor_app']], function () {
         Route::get('earning-report', 'StoreEarningReportController@getEarningReport');
     });
+
+    Route::group(['prefix' => 'customer', 'middleware' => ['auth:api']], function () {
+        Route::get('saved-files', 'FoxGoSavedPrescriptionController@index');
+        Route::post('saved-files/store', 'FoxGoSavedPrescriptionController@store');
+        Route::delete('saved-files/delete-all', 'FoxGoSavedPrescriptionController@deleteAll');
+    });
 });
