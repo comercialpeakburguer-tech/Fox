@@ -403,6 +403,7 @@ $images = [];
         $food->module_id = Helpers::get_store_data()->module_id;
         $food->images = $images;
         $food->stock = $request->current_stock ?? 0;
+        $this->foxGoV39SaveProductFields($request, $food);
         $module_type = Helpers::get_store_data()->module->module_type;
         if ($module_type == 'grocery') {
             $food->organic = $request->organic ?? 0;
@@ -468,6 +469,35 @@ $images = [];
 
         return response()->json(['success' => translate('messages.product_added_successfully')], 200);
     }
+
+    private function foxGoV39SaveProductFields($request, $item): void
+    {
+        if (\Illuminate\Support\Facades\Schema::hasColumn('items', 'video_link')) {
+            $item->video_link = $request->filled('video_link') ? trim((string) $request->video_link) : null;
+        }
+
+        if (\Illuminate\Support\Facades\Schema::hasColumn('items', 'low_stock_alert_quantity')) {
+            $item->low_stock_alert_quantity = $request->filled('low_stock_alert_quantity') ? max(0, (int) $request->low_stock_alert_quantity) : null;
+        }
+
+        if (\Illuminate\Support\Facades\Schema::hasColumn('items', 'video') && $request->hasFile('video')) {
+            if (!empty($item->video)) {
+                try {
+                    \App\CentralLogics\Helpers::check_and_delete('product/video/', $item->video);
+                } catch (\Throwable $e) {
+                    info('Fox GO product old video delete skipped: '.$e->getMessage());
+                }
+            }
+
+            $extension = strtolower($request->file('video')->getClientOriginalExtension() ?: 'mp4');
+            if (!in_array($extension, ['mp4', 'webm', 'mov', 'm4v'])) {
+                $extension = 'mp4';
+            }
+
+            $item->video = \App\CentralLogics\Helpers::upload('product/video/', $extension, $request->file('video'));
+        }
+    }
+
 
     public function view($id)
     {
@@ -781,6 +811,7 @@ $p = Item::find($id);
         $p->attributes = $request->has('attribute_id') ? json_encode($request->attribute_id) : json_encode([]);
         $p->add_ons = $request->has('addon_ids') ? json_encode($request->addon_ids) : json_encode([]);
         $p->stock = $request->current_stock ?? 0;
+        $this->foxGoV39SaveProductFields($request, $p);
         $p->organic = $request->organic ?? 0;
         $p->is_halal = $request->is_halal ?? 0;
 
