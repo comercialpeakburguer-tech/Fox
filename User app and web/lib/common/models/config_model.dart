@@ -67,6 +67,7 @@ class ConfigModel {
   double? additionCharge;
   List<PaymentBody>? activePaymentMethodList;
   DigitalPaymentInfo? digitalPaymentInfo;
+  ValidationConfig? validationConfig;
   bool? addFundStatus;
   bool? offlinePaymentStatus;
   bool? guestCheckoutStatus;
@@ -191,6 +192,7 @@ class ConfigModel {
     this.additionCharge,
     this.activePaymentMethodList,
     this.digitalPaymentInfo,
+    this.validationConfig,
     this.addFundStatus,
     this.offlinePaymentStatus,
     this.guestCheckoutStatus,
@@ -339,6 +341,7 @@ class ConfigModel {
       });
     }
     digitalPaymentInfo = json['digital_payment_info'] != null ? DigitalPaymentInfo.fromJson(json['digital_payment_info']) : null;
+    validationConfig = json['validation_config'] != null ? ValidationConfig.fromJson(json['validation_config']) : null;
     addFundStatus = json['add_fund_status'] == 1;
     offlinePaymentStatus = json['offline_payment_status'] == 1;
     guestCheckoutStatus = json['guest_checkout_status'] == 1;
@@ -491,6 +494,9 @@ class ConfigModel {
     }
     if (digitalPaymentInfo != null) {
       data['digital_payment_info'] = digitalPaymentInfo!.toJson();
+    }
+    if (validationConfig != null) {
+      data['validation_config'] = validationConfig!.toJson();
     }
     data['add_fund_status'] = addFundStatus;
     data['offline_payment_status'] = offlinePaymentStatus;
@@ -908,6 +914,63 @@ class DigitalPaymentInfo {
     data['digital_payment'] = digitalPayment;
     data['plugin_payment_gateways'] = pluginPaymentGateways;
     data['default_payment_gateways'] = defaultPaymentGateways;
+    return data;
+  }
+}
+
+class ValidationConfig {
+ String? imageFormat;
+ String? imageExtension;
+ String? imageFormatForValidation;
+ String? videoFormat;
+ String? videoExtension;
+ int? productVideoMaxFileSize;
+ String? documentFormat;
+ String? documentExtension;
+ String? audioFormat;
+ String? audioExtension;
+ String? fileFormat;
+ String? fileFormatForImagePicker;
+ String? fileExtension;
+ int? maxFileSize;
+
+  ValidationConfig({this.imageFormat, this.imageExtension, this.imageFormatForValidation, this.videoFormat,
+    this.videoExtension, this.productVideoMaxFileSize, this.documentFormat, this.documentExtension, this.audioFormat,
+    this.audioExtension, this.fileFormat, this.fileFormatForImagePicker, this.fileExtension, this.maxFileSize});
+
+  ValidationConfig.fromJson(Map<String, dynamic> json) {
+    imageFormat = json['image_format'];
+    imageExtension = json['image_extension'];
+    imageFormatForValidation = json['image_format_for_validation'];
+    videoFormat = json['video_format'];
+    videoExtension = json['video_extension'];
+    productVideoMaxFileSize = json['product_video_max_file_size'];
+    documentFormat = json['document_format'];
+    documentExtension = json['document_extension'];
+    audioFormat = json['audio_format'];
+    audioExtension = json['audio_extension'];
+    fileFormat = json['file_format'];
+    fileFormatForImagePicker = json['file_format_for_image_picker'];
+    fileExtension = json['file_extension'];
+    maxFileSize = json['max_file_size'];
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['image_format'] = imageFormat;
+    data['image_extension'] = imageExtension;
+    data['image_format_for_validation'] = imageFormatForValidation;
+    data['video_format'] = videoFormat;
+    data['video_extension'] = videoExtension;
+    data['product_video_max_file_size'] = productVideoMaxFileSize;
+    data['document_format'] = documentFormat;
+    data['document_extension'] = documentExtension;
+    data['audio_format'] = audioFormat;
+    data['audio_extension'] = audioExtension;
+    data['file_format'] = fileFormat;
+    data['file_format_for_image_picker'] = fileFormatForImagePicker;
+    data['file_extension'] = fileExtension;
+    data['max_file_size'] = maxFileSize;
     return data;
   }
 }

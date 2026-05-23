@@ -218,6 +218,9 @@ class Images {
   static const String uploadIcon = 'assets/image/upload_icon.png';
   static const String infoError = 'assets/image/info_error.png';
   static const String helpAndSupport = 'assets/image/help_and_support.png';
+  static const String verifiedBadge = 'assets/image/verified_badge.png';
+  static const String playStoreLogo = 'assets/image/playstore.png';
+  static const String appleSoreLogo = 'assets/image/apple-logo.png';
 
   ///Svg images
   static const String referBg = 'assets/image/refer_bg.svg';
@@ -293,6 +296,8 @@ class Images {
   static const String starFill = 'assets/image/rating_star.png';
   static const String mapIconExtended = 'assets/json/map-picker-1.json';
   static const String mapIconMinimised = 'assets/json/map-picker-2.json';
+  static const String reelTitleIcon = 'assets/image/reel_title_icon.png';
+  static const String qrScannerBg = 'assets/image/qrscanner.png';
 
 
   /// Ride share module

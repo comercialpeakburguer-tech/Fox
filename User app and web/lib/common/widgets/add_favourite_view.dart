@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:pointer_interceptor/pointer_interceptor.dart';
 import 'package:sixam_mart/features/favourite/controllers/favourite_controller.dart';
 import 'package:sixam_mart/features/item/domain/models/item_model.dart';
 import 'package:sixam_mart/helper/auth_helper.dart';
@@ -11,7 +12,8 @@ class AddFavouriteView extends StatefulWidget {
   final double? top, right;
   final double? left;
   final int? storeId;
-  const AddFavouriteView({super.key, required this.item, this.top = 15, this.right = 15, this.left, this.storeId});
+  final bool interceptPointers;
+  const AddFavouriteView({super.key, required this.item, this.top = 15, this.right = 15, this.left, this.storeId, this.interceptPointers = false});
 
   @override
   State<AddFavouriteView> createState() => _AddFavouriteViewState();
@@ -34,8 +36,8 @@ class _AddFavouriteViewState extends State<AddFavouriteView> with SingleTickerPr
 
   @override
   void dispose() {
-    super.dispose();
     _controller.dispose();
+    super.dispose();
   }
 
   @override
@@ -49,7 +51,7 @@ class _AddFavouriteViewState extends State<AddFavouriteView> with SingleTickerPr
         } else {
           isWished = favouriteController.wishItemIdList.contains(widget.item!.id);
         }
-        return InkWell(
+        Widget favouriteButton = InkWell(
           onTap: favouriteController.isRemoving ? null : () {
             if(AuthHelper.isLoggedIn()) {
               if(widget.storeId != null) {
@@ -67,6 +69,7 @@ class _AddFavouriteViewState extends State<AddFavouriteView> with SingleTickerPr
             child: Icon(isWished ? CupertinoIcons.heart_solid : CupertinoIcons.heart, color: isWished ? Theme.of(context).primaryColor : Theme.of(context).primaryColor.withValues(alpha: 0.3), size: 25),
           ),
         );
+        return PointerInterceptor(intercepting: widget.interceptPointers, child: favouriteButton);
       }),
     );
   }

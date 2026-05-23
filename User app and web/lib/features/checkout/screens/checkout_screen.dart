@@ -165,6 +165,7 @@ class CheckoutScreenState extends State<CheckoutScreen> {
   void _setSinglePaymentActive() {
     if((!_firstTimeCheckPayment && !_isCashOnDeliveryActive! && _isDigitalPaymentActive! && Get.find<SplashController>().configModel!.activePaymentMethodList!.length == 1) && ((!_isWalletActive && AuthHelper.isLoggedIn()) || !AuthHelper.isLoggedIn()) ) {
       Future.delayed(const Duration(milliseconds: 600), (){
+        if (!mounted) return;
         Get.find<CheckoutController>().setPaymentMethod(2, isUpdate: false);
         Get.find<CheckoutController>().changeDigitalPaymentName(Get.find<SplashController>().configModel!.activePaymentMethodList![0].getWay!, willUpdate: false);
         _firstTimeCheckPayment = true;
@@ -239,6 +240,8 @@ class CheckoutScreenState extends State<CheckoutScreen> {
           double extraDiscount = _getExtraDiscountPrice(storeDiscountPrice, itemDiscountPrice);
           double? discount = _getDiscountPrice(storeDiscountPrice, itemDiscountPrice);
           double couponDiscount = PriceConverter.toFixed(couponController.discount!);
+
+          print('========coupon discount: $couponDiscount');
 
           double subTotal = _calculateSubTotal(price: price, addOns: addOns, variations: variations, cartList: _cartList);
 
@@ -409,7 +412,7 @@ class CheckoutScreenState extends State<CheckoutScreen> {
                           checkoutController, todayClosed, tomorrowClosed, orderAmount,
                           deliveryCharge, checkoutController.orderTax!, discount, total, maxCodOrderAmount, isPrescriptionRequired,
                         ),
-                        referralDiscount: referralDiscount, variationPrice: isPassedVariationPrice ? variations : 0, extraDiscount: extraDiscount,
+                        referralDiscount: referralDiscount, variationPrice: isPassedVariationPrice ? variations : 0, extraDiscount: extraDiscount, tooltipController1: tooltipController1, tooltipController2: tooltipController2,
                       )),
                     ]),
                   ) : Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -439,7 +442,7 @@ class CheckoutScreenState extends State<CheckoutScreen> {
                         checkoutController, todayClosed, tomorrowClosed, orderAmount, deliveryCharge,
                       checkoutController.orderTax!, discount, total, maxCodOrderAmount, isPrescriptionRequired,
                       ),
-                      referralDiscount: referralDiscount, variationPrice: isPassedVariationPrice ? variations : 0, extraDiscount: extraDiscount,
+                      referralDiscount: referralDiscount, variationPrice: isPassedVariationPrice ? variations : 0, extraDiscount: extraDiscount, tooltipController1: tooltipController1, tooltipController2: tooltipController2,
                     )
                   ]),
                 )),
@@ -450,34 +453,31 @@ class CheckoutScreenState extends State<CheckoutScreen> {
                   color: Theme.of(context).cardColor,
                   boxShadow: [BoxShadow(color: Theme.of(context).primaryColor.withValues(alpha: 0.1), blurRadius: 10)],
                 ),
-                child: Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeLarge, vertical: Dimensions.paddingSizeExtraSmall),
-                      child: Row(children: [
-                        Text(
-                          checkoutController.isPartialPay ? 'due_payment'.tr : 'total_amount'.tr,
-                          style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge, color: Theme.of(context).primaryColor),
-                        ),
+                child: Column(children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeLarge, vertical: Dimensions.paddingSizeExtraSmall),
+                    child: Row(children: [
+                      Text(
+                        checkoutController.isPartialPay ? 'due_payment'.tr : 'total_amount'.tr,
+                        style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge, color: Theme.of(context).primaryColor),
+                      ),
 
-                        (checkoutController.taxIncluded == 1) ? Text(' ${'vat_tax_inc'.tr}', style: robotoMedium.copyWith(
-                          fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).primaryColor,
-                        )) : const SizedBox(),
+                      (checkoutController.taxIncluded == 1) ? Text(' ${'vat_tax_inc'.tr}', style: robotoMedium.copyWith(
+                        fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).primaryColor,
+                      )) : const SizedBox(),
 
-                        const Expanded(child: SizedBox()),
+                      const Expanded(child: SizedBox()),
 
-                        PriceConverter.convertAnimationPrice(
-                          checkoutController.viewTotalPrice,
-                          textStyle: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge, color: Theme.of(context).primaryColor),
-                        ),
-                      ]),
-                    ),
+                      PriceConverter.convertAnimationPrice(
+                        checkoutController.viewTotalPrice,
+                        textStyle: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge, color: Theme.of(context).primaryColor),
+                      ),
+                    ]),
+                  ),
 
-                    _orderPlaceButton(
-                        checkoutController, todayClosed, tomorrowClosed, orderAmount, deliveryCharge, checkoutController.orderTax!, discount, total, maxCodOrderAmount, isPrescriptionRequired,
-                    ),
-                  ],
-                ),
+                  _orderPlaceButton(checkoutController, todayClosed, tomorrowClosed, orderAmount, deliveryCharge, checkoutController.orderTax!, discount, total, maxCodOrderAmount, isPrescriptionRequired,
+                  ),
+                ]),
               ),
 
             ],
@@ -730,12 +730,17 @@ class CheckoutScreenState extends State<CheckoutScreen> {
                 _isCashOnDeliveryActive!, checkoutController.pickedPrescriptions, isOfflinePay: checkoutController.paymentMethodIndex == 3,
               );
             }else{
-              checkoutController.placePrescriptionOrder(
-                widget.storeId, checkoutController.store!.zoneId, checkoutController.distance,
-                finalAddress!.address!, finalAddress.longitude!, finalAddress.latitude!, checkoutController.noteController.text,
-                checkoutController.pickedPrescriptions, (checkoutController.orderType == 'take_away' || checkoutController.tipController.text == 'not_now')
-                ? '' : checkoutController.tipController.text.trim(), checkoutController.selectedInstruction != -1
-                ? AppConstants.deliveryInstructionList[checkoutController.selectedInstruction] : '', 0, 0, widget.fromCart, _isCashOnDeliveryActive!,
+              checkoutController.placePrescriptionOrder(storeId: widget.storeId,
+                zoneID: checkoutController.store!.zoneId, distance: checkoutController.distance,
+                address: finalAddress!.address!, longitude: finalAddress.longitude!,
+                latitude: finalAddress.latitude!, note: checkoutController.noteController.text,
+                orderAttachment: checkoutController.pickedPrescriptions,
+                savedImages: checkoutController.pickedPrescriptionSavedImageNames.whereType<String>().toList(),
+                dmTips: (checkoutController.orderType == 'take_away' || checkoutController.tipController.text == 'not_now')
+                    ? '' : checkoutController.tipController.text.trim(),
+                deliveryInstruction: checkoutController.selectedInstruction != -1
+                    ? AppConstants.deliveryInstructionList[checkoutController.selectedInstruction] : '',
+                orderAmount: 0, maxCodAmount: 0, fromCart: widget.fromCart, isCashOnDeliveryActive: _isCashOnDeliveryActive!,
               );
             }
           }
@@ -914,7 +919,7 @@ class CheckoutScreenState extends State<CheckoutScreen> {
 
   double _calculateDiscountPrice({required Store? store, required List<CartModel?>? cartList, required double price, required double addOns, required bool calStoreDiscount}) {
     double discount = 0;
-    if (store != null && cartList != null) {
+    if (store != null && cartList != null && cartList.isNotEmpty) {
       for (var cartModel in cartList) {
         double? dis = (store.discount != null
             && DateConverter.isAvailable(store.discount!.startTime, store.discount!.endTime))
@@ -1005,8 +1010,7 @@ class CheckoutScreenState extends State<CheckoutScreen> {
             variationPrice += (PriceConverter.convertWithDiscount(
                 cartModel.item!.foodVariations![index].variationValues![i].optionPrice!, discount, discountType,
                 isFoodVariation: true)! * cartModel.quantity!);
-            variationDiscount +=
-            (cartModel.item!.foodVariations![index].variationValues![i].optionPrice! * cartModel.quantity!);
+            variationDiscount += (cartModel.item!.foodVariations![index].variationValues![i].optionPrice! * cartModel.quantity!);
           }
         }
       }
