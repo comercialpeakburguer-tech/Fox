@@ -4,6 +4,7 @@ import 'package:shimmer_animation/shimmer_animation.dart';
 import 'package:sixam_mart/features/wallet/controllers/wallet_controller.dart';
 import 'package:sixam_mart/helper/responsive_helper.dart';
 import 'package:sixam_mart/util/dimensions.dart';
+import 'package:sixam_mart/util/foxgo_design.dart';
 import 'package:sixam_mart/util/styles.dart';
 import 'package:sixam_mart/common/widgets/no_data_screen.dart';
 import '../../../common/widgets/history_item_widget.dart';
@@ -41,13 +42,13 @@ class WalletHistoryWidget extends StatelessWidget {
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text(
                   'wallet_history'.tr,
-                  style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge),
+                  style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge + 1, color: FoxGoDesign.graphite),
                 ),
                 const SizedBox(height: Dimensions.paddingSizeExtraSmall),
 
                 Text(
                   filterName,
-                  style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).primaryColor),
+                  style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).primaryColor),
                 ),
 
               ]),
@@ -65,18 +66,19 @@ class WalletHistoryWidget extends StatelessWidget {
                 ),
                 child: Container(
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
-                    border: Border.all(color: Theme.of(context).disabledColor, width: 1),
+                    borderRadius: BorderRadius.circular(999),
+                    color: Theme.of(context).primaryColor.withValues(alpha: 0.08),
+                    border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.10), width: 1),
                   ),
                   child: Padding(
                     padding: const EdgeInsets.only(left: Dimensions.paddingSizeSmall, right: Dimensions.paddingSizeExtraSmall, top: 2, bottom: 2),
                     child: Row(children: [
                       Text(
                         'filter'.tr,
-                        style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeDefault),
+                        style: robotoBold.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).primaryColor),
                       ),
 
-                      const Icon(Icons.arrow_drop_down, size: 18),
+                      Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: Theme.of(context).primaryColor),
                     ]),
                   ),
                 ),
@@ -95,7 +97,7 @@ class WalletHistoryWidget extends StatelessWidget {
             physics:  const NeverScrollableScrollPhysics(),
             shrinkWrap:  true,
             itemCount: walletController.transactionList!.length,
-            padding: EdgeInsets.only(top: ResponsiveHelper.isDesktop(context) ? 28 : 25),
+            padding: EdgeInsets.only(top: ResponsiveHelper.isDesktop(context) ? 28 : 20),
             itemBuilder: (context, index) {
               return HistoryItemWidget(index: index, fromWallet: true, data: walletController.transactionList);
             },
@@ -131,7 +133,7 @@ class WalletShimmer extends StatelessWidget {
       physics:  const NeverScrollableScrollPhysics(),
       shrinkWrap:  true,
       itemCount: 10,
-      padding: EdgeInsets.only(top: ResponsiveHelper.isDesktop(context) ? 28 : 25),
+      padding: EdgeInsets.only(top: ResponsiveHelper.isDesktop(context) ? 28 : 20),
       itemBuilder: (context, index) {
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeSmall),
