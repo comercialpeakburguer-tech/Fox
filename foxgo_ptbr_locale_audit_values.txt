@@ -1,0 +1,4 @@
+AUDITORIA PT-BR - SOMENTE VALORES DO JSON
+Chaves técnicas em inglês são normais e não aparecem para o cliente.
+
+OK: nenhum valor problemático detectado nos padrões auditados.
