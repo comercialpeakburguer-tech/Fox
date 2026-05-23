@@ -35,29 +35,29 @@ class ModuleView extends StatelessWidget {
       splashController.moduleList != null ? splashController.moduleList!.isNotEmpty ? GridView.builder(
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 3, mainAxisSpacing: Dimensions.paddingSizeSmall,
-          crossAxisSpacing: Dimensions.paddingSizeSmall, childAspectRatio: (1/1),
+          crossAxisSpacing: Dimensions.paddingSizeSmall, childAspectRatio: (1.10/1),
         ),
-        padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
+        padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall, Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault),
         itemCount: splashController.moduleList!.length,
         shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
         itemBuilder: (context, index) {
           return Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+              borderRadius: BorderRadius.circular(24),
               color: Theme.of(context).cardColor,
-              border: Border.all(color: Theme.of(context).disabledColor, width: 0.05),
-              boxShadow: [BoxShadow(color: Theme.of(context).disabledColor.withValues(alpha: 0.2), spreadRadius: 1, blurRadius: 3)],
+              border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.06), width: 0.8),
+              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.07), spreadRadius: 0, blurRadius: 18, offset: const Offset(0, 8))],
             ),
             child: CustomInkWell(
               onTap: () => splashController.switchModule(index, true),
-              radius: Dimensions.radiusDefault,
+              radius: 24,
               child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
 
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+                  borderRadius: BorderRadius.circular(18),
                   child: CustomImage(
                     image: '${splashController.moduleList![index].iconFullUrl}',
-                    height: 50, width: 50,
+                    height: 48, width: 48,
                   ),
                 ),
                 const SizedBox(height: Dimensions.paddingSizeSmall),
@@ -65,7 +65,7 @@ class ModuleView extends StatelessWidget {
                 Center(child: Text(
                   splashController.moduleList![index].moduleName!,
                   textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis,
-                  style: robotoBold.copyWith(fontSize: Dimensions.fontSizeSmall),
+                  style: robotoBold.copyWith(fontSize: Dimensions.fontSizeSmall + 1, height: 1.10),
                 )),
 
               ]),
@@ -171,8 +171,8 @@ class ModuleShimmer extends StatelessWidget {
             child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
 
               Container(
-                height: 50, width: 50,
-                decoration: BoxDecoration(borderRadius: BorderRadius.circular(Dimensions.radiusSmall), color: Colors.grey[300]),
+                height: 48, width: 48,
+                decoration: BoxDecoration(borderRadius: BorderRadius.circular(18), color: Colors.grey[300]),
               ),
               const SizedBox(height: Dimensions.paddingSizeSmall),
 
@@ -218,7 +218,7 @@ class AddressShimmer extends StatelessWidget {
                       : Dimensions.paddingSizeSmall),
                   decoration: BoxDecoration(
                     color: Theme.of(context).cardColor,
-                    borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+                    borderRadius: BorderRadius.circular(18),
                     boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
                   ),
                   child: Row(mainAxisSize: MainAxisSize.min, children: [

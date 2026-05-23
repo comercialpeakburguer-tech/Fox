@@ -44,7 +44,7 @@ class StoreCard extends StatelessWidget {
         width: 300,
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+          borderRadius: BorderRadius.circular(24),
           boxShadow: ResponsiveHelper.isMobile(context) ? [BoxShadow(color: Theme.of(context).disabledColor.withValues(alpha: 0.2), blurRadius: 5, spreadRadius: 1)] : null,
         ),
         child: CustomInkWell(
@@ -77,7 +77,7 @@ class StoreCard extends StatelessWidget {
                       Stack(
                         children: [
                           ClipRRect(
-                            borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+                            borderRadius: BorderRadius.circular(24),
                             child: CustomImage(
                               isHovered: hovered,
                               image: '${store.logoFullUrl}',

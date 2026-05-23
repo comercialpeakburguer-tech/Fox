@@ -377,7 +377,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 locationController.navigateToLocationScreen('home');
                               },
                               child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall),
+                                padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault),
                                 child: Row(children: [
                                   Icon(
                                     CupertinoIcons.location_solid,
@@ -433,19 +433,19 @@ class _HomeScreenState extends State<HomeScreen> {
                   !showMobileModule && !isTaxi && !isRide ? SliverPersistentHeader(
                     pinned: true,
                     delegate: SliverDelegate(callback: (val){}, child: Center(child: Container(
-                      height: 50, width: Dimensions.webMaxWidth,
+                      height: 62, width: Dimensions.webMaxWidth,
                       color: searchBgShow ? Get.find<ThemeController>().darkTheme ? Theme.of(context).colorScheme.surface : Theme.of(context).cardColor : null,
                       padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall),
                       child: isTaxi? Container(color: Theme.of(context).primaryColor): InkWell(
                         onTap: () => Get.toNamed(RouteHelper.getSearchRoute()),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall),
-                          margin: const EdgeInsets.symmetric(vertical: 3),
+                          padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault),
+                          margin: const EdgeInsets.symmetric(vertical: 6),
                           decoration: BoxDecoration(
                             color: Theme.of(context).cardColor,
-                            border: Border.all(color: Theme.of(context).disabledColor, width: 0.2),
-                            borderRadius: BorderRadius.circular(25),
-                            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4, spreadRadius: 1, offset: Offset(0, 2))],
+                            border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.08), width: 0.8),
+                            borderRadius: BorderRadius.circular(28),
+                            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 18, spreadRadius: 0, offset: const Offset(0, 8))],
                           ),
                           child: Row(children: [
                             Icon(
@@ -456,7 +456,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             Expanded(child: Text(
                               Get.find<SplashController>().configModel!.moduleConfig!.module!.showRestaurantText! ? 'search_food_or_restaurant'.tr : 'search_item_or_store'.tr,
                               style: robotoRegular.copyWith(
-                                fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).hintColor,
+                                fontSize: Dimensions.fontSizeDefault, color: Theme.of(context).hintColor,
                               ),
                             )),
                             Icon(Icons.keyboard_voice_sharp, size: 22, color: Theme.of(context).disabledColor)

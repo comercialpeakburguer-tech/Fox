@@ -121,7 +121,7 @@ class StoreCardWithDistance extends StatelessWidget {
                           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                             const SizedBox(height: Dimensions.paddingSizeExtraSmall),
 
-                            Flexible(child: Text(store.name ?? '', maxLines: 1, overflow: TextOverflow.ellipsis, style: robotoMedium)),
+                            Flexible(child: Text(store.name ?? '', maxLines: 1, overflow: TextOverflow.ellipsis, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault))),
                             const SizedBox(height: Dimensions.paddingSizeExtraSmall),
 
                             //if(store.ratingCount! > 0)
@@ -153,7 +153,7 @@ class StoreCardWithDistance extends StatelessWidget {
                           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                             const SizedBox(height: Dimensions.paddingSizeExtraSmall),
 
-                            Flexible(child: Text(store.name ?? '', maxLines: 1, overflow: TextOverflow.ellipsis, style: robotoMedium)),
+                            Flexible(child: Text(store.name ?? '', maxLines: 1, overflow: TextOverflow.ellipsis, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault))),
                             const SizedBox(height: Dimensions.paddingSizeExtraSmall),
 
                            !fromTopOffers! ? Row(children: [
@@ -277,10 +277,10 @@ class StoreCardWithDistance extends StatelessWidget {
                 padding: const EdgeInsets.all(2),
                 decoration: BoxDecoration(
                   color: Theme.of(context).cardColor,
-                  borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+                  borderRadius: BorderRadius.circular(18),
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+                  borderRadius: BorderRadius.circular(18),
                   child: CustomImage(
                     image: '${store.logoFullUrl}',
                     fit: BoxFit.cover, height: double.infinity, width: double.infinity,
@@ -293,8 +293,8 @@ class StoreCardWithDistance extends StatelessWidget {
                 child: Container(
                   decoration: BoxDecoration(
                     color: Theme.of(context).cardColor,
-                    borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-                    boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: const [BoxShadow(color: Colors.black.withValues(alpha: 0.07), blurRadius: 16, spreadRadius: 0, offset: const Offset(0, 7))],
                   ),
                   child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                     Text(store.avgRating!.toStringAsFixed(1), style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall)),
