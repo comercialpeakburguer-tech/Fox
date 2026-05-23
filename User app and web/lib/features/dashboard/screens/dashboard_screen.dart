@@ -235,11 +235,11 @@ class DashboardScreenState extends State<DashboardScreen> {
                                 const MenuScreen()
                               ];
                               return Container(
-                                width: size.width, height: GetPlatform.isIOS ? 80 : 65,
+                                width: size.width, height: GetPlatform.isIOS ? 88 : 74,
                                 decoration: BoxDecoration(
                                   color: Theme.of(context).cardColor,
-                                  borderRadius: const BorderRadius.vertical(top: Radius.circular(Dimensions.radiusLarge)),
-                                    boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
+                                  borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.12), blurRadius: 22, spreadRadius: 0, offset: const Offset(0, -6))],
                                 ),
                                 child: Stack(children: [
 
@@ -247,11 +247,11 @@ class DashboardScreenState extends State<DashboardScreen> {
                                     heightFactor: 0.6,
                                     child: ResponsiveHelper.isDesktop(context) ? null : (widget.fromSplash && Get.find<LocationController>().showLocationSuggestion && active) ? null
                                       : (orderController.showBottomSheet && orderController.runningOrderModel != null && orderController.runningOrderModel!.orders!.isNotEmpty && _isLogin) ? const SizedBox() : Container(
-                                        width: 60, height: 60,
+                                        width: 64, height: 64,
                                         decoration: BoxDecoration(
                                           border: Border.all(color: Theme.of(context).cardColor, width: 5),
-                                          borderRadius: BorderRadius.circular(30),
-                                          boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
+                                          borderRadius: BorderRadius.circular(32),
+                                          boxShadow: [BoxShadow(color: Theme.of(context).primaryColor.withValues(alpha: 0.35), blurRadius: 18, spreadRadius: 0, offset: const Offset(0, 8))],
                                         ),
                                         child: FloatingActionButton(
                                           backgroundColor: Theme.of(context).primaryColor,

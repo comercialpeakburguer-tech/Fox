@@ -60,7 +60,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
           Container(
             width: 1170, height: double.infinity,
-            color: Theme.of(context).primaryColor,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Theme.of(context).primaryColor,
+                  Theme.of(context).primaryColor.withValues(alpha: 0.82),
+                ],
+              ),
+            ),
           ),
 
           SizedBox(
@@ -72,7 +81,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             top: MediaQuery.of(context).padding.top + 10, left: 0, right: 0,
             child: Text(
               'profile'.tr, textAlign: TextAlign.center,
-              style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge, fontWeight: FontWeight.w600, color: Theme.of(context).cardColor),
+              style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge + 1, color: Theme.of(context).cardColor),
             ),
           ),
 
@@ -90,11 +99,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
               padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeExtremeLarge),
               child: Row(children: [
 
-                ClipOval(child: CustomImage(
-                  placeholder: Images.guestIcon,
-                  image: '${(profileController.userInfoModel != null && isLoggedIn) ? profileController.userInfoModel!.imageFullUrl : ''}',
-                  height: 70, width: 70, fit: BoxFit.cover, color: isLoggedIn && profileController.userInfoModel?.imageFullUrl != null ? null : Theme.of(context).cardColor,
-                )),
+                Container(
+                  padding: const EdgeInsets.all(3),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Theme.of(context).cardColor,
+                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.12), blurRadius: 16, offset: const Offset(0, 8))],
+                  ),
+                  child: ClipOval(child: CustomImage(
+                    placeholder: Images.guestIcon,
+                    image: '${(profileController.userInfoModel != null && isLoggedIn) ? profileController.userInfoModel!.imageFullUrl : ''}',
+                    height: 74, width: 74, fit: BoxFit.cover, color: isLoggedIn && profileController.userInfoModel?.imageFullUrl != null ? null : Theme.of(context).cardColor,
+                  )),
+                ),
                 const SizedBox(width: Dimensions.paddingSizeDefault),
 
                 Expanded(
@@ -133,7 +150,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       boxShadow: [BoxShadow(color: Theme.of(context).primaryColor.withValues(alpha: 0.05), blurRadius: 5, spreadRadius: 1, offset: const Offset(3, 3))],
                     ),
                     padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
-                    child: const Icon(Icons.edit_outlined, size: 16, color: Colors.blue),
+                    child: Icon(Icons.edit_outlined, size: 16, color: Theme.of(context).primaryColor),
                   ),
                 ) : InkWell(
                   onTap: () async {
@@ -164,8 +181,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               width: double.infinity,
               padding: const EdgeInsets.all(Dimensions.paddingSizeLarge),
               decoration: BoxDecoration(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(34)),
                 color: Theme.of(context).cardColor,
+                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.10), blurRadius: 24, offset: const Offset(0, -8))],
               ),
               child: Column(children: [
 
