@@ -3,6 +3,7 @@
 namespace App\Traits;
 
 use App\CentralLogics\Helpers;
+use Illuminate\Support\Facades\Storage;
 
 trait HasProductVideoPreview
 {
@@ -19,9 +20,9 @@ trait HasProductVideoPreview
             return null;
         }
 
-        $disk = Helpers::getStorageDiskByKey($this, 'video', 'public');
+        $disk = $this->getFoxGoVideoStorageDisk();
 
-        if (Helpers::getStoredFileSize('product/', $this->video, $disk) <= 0) {
+        if ($this->getFoxGoStoredFileSize('product/', $this->video, $disk) <= 0) {
             return null;
         }
 
@@ -34,7 +35,7 @@ trait HasProductVideoPreview
             return 0;
         }
 
-        return Helpers::getStoredFileSize('product/', $this->video, Helpers::getStorageDiskByKey($this, 'video', 'public'));
+        return $this->getFoxGoStoredFileSize('product/', $this->video, $this->getFoxGoVideoStorageDisk());
     }
 
     public function getVideoPreviewTypeAttribute()
@@ -132,6 +133,29 @@ trait HasProductVideoPreview
     public function getHasVideoSourceAttribute(): bool
     {
         return (bool) ($this->video_full_url || $this->getRawResolvedVideoLink());
+    }
+
+    protected function getFoxGoVideoStorageDisk(): string
+    {
+        if ($this->relationLoaded('storage') && $this->storage) {
+            foreach ($this->storage as $storage) {
+                if (($storage['key'] ?? null) === 'video') {
+                    return $storage['value'] ?? 'public';
+                }
+            }
+        }
+
+        return 'public';
+    }
+
+    protected function getFoxGoStoredFileSize(string $path, string $fileName, string $disk = 'public'): int
+    {
+        try {
+            $fullPath = rtrim($path, '/') . '/' . ltrim($fileName, '/');
+            return Storage::disk($disk)->exists($fullPath) ? (int) Storage::disk($disk)->size($fullPath) : 0;
+        } catch (\Throwable $e) {
+            return 0;
+        }
     }
 
     protected function getResolvedVideoLink(): ?string
