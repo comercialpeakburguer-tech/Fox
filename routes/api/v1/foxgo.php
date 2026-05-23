@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 
 Route::group(['namespace' => 'Api\\V1', 'middleware' => 'localization'], function () {
-    Route::get('app-download-section', 'ConfigController@app_settings_download_section');
+    Route::get('app-download-section', 'FoxGoConfigController@appDownloadSection');
 
     Route::group(['prefix' => 'delivery-man', 'middleware' => 'actch:deliveryman_app'], function () {
         Route::group(['middleware' => ['dm.api']], function () {
