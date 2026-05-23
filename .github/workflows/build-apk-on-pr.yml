@@ -3,6 +3,9 @@ name: Build APK on PR
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - 'Delivery Man App/**'
+      - '.github/workflows/build-apk-on-pr.yml'
   push:
     branches: [main, master]
 
