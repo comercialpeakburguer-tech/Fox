@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 
 class FoxGoDesign {
-  static const Color red = Color(0xFFF7272F);
-  static const Color deepRed = Color(0xFFE30613);
-  static const Color orange = Color(0xFFFF7A00);
-  static const Color graphite = Color(0xFF1E2430);
-  static const Color textMuted = Color(0xFF6D717A);
-  static const Color softBackground = Color(0xFFFAFAFB);
+  static const Color orange = Color(0xFFFF6A00);
+  static const Color orangeSoft = Color(0xFFFF8F1F);
+  static const Color yellow = Color(0xFFFFC107);
+  static const Color red = Color(0xFFFF3B30);
+  static const Color deepRed = Color(0xFFE53935);
+  static const Color graphite = Color(0xFF1A1C1E);
+  static const Color textMuted = Color(0xFF737985);
+  static const Color softBackground = Color(0xFFFFF6F0);
   static const Color card = Color(0xFFFFFFFF);
-  static const Color softRed = Color(0xFFFFEEF0);
+  static const Color softRed = Color(0xFFFFEDE2);
+  static const Color softOrange = Color(0xFFFFF2E6);
 
   static const double radiusSm = 14;
   static const double radiusMd = 18;
@@ -23,7 +26,15 @@ class FoxGoDesign {
     return const LinearGradient(
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
-      colors: [Color(0xFFFF4B1F), Color(0xFFF7272F), Color(0xFFE30613)],
+      colors: [Color(0xFFFF8F1F), Color(0xFFFF6A00), Color(0xFFFF3B30)],
+    );
+  }
+
+  static LinearGradient orangeGradient() {
+    return const LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: [Color(0xFFFFC107), Color(0xFFFF8F1F), Color(0xFFFF6A00)],
     );
   }
 }
