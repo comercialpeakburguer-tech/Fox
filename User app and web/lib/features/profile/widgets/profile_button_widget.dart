@@ -21,10 +21,10 @@ class ProfileButtonWidget extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault, vertical: isButtonActive != null ? 12 : languageName != null ? Dimensions.paddingSizeDefault : Dimensions.paddingSizeLarge),
         decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(22),
+          color: FoxGoDesign.card,
+          borderRadius: BorderRadius.circular(24),
           border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.07), width: 1),
-          boxShadow: FoxGoDesign.premiumShadow(opacity: 0.055, blur: 14, offset: const Offset(0, 6)),
+          boxShadow: FoxGoDesign.premiumShadow(opacity: 0.055, blur: 18, offset: const Offset(0, 8)),
         ),
         child: Row(children: [
           Container(height: 42, width: 42, decoration: BoxDecoration(color: (color ?? Theme.of(context).primaryColor).withValues(alpha: 0.10), borderRadius: BorderRadius.circular(16)), alignment: Alignment.center, child: iconImage != null ? Image.asset(iconImage!, height: 18, width: 25) : Icon(icon, size: 22, color: color ?? Theme.of(context).primaryColor)),
@@ -38,7 +38,7 @@ class ProfileButtonWidget extends StatelessWidget {
               value: isButtonActive!,
               activeTrackColor: Theme.of(context).primaryColor,
               onChanged: (bool? value) => onTap(),
-              inactiveTrackColor: Theme.of(context).primaryColor.withValues(alpha: 0.5),
+              inactiveTrackColor: FoxGoDesign.graphite.withValues(alpha: 0.14),
             ),
           ) : languageName != null ? Container(
             decoration: BoxDecoration(

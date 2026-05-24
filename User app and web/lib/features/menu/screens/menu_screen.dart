@@ -36,26 +36,28 @@ class _MenuScreenState extends State<MenuScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: FoxGoDesign.softBackground,
       body: GetBuilder<ProfileController>(builder: (profileController) {
         final bool isLoggedIn = AuthHelper.isLoggedIn();
 
         return Column(children: [
 
           Container(
-            decoration: BoxDecoration(gradient: FoxGoDesign.redGradient(), borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(30), bottomRight: Radius.circular(30)), boxShadow: FoxGoDesign.premiumShadow(opacity: 0.14, blur: 22, offset: const Offset(0, 10))),
+            decoration: const BoxDecoration(color: FoxGoDesign.softBackground),
             child: Padding(
               padding: const EdgeInsets.only(
                 left: Dimensions.paddingSizeLarge, right: Dimensions.paddingSizeLarge,
-                top: 48, bottom: Dimensions.paddingSizeLarge,
+                top: 42, bottom: Dimensions.paddingSizeDefault,
               ),
               child: Column(
                 children: [
+                  Image.asset(Images.logo, width: 145, fit: BoxFit.contain),
+                  const SizedBox(height: Dimensions.paddingSizeLarge),
                   Row(children: [
 
                     Container(
                       decoration: BoxDecoration(
-                        color: Theme.of(context).cardColor,
+                        color: FoxGoDesign.card,
                         shape: BoxShape.circle,
                         boxShadow: FoxGoDesign.premiumShadow(opacity: 0.14, blur: 18, offset: const Offset(0, 8)),
                       ),
@@ -74,13 +76,13 @@ class _MenuScreenState extends State<MenuScreen> {
                           child: Container(
                             height: 15, width: 150,
                             decoration: BoxDecoration(
-                              color: Theme.of(context).cardColor,
+                              color: FoxGoDesign.card,
                               borderRadius: BorderRadius.circular(5),
                             ),
                           ),
                         ) : Text(
                           isLoggedIn ? '${profileController.userInfoModel?.fName ?? ''} ${profileController.userInfoModel?.lName ?? ''}' : 'guest_user'.tr,
-                          style: robotoBold.copyWith(fontSize: Dimensions.fontSizeExtraLarge + 1, color: Theme.of(context).cardColor, height: 1.05),
+                          style: robotoBold.copyWith(fontSize: Dimensions.fontSizeExtraLarge + 5, color: FoxGoDesign.graphite, height: 1.05),
                         ),
                         SizedBox(height: isLoggedIn && profileController.userInfoModel == null ? Dimensions.paddingSizeSmall : Dimensions.paddingSizeExtraSmall),
 
@@ -88,13 +90,13 @@ class _MenuScreenState extends State<MenuScreen> {
                           child: Container(
                             height: 15, width: 100,
                             decoration: BoxDecoration(
-                              color: Theme.of(context).cardColor,
+                              color: FoxGoDesign.card,
                               borderRadius: BorderRadius.circular(5),
                             ),
                           ),
                         ) : isLoggedIn ? Text(
                           '${'joined'.tr} ${profileController.userInfoModel != null ? DateConverter.containTAndZToUTCFormat(profileController.userInfoModel!.createdAt!) : ''}',
-                          style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).cardColor.withValues(alpha: 0.86)),
+                          style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeDefault, color: FoxGoDesign.textMuted),
                         ) : SizedBox(),
 
                       ]),
@@ -104,7 +106,20 @@ class _MenuScreenState extends State<MenuScreen> {
                       onPressed: (){
                         Get.find<ThemeController>().toggleTheme();
                       },
-                      icon: Get.find<ThemeController>().darkTheme ? Icon(Icons.sunny, color:Colors.white) : Image.asset(Images.moon, height: 30, color: Colors.white,),
+                      icon: Container(
+                        height: 42,
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        decoration: BoxDecoration(
+                          color: FoxGoDesign.graphite,
+                          borderRadius: BorderRadius.circular(18),
+                          boxShadow: FoxGoDesign.premiumShadow(opacity: 0.08, blur: 16, offset: const Offset(0, 7)),
+                        ),
+                        child: Row(mainAxisSize: MainAxisSize.min, children: [
+                          Icon(Icons.dark_mode_outlined, color: Colors.white, size: 18),
+                          const SizedBox(width: 8),
+                          Text('Modo escuro', style: robotoBold.copyWith(color: Colors.white, fontSize: Dimensions.fontSizeSmall)),
+                        ]),
+                      ),
                     ),
 
 
@@ -113,13 +128,13 @@ class _MenuScreenState extends State<MenuScreen> {
 
                   !isLoggedIn ? Column(children: [
                     Divider(
-                      thickness: 0.2, color: Theme.of(context).cardColor,
+                      thickness: 0.2, color: Theme.of(context).hintColor.withValues(alpha: 0.20),
                     ),
 
                     Row(children: [
                       Expanded(child: Text(
                         'for_more_personalised_and_smooth_experience'.tr,
-                        style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).cardColor.withValues(alpha: 0.86)),
+                        style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeDefault, color: FoxGoDesign.textMuted),
                       )),
                       const SizedBox(width: Dimensions.paddingSizeSmall),
 
@@ -129,7 +144,7 @@ class _MenuScreenState extends State<MenuScreen> {
                           minimumSize: Size(130, 30),
                           padding: EdgeInsets.zero,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
+                            borderRadius: BorderRadius.circular(28),
                             side: BorderSide.none,
                           ),
                         ),
@@ -182,9 +197,9 @@ class _MenuScreenState extends State<MenuScreen> {
 
                 Container(
                   decoration: BoxDecoration(
-                    color: Theme.of(context).cardColor,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
+                    color: FoxGoDesign.card,
+                    borderRadius: BorderRadius.circular(28),
+                    boxShadow: FoxGoDesign.premiumShadow(opacity: 0.055, blur: 18, offset: const Offset(0, 8)),
                   ),
                   padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall, Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall),
                   margin: const EdgeInsets.all(Dimensions.paddingSizeDefault),
@@ -209,9 +224,9 @@ class _MenuScreenState extends State<MenuScreen> {
 
                 Container(
                   decoration: BoxDecoration(
-                    color: Theme.of(context).cardColor,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
+                    color: FoxGoDesign.card,
+                    borderRadius: BorderRadius.circular(28),
+                    boxShadow: FoxGoDesign.premiumShadow(opacity: 0.055, blur: 18, offset: const Offset(0, 8)),
                   ),
                   padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall, Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall),
                   margin: const EdgeInsets.all(Dimensions.paddingSizeDefault),
@@ -248,9 +263,9 @@ class _MenuScreenState extends State<MenuScreen> {
 
                 Container(
                   decoration: BoxDecoration(
-                    color: Theme.of(context).cardColor,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
+                    color: FoxGoDesign.card,
+                    borderRadius: BorderRadius.circular(28),
+                    boxShadow: FoxGoDesign.premiumShadow(opacity: 0.055, blur: 18, offset: const Offset(0, 8)),
                   ),
                   padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall, Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall),
                   margin: const EdgeInsets.all(Dimensions.paddingSizeDefault),
@@ -287,9 +302,9 @@ class _MenuScreenState extends State<MenuScreen> {
 
                 Container(
                   decoration: BoxDecoration(
-                    color: Theme.of(context).cardColor,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
+                    color: FoxGoDesign.card,
+                    borderRadius: BorderRadius.circular(28),
+                    boxShadow: FoxGoDesign.premiumShadow(opacity: 0.055, blur: 18, offset: const Offset(0, 8)),
                   ),
                   padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall, Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall),
                   margin: const EdgeInsets.all(Dimensions.paddingSizeDefault),
@@ -375,10 +390,10 @@ class _MenuScreenState extends State<MenuScreen> {
     return  Expanded(
       child: Container(
         decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(20),
+          color: FoxGoDesign.card,
+          borderRadius: BorderRadius.circular(28),
           border: Border.all(color: Theme.of(context).disabledColor, width: 0.2),
-          boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
+          boxShadow: FoxGoDesign.premiumShadow(opacity: 0.055, blur: 18, offset: const Offset(0, 8)),
         ),
         // margin: const EdgeInsets.all(Dimensions.paddingSizeExtraSmall+3),
         padding: const EdgeInsets.all(Dimensions.paddingSizeExtraSmall),
