@@ -1,0 +1,66 @@
+name: Fox GO Release Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - foxgo/user-web-v39-sync
+    paths:
+      - 'User app and web/**'
+      - '.github/workflows/fox_go_release_build.yml'
+
+jobs:
+  build-android-and-web:
+    name: Build APK and User Web
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: User app and web
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Flutter stable
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Flutter doctor
+        run: flutter doctor -v
+
+      - name: Clean project
+        run: flutter clean
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze Dart code
+        run: flutter analyze
+
+      - name: Build release APK
+        run: flutter build apk --release
+
+      - name: Build User Web release
+        run: flutter build web --release --web-renderer canvaskit
+
+      - name: Upload Android APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: fox-go-release-apk
+          path: User app and web/build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
+
+      - name: Upload User Web build
+        uses: actions/upload-artifact@v4
+        with:
+          name: fox-go-user-web-release
+          path: User app and web/build/web
+          if-no-files-found: error
