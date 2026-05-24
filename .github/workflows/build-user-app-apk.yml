@@ -55,6 +55,9 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Apply Fox GO APK patch
+        run: bash ../script/foxgo-apk-patch.sh
+
       - name: Build User Release APK
         run: flutter build apk --release --android-skip-build-dependency-validation
 
