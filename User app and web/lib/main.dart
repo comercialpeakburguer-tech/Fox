@@ -4,6 +4,8 @@ import 'package:app_links/app_links.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:sixam_mart/features/auth/controllers/auth_controller.dart';
 import 'package:sixam_mart/features/cart/controllers/cart_controller.dart';
+import 'package:sixam_mart/features/checkout/controllers/checkout_controller.dart';
+import 'package:sixam_mart/features/checkout/controllers/fox_checkout_controller.dart';
 import 'package:sixam_mart/features/language/controllers/language_controller.dart';
 import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
 import 'package:sixam_mart/common/controllers/theme_controller.dart';
@@ -73,6 +75,11 @@ Future<void> main() async {
   }
 
   Map<String, Map<String, String>> languages = await di.init();
+
+  if(Get.isRegistered<CheckoutController>()) {
+    Get.delete<CheckoutController>(force: true);
+  }
+  Get.lazyPut<CheckoutController>(() => FoxCheckoutController(checkoutServiceInterface: Get.find()), fenix: true);
 
   NotificationBodyModel? body;
   try {
@@ -207,4 +214,3 @@ class _MyAppState extends State<MyApp> {
     });
   }
 }
-
