@@ -29,6 +29,7 @@ import 'package:sixam_mart/helper/route_helper.dart';
 import 'package:sixam_mart/helper/taxi_helper.dart';
 import 'package:sixam_mart/util/app_constants.dart';
 import 'package:sixam_mart/util/dimensions.dart';
+import 'package:sixam_mart/util/foxgo_design.dart';
 import 'package:sixam_mart/util/images.dart';
 import 'package:sixam_mart/util/styles.dart';
 import 'package:sixam_mart/common/widgets/cart_widget.dart';
@@ -236,23 +237,24 @@ class DashboardScreenState extends State<DashboardScreen> {
                                 const MenuScreen()
                               ];
                               return Container(
-                                width: size.width, height: GetPlatform.isIOS ? 94 : 84,
+                                width: size.width, height: GetPlatform.isIOS ? 104 : 94,
                                 decoration: BoxDecoration(
-                                  color: Theme.of(context).cardColor,
-                                  borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-                                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.13), blurRadius: 26, spreadRadius: 0, offset: const Offset(0, -8))],
+                                  color: FoxGoDesign.card,
+                                  borderRadius: const BorderRadius.vertical(top: Radius.circular(34)),
+                                  border: Border(top: BorderSide(color: Theme.of(context).primaryColor.withValues(alpha: 0.06))),
+                                  boxShadow: FoxGoDesign.premiumShadow(opacity: 0.13, blur: 28, offset: const Offset(0, -8)),
                                 ),
                                 child: Stack(children: [
 
                                   Center(
-                                    heightFactor: 0.6,
+                                    heightFactor: 0.58,
                                     child: ResponsiveHelper.isDesktop(context) ? null : (widget.fromSplash && Get.find<LocationController>().showLocationSuggestion && active) ? null
                                       : (orderController.showBottomSheet && orderController.runningOrderModel != null && orderController.runningOrderModel!.orders!.isNotEmpty && _isLogin) ? const SizedBox() : Container(
-                                        width: 66, height: 66,
+                                        width: 72, height: 72,
                                         decoration: BoxDecoration(
-                                          border: Border.all(color: Theme.of(context).cardColor, width: 5),
-                                          borderRadius: BorderRadius.circular(33),
-                                          boxShadow: [BoxShadow(color: Theme.of(context).primaryColor.withValues(alpha: 0.34), blurRadius: 22, spreadRadius: 0, offset: const Offset(0, 10))],
+                                          border: Border.all(color: FoxGoDesign.card, width: 6),
+                                          borderRadius: BorderRadius.circular(36),
+                                          boxShadow: FoxGoDesign.premiumShadow(opacity: 0.24, blur: 24, offset: const Offset(0, 10)),
                                         ),
                                         child: FloatingActionButton(
                                           backgroundColor: Theme.of(context).primaryColor,
@@ -276,28 +278,28 @@ class DashboardScreenState extends State<DashboardScreen> {
                                           },
                                           elevation: 0,
                                           child: isTaxiWithCache
-                                              ? TaxiCartWidget(color: Theme.of(context).cardColor, size: 22)
-                                              : isParcel ? Icon(CupertinoIcons.add, size: 34, color: Theme.of(context).cardColor)
+                                              ? TaxiCartWidget(color: FoxGoDesign.card, size: 22)
+                                              : isParcel ? Icon(CupertinoIcons.add, size: 34, color: FoxGoDesign.card)
                                               : isRide ? const RideCart()
-                                              : CartWidget(color: Theme.of(context).cardColor, size: 22),
+                                              : CartWidget(color: FoxGoDesign.card, size: 22),
                                         ),
                                     ),
                                   ),
 
                                   ResponsiveHelper.isDesktop(context) ? const SizedBox() : (widget.fromSplash && Get.find<LocationController>().showLocationSuggestion && active) ? const SizedBox()
                                   : (orderController.showBottomSheet && orderController.runningOrderModel != null && orderController.runningOrderModel!.orders!.isNotEmpty && _isLogin) ? const SizedBox() : Positioned(
-                                    bottom: 8,
+                                    bottom: 10,
                                     left: 0,
                                     right: 0,
                                     child: Center(
-                                      child: Text('cart'.tr, style: robotoBold.copyWith(color: Theme.of(context).primaryColor, fontSize: 10.8, height: 1)),
+                                      child: Text('cart'.tr, style: robotoBold.copyWith(color: Theme.of(context).primaryColor, fontSize: 10.6, height: 1)),
                                     ),
                                   ),
 
                                   ResponsiveHelper.isDesktop(context) ? const SizedBox() : (widget.fromSplash && Get.find<LocationController>().showLocationSuggestion && active) ? const SizedBox()
                                   : (orderController.showBottomSheet && orderController.runningOrderModel != null && orderController.runningOrderModel!.orders!.isNotEmpty && _isLogin) ? const SizedBox() : Center(
                                     child: SizedBox(
-                                        width: size.width, height: 80,
+                                        width: size.width, height: 88,
                                         child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
                                           BottomNavItemWidget(
                                             title: 'home'.tr, selectedIcon: Images.homeSelect,
@@ -333,7 +335,7 @@ class DashboardScreenState extends State<DashboardScreen> {
                         ),
                       ]),
 
-                    persistentContentHeight: (widget.fromSplash && Get.find<LocationController>().showLocationSuggestion && active) ? 0 : GetPlatform.isIOS ? 110 : 100,
+                    persistentContentHeight: (widget.fromSplash && Get.find<LocationController>().showLocationSuggestion && active) ? 0 : GetPlatform.isIOS ? 118 : 108,
 
                     onIsContractedCallback: () {
                       if(!orderController.showOneOrder) {
