@@ -48,13 +48,13 @@ class ItemWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool ltr = Get.find<LocalizationController>().isLtr;
-    bool desktop = ResponsiveHelper.isDesktop(context);
+    final bool desktop = ResponsiveHelper.isDesktop(context);
     double? discount;
     String? discountType;
     bool isAvailable;
     String genericName = '';
 
-    if(!isStore && item!.genericName != null && item!.genericName!.isNotEmpty) {
+    if(!isStore && item?.genericName != null && item!.genericName!.isNotEmpty) {
       for (String name in item!.genericName!) {
         genericName += name;
       }
@@ -69,15 +69,17 @@ class ItemWidget extends StatelessWidget {
       isAvailable = DateConverter.isAvailable(item!.availableTimeStarts, item!.availableTimeEnds);
     }
 
+    final double safeDiscount = discount ?? 0;
+
     return Stack(
       children: [
         Container(
           margin: ResponsiveHelper.isDesktop(context) ? null : const EdgeInsets.only(bottom: Dimensions.paddingSizeSmall),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
-            color: Theme.of(context).cardColor,
-            border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.06)),
-            boxShadow: FoxGoDesign.premiumShadow(opacity: 0.06, blur: 16, offset: const Offset(0, 7)),
+            borderRadius: BorderRadius.circular(28),
+            color: FoxGoDesign.card,
+            border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.07), width: 1),
+            boxShadow: FoxGoDesign.premiumShadow(opacity: 0.07, blur: 20, offset: const Offset(0, 9)),
           ),
           child: CustomInkWell(
             onTap: () {
@@ -108,8 +110,8 @@ class ItemWidget extends StatelessWidget {
                 Get.find<ItemController>().navigateToItemPage(item, context, inStore: inStore, isCampaign: isCampaign);
               }
             },
-            radius: 24,
-            padding: ResponsiveHelper.isDesktop(context) ? EdgeInsets.all(fromCartSuggestion ? Dimensions.paddingSizeExtraSmall : Dimensions.paddingSizeSmall) : const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall, vertical: Dimensions.paddingSizeExtraSmall),
+            radius: 28,
+            padding: ResponsiveHelper.isDesktop(context) ? EdgeInsets.all(fromCartSuggestion ? Dimensions.paddingSizeExtraSmall : Dimensions.paddingSizeSmall) : const EdgeInsets.all(Dimensions.paddingSizeSmall),
             child: TextHover(
               builder: (hovered) {
                 return Column(mainAxisAlignment: MainAxisAlignment.center, children: [
@@ -119,12 +121,20 @@ class ItemWidget extends StatelessWidget {
                     child: Row(children: [
 
                       Stack(children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(20),
-                          child: CustomImage(
-                            isHovered: hovered,
-                            image: '${isStore ? store != null ? store!.logoFullUrl : '' : item!.imageFullUrl}',
-                            height: imageHeight ?? (desktop ? 124 : length == null ? 104 : 94), width: imageWidth ?? (desktop ? 124 : 94), fit: BoxFit.cover,
+                        Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(24),
+                            boxShadow: FoxGoDesign.premiumShadow(opacity: 0.08, blur: 14, offset: const Offset(0, 6)),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(24),
+                            child: CustomImage(
+                              isHovered: hovered,
+                              image: '${isStore ? store != null ? store!.logoFullUrl : '' : item!.imageFullUrl}',
+                              height: imageHeight ?? (desktop ? 132 : length == null ? 112 : 102),
+                              width: imageWidth ?? (desktop ? 132 : 102),
+                              fit: BoxFit.cover,
+                            ),
                           ),
                         ),
 
@@ -138,7 +148,7 @@ class ItemWidget extends StatelessWidget {
                         isAvailable ? const SizedBox() : NotAvailableWidget(isStore: isStore),
 
                         Positioned(
-                          top: 5, left: 5,
+                          top: 7, left: 7,
                           child: GetBuilder<FavouriteController>(builder: (favouriteController) {
                             bool isWished = isStore ? favouriteController.wishStoreIdList.contains(store!.id) : favouriteController.wishItemIdList.contains(item!.id);
                             return CustomFavouriteWidget(
@@ -150,16 +160,16 @@ class ItemWidget extends StatelessWidget {
                           }),
                         ),
                       ]),
-                      const SizedBox(width: Dimensions.paddingSizeSmall),
+                      const SizedBox(width: Dimensions.paddingSizeDefault),
 
                       Expanded(
-                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.start, children: [
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
 
                           Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
                             Flexible(
                               child: Text(
                                 isStore ? store!.name! : item!.name!,
-                                style: robotoBold.copyWith(fontSize: Dimensions.fontSizeSmall + 1, height: 1.15, color: FoxGoDesign.graphite),
+                                style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault, height: 1.12, color: FoxGoDesign.graphite),
                                 maxLines: 1, overflow: TextOverflow.ellipsis,
                               ),
                             ),
@@ -169,25 +179,26 @@ class ItemWidget extends StatelessWidget {
                                 ? Image.asset(item != null && item!.veg == 0 ? Images.nonVegImage : Images.vegImage,
                                 height: 10, width: 10, fit: BoxFit.contain) : const SizedBox(),
 
-                            (Get.find<SplashController>().configModel!.moduleConfig!.module!.unit! && item != null && item!.unitType != null) ? Text(
+                            (!isStore && Get.find<SplashController>().configModel!.moduleConfig!.module!.unit! && item != null && item!.unitType != null) ? Text(
                               '(${ item!.unitType ?? ''})',
                               style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).hintColor),
                             ) : const SizedBox(),
 
-                            SizedBox(width: item!.isStoreHalalActive! && item!.isHalalItem! ? Dimensions.paddingSizeExtraSmall : 0),
+                            SizedBox(width: !isStore && item != null && item!.isStoreHalalActive! && item!.isHalalItem! ? Dimensions.paddingSizeExtraSmall : 0),
 
-                            !isStore && item!.isStoreHalalActive! && item!.isHalalItem! ? const CustomAssetImageWidget(
+                            !isStore && item != null && item!.isStoreHalalActive! && item!.isHalalItem! ? const CustomAssetImageWidget(
                                 Images.halalTag, height: 13, width: 13) : const SizedBox(),
 
                             SizedBox(width: ResponsiveHelper.isDesktop(context) ? 20 : 0),
                           ]),
-                          const SizedBox(height: 3),
+                          const SizedBox(height: 5),
 
                           inStore ? const SizedBox() : (isStore ? store!.address != null : item!.storeName != null) ? Text(
                             isStore ? store!.address ?? '' : item!.storeName ?? '',
-                            style: robotoRegular.copyWith(
+                            style: robotoMedium.copyWith(
                               fontSize: Dimensions.fontSizeExtraSmall,
-                              color: Theme.of(context).hintColor,
+                              color: FoxGoDesign.textMuted,
+                              height: 1.15,
                             ),
                             maxLines: 1, overflow: TextOverflow.ellipsis,
                           ) : const SizedBox(),
@@ -199,80 +210,90 @@ class ItemWidget extends StatelessWidget {
                                 genericName,
                                 style: robotoMedium.copyWith(
                                   fontSize: Dimensions.fontSizeSmall,
-                                  color: Theme.of(context).hintColor,
+                                  color: FoxGoDesign.textMuted,
                                 ),
                                 maxLines: 1, overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ) : const SizedBox(),
-                          SizedBox(height: ((desktop || isStore) && (isStore ? store!.address != null : item!.storeName != null)) ? 3 : 3),
-
-                          !isStore && (item!.ratingCount! > 0) ? Row(children: [
-
-                            Icon(Icons.star, size: 16, color: Colors.orange),
-                            const SizedBox(width: Dimensions.paddingSizeExtraSmall),
-
-                            Text(
-                              item!.avgRating!.toStringAsFixed(1),
-                              style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall),
-                            ),
-                            const SizedBox(width: Dimensions.paddingSizeExtraSmall),
-
-                            Text(
-                              '(${item!.ratingCount})',
-                              style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).hintColor),
-                            ),
-
-                          ]) : const SizedBox(),
-
-                          SizedBox(height: (!isStore && desktop) || (!isStore && (item!.ratingCount! > 0)) ? 3 : 0),
+                          const SizedBox(height: 7),
 
                           isStore && (store != null && store!.ratingCount! > 0) ? Row(children: [
 
-                            Icon(Icons.star, size: 16, color: Colors.orange),
-                            const SizedBox(width: Dimensions.paddingSizeExtraSmall),
-
-                            Text(
-                              store!.avgRating!.toStringAsFixed(1),
-                              style: robotoMedium,
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: FoxGoDesign.softRed,
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                                Icon(Icons.star_rounded, size: 15, color: Theme.of(context).primaryColor),
+                                const SizedBox(width: 3),
+                                Text(store!.avgRating!.toStringAsFixed(1), style: robotoBold.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).primaryColor)),
+                              ]),
                             ),
                             const SizedBox(width: Dimensions.paddingSizeExtraSmall),
+                            Flexible(child: Text('(${store!.ratingCount})', style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: FoxGoDesign.textMuted))),
 
-                            Text(
-                              '(${store!.ratingCount})',
-                              style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).hintColor),
+                          ]) : !isStore && (item!.ratingCount! > 0) ? Row(children: [
+
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: FoxGoDesign.softRed,
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                                Icon(Icons.star_rounded, size: 15, color: Theme.of(context).primaryColor),
+                                const SizedBox(width: 3),
+                                Text(item!.avgRating!.toStringAsFixed(1), style: robotoBold.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).primaryColor)),
+                              ]),
                             ),
+                            const SizedBox(width: Dimensions.paddingSizeExtraSmall),
+                            Text('(${item!.ratingCount})', style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: FoxGoDesign.textMuted)),
 
-                          ]) : Row(children: [
-                            Text(
-                              PriceConverter.convertPrice(item!.price, discount: discount, discountType: discountType),
-                              style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault, color: Theme.of(context).primaryColor), textDirection: TextDirection.ltr,
+                          ]) : const SizedBox(),
+
+                          SizedBox(height: !isStore ? Dimensions.paddingSizeExtraSmall : 0),
+
+                          !isStore ? Row(children: [
+                            Flexible(
+                              child: Text(
+                                PriceConverter.convertPrice(item!.price, discount: discount, discountType: discountType),
+                                style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault + 1, color: Theme.of(context).primaryColor), textDirection: TextDirection.ltr,
+                              ),
                             ),
-                            SizedBox(width: discount! > 0 ? Dimensions.paddingSizeExtraSmall : 0),
+                            SizedBox(width: safeDiscount > 0 ? Dimensions.paddingSizeExtraSmall : 0),
 
-                            discount > 0 ? Text(
+                            safeDiscount > 0 ? Flexible(child: Text(
                               PriceConverter.convertPrice(item!.price),
                               style: robotoMedium.copyWith(
                                 fontSize: Dimensions.fontSizeExtraSmall,
-                                color: Theme.of(context).hintColor,
+                                color: FoxGoDesign.textMuted,
                                 decoration: TextDecoration.lineThrough,
                               ), textDirection: TextDirection.ltr,
-                            ) : const SizedBox(),
-                          ]),
+                            )) : const SizedBox(),
+                          ]) : const SizedBox(),
 
                         ]),
                       ),
 
-                      Column(mainAxisAlignment: isStore ? MainAxisAlignment.center : MainAxisAlignment.spaceBetween, children: [
+                      !isStore && item != null ? Column(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
 
                         const SizedBox(),
 
-                        CartCountView(
-                          item: item!,
-                          index: index,
+                        Container(
+                          decoration: BoxDecoration(
+                            color: FoxGoDesign.softRed,
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                          child: CartCountView(
+                            item: item!,
+                            index: index,
+                          ),
                         ),
 
-                      ]),
+                      ]) : const SizedBox(),
 
                     ]),
                   )),
