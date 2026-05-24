@@ -1,7 +1,8 @@
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:sixam_mart/util/app_constants.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sixam_mart/util/app_constants.dart';
 
 class ThemeController extends GetxController implements GetxService {
   final SharedPreferences sharedPreferences;
@@ -27,8 +28,14 @@ class ThemeController extends GetxController implements GetxService {
   String get lightMapTaxi => _lightMapTaxi;
 
   void toggleTheme() {
-    _darkTheme = !_darkTheme;
+    setTheme(!_darkTheme);
+  }
+
+  void setTheme(bool isDark) {
+    _darkTheme = isDark;
     sharedPreferences.setBool(AppConstants.theme, _darkTheme);
+    Get.changeThemeMode(_darkTheme ? ThemeMode.dark : ThemeMode.light);
+    _setSystemOverlayStyle();
     update();
   }
 
@@ -38,11 +45,23 @@ class ThemeController extends GetxController implements GetxService {
     update();
   }
 
-  void _loadCurrentTheme() async {
+  Future<void> _loadCurrentTheme() async {
     _lightMap = await rootBundle.loadString('assets/map/light_map.json');
     _darkMap = await rootBundle.loadString('assets/map/dark_map.json');
     _lightMapTaxi = await rootBundle.loadString('assets/map/light_taxi.json');
     _darkTheme = sharedPreferences.getBool(AppConstants.theme) ?? false;
+    Get.changeThemeMode(_darkTheme ? ThemeMode.dark : ThemeMode.light);
+    _setSystemOverlayStyle();
     update();
+  }
+
+  void _setSystemOverlayStyle() {
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      systemNavigationBarColor: _darkTheme ? const Color(0xFF0F1621) : const Color(0xFFFFF6F0),
+      statusBarIconBrightness: _darkTheme ? Brightness.light : Brightness.dark,
+      statusBarBrightness: _darkTheme ? Brightness.dark : Brightness.light,
+      systemNavigationBarIconBrightness: _darkTheme ? Brightness.light : Brightness.dark,
+    ));
   }
 }
