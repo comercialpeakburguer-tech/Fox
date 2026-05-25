@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sixam_mart/features/home/screens/foxgo_mobile_home_screen.dart';
+import 'package:sixam_mart/features/home/screens/foxgo_web_home_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -13,6 +14,10 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final double width = MediaQuery.of(context).size.width;
+    if (width >= 900) {
+      return const FoxGoWebHomeScreen();
+    }
     return const FoxGoMobileHomeScreen();
   }
 }
