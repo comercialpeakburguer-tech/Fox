@@ -1,12 +1,22 @@
-name: Build User Web on PR
+name: Build and Deploy User Web
 
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - 'User app and web/**'
+      - '.github/workflows/build-user-web-on-pr.yml'
   push:
     branches:
-      - foxgo/user-web-v39-sync
+      - main
+    paths:
+      - 'User app and web/**'
+      - '.github/workflows/build-user-web-on-pr.yml'
   workflow_dispatch:
+
+concurrency:
+  group: user-web-build-deploy
+  cancel-in-progress: true
 
 jobs:
   build-web:
@@ -51,3 +61,15 @@ jobs:
           name: user-web-build
           path: User app and web/build/web
           if-no-files-found: error
+
+      - name: Deploy User Web to VPS
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        uses: easingthemes/ssh-deploy@main
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_KEY }}
+          REMOTE_HOST: ${{ secrets.VPS_HOST }}
+          REMOTE_USER: ${{ secrets.VPS_USER }}
+          REMOTE_PORT: ${{ secrets.VPS_PORT }}
+          SOURCE: 'User app and web/build/web/'
+          TARGET: '/opt/foxgo/web_public/'
+          ARGS: '-avz --delete'
