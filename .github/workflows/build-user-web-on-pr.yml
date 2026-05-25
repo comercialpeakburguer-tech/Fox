@@ -14,6 +14,9 @@ on:
       - '.github/workflows/build-user-web-on-pr.yml'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 concurrency:
   group: user-web-build-deploy
   cancel-in-progress: true
@@ -62,47 +65,18 @@ jobs:
           path: User app and web/build/web
           if-no-files-found: error
 
-  deploy-vps:
-    needs: build-web
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-    runs-on: self-hosted
-
-    steps:
-      - name: Download web artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: user-web-build
-          path: user-web-build
-
-      - name: Publish User Web on VPS
+      - name: Publish build to user-web-live branch
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        working-directory: User app and web/build/web
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          TARGET='/opt/foxgo/web_public'
-          if [ ! -d "$TARGET" ]; then
-            sudo mkdir -p "$TARGET"
-          fi
-          if command -v rsync >/dev/null 2>&1; then
-            if [ -w "$TARGET" ]; then
-              rsync -av --delete user-web-build/ "$TARGET"/
-            else
-              sudo rsync -av --delete user-web-build/ "$TARGET"/
-            fi
-          else
-            if [ -w "$TARGET" ]; then
-              find "$TARGET" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
-              cp -a user-web-build/. "$TARGET"/
-            else
-              sudo find "$TARGET" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
-              sudo cp -a user-web-build/. "$TARGET"/
-            fi
-          fi
-
-      - name: Reload web server if available
-        run: |
-          if command -v nginx >/dev/null 2>&1; then
-            sudo nginx -t && sudo systemctl reload nginx
-          elif command -v apache2 >/dev/null 2>&1; then
-            sudo systemctl reload apache2
-          else
-            echo 'Nenhum nginx/apache2 detectado para reload; arquivos publicados.'
-          fi
+          git init
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b user-web-live
+          git add -A
+          git commit -m "deploy: user web ${GITHUB_SHA}"
+          git remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git push --force origin user-web-live
