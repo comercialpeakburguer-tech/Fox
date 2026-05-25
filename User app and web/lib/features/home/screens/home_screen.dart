@@ -5,6 +5,7 @@ import 'package:sixam_mart/features/banner/controllers/banner_controller.dart';
 import 'package:sixam_mart/features/brands/controllers/brands_controller.dart';
 import 'package:sixam_mart/features/home/controllers/advertisement_controller.dart';
 import 'package:sixam_mart/features/home/controllers/home_controller.dart';
+import 'package:sixam_mart/features/home/screens/foxgo_mobile_home_screen.dart';
 import 'package:sixam_mart/features/home/widgets/all_store_filter_widget.dart';
 import 'package:sixam_mart/features/home/widgets/cashback_logo_widget.dart';
 import 'package:sixam_mart/features/home/widgets/cashback_dialog_widget.dart';
@@ -244,6 +245,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if(!ResponsiveHelper.isDesktop(context)) {
+      return const FoxGoMobileHomeScreen();
+    }
     return GetBuilder<SplashController>(builder: (splashController) {
       if(splashController.moduleList != null && splashController.moduleList!.length == 1) {
         splashController.switchModule(0, true);
@@ -518,32 +522,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     );
                   }),) : const SizedBox()),
 
+                  if(ResponsiveHelper.isDesktop(context)) SliverToBoxAdapter(child: CashbackLogoWidget()),
+
                 ],
               ),
             ),
           ),
-
-          floatingActionButton: isRide ?  GetBuilder<RideController>(
-              builder: (rideController) {
-                return rideController.biddingList.isNotEmpty && homeController.showFavButton ? Padding(
-                  padding: EdgeInsets.only(bottom: Get.height * 0.08),
-                  child: InkWell(
-                    onTap: (){
-                      Get.to(()=> BidingListScreen(tripId: rideController.rideDetails!.id!));
-                    },
-                    child: Image.asset(Images.biddingIcon,height: 60,width: 60),
-                  ),
-                ) : const SizedBox();
-              }
-          ) : AuthHelper.isLoggedIn() && homeController.cashBackOfferList != null && homeController.cashBackOfferList!.isNotEmpty ?
-          homeController.showFavButton ? Padding(
-            padding: EdgeInsets.only(bottom: 50.0, right: ResponsiveHelper.isDesktop(context) ? 50 : 0),
-            child: InkWell(
-              onTap: () => Get.dialog(const CashBackDialogWidget()),
-              child: const CashBackLogoWidget(),
-            ),
-          ) : null : null,
-
         );
       });
     });
@@ -554,14 +538,11 @@ class SliverDelegate extends SliverPersistentHeaderDelegate {
   Widget child;
   double height;
   Function(bool isPinned)? callback;
-  bool isPinned = false;
-
   SliverDelegate({required this.child, this.height = 50, this.callback});
 
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    isPinned = shrinkOffset == maxExtent /*|| shrinkOffset < maxExtent*/;
-    callback!(isPinned);
+    callback!(shrinkOffset > 0);
     return child;
   }
 
