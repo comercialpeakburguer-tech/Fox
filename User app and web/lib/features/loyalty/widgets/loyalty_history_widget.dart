@@ -5,6 +5,7 @@ import 'package:sixam_mart/features/loyalty/controllers/loyalty_controller.dart'
 import 'package:sixam_mart/common/widgets/history_item_widget.dart';
 import 'package:sixam_mart/helper/responsive_helper.dart';
 import 'package:sixam_mart/util/dimensions.dart';
+import 'package:sixam_mart/util/foxgo_design.dart';
 import 'package:sixam_mart/util/styles.dart';
 import 'package:sixam_mart/common/widgets/no_data_screen.dart';
 
@@ -23,7 +24,7 @@ class LoyaltyHistoryWidget extends StatelessWidget {
 
               Text(
                 'point_history'.tr,
-                style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge),
+                style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge + 1, color: FoxGoDesign.graphite),
               ),
 
               const SizedBox(),
@@ -41,7 +42,7 @@ class LoyaltyHistoryWidget extends StatelessWidget {
             physics:  const NeverScrollableScrollPhysics(),
             shrinkWrap:  true,
             itemCount: loyaltyController.transactionList!.length ,
-            padding: EdgeInsets.only(top: ResponsiveHelper.isDesktop(context) ? 28 : 25),
+            padding: EdgeInsets.only(top: ResponsiveHelper.isDesktop(context) ? 28 : 20),
             itemBuilder: (context, index) {
               return HistoryItemWidget(index: index, fromWallet: false, data: loyaltyController.transactionList);
             },
@@ -77,7 +78,7 @@ class WalletShimmer extends StatelessWidget {
       physics:  const NeverScrollableScrollPhysics(),
       shrinkWrap:  true,
       itemCount: 10,
-      padding: EdgeInsets.only(top: ResponsiveHelper.isDesktop(context) ? 28 : 25),
+      padding: EdgeInsets.only(top: ResponsiveHelper.isDesktop(context) ? 28 : 20),
       itemBuilder: (context, index) {
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeSmall),

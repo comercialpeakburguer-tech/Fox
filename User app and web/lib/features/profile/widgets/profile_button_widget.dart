@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:sixam_mart/util/dimensions.dart';
+import 'package:sixam_mart/util/foxgo_design.dart';
 import 'package:sixam_mart/util/styles.dart';
 import 'package:flutter/material.dart';
 
@@ -20,16 +21,16 @@ class ProfileButtonWidget extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault, vertical: isButtonActive != null ? 12 : languageName != null ? Dimensions.paddingSizeDefault : Dimensions.paddingSizeLarge),
         decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-          border: Border.all(color: Theme.of(context).disabledColor, width: 0.1),
-          boxShadow: [BoxShadow(color: Theme.of(context).disabledColor.withValues(alpha: 0.2), spreadRadius: 1, blurRadius: 5)],
+          color: FoxGoDesign.card,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.07), width: 1),
+          boxShadow: FoxGoDesign.premiumShadow(opacity: 0.055, blur: 18, offset: const Offset(0, 8)),
         ),
         child: Row(children: [
-          iconImage != null ? Image.asset(iconImage!, height: 18, width: 25) : Icon(icon, size: 25, color: color ?? Theme.of(context).textTheme.bodyMedium!.color),
+          Container(height: 42, width: 42, decoration: BoxDecoration(color: (color ?? Theme.of(context).primaryColor).withValues(alpha: 0.10), borderRadius: BorderRadius.circular(16)), alignment: Alignment.center, child: iconImage != null ? Image.asset(iconImage!, height: 18, width: 25) : Icon(icon, size: 22, color: color ?? Theme.of(context).primaryColor)),
           const SizedBox(width: Dimensions.paddingSizeSmall),
 
-          Expanded(child: Text(title, style: robotoRegular)),
+          Expanded(child: Text(title, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault, color: FoxGoDesign.graphite))),
 
           isButtonActive != null ? Transform.scale(
             scale: 0.7,
@@ -37,7 +38,7 @@ class ProfileButtonWidget extends StatelessWidget {
               value: isButtonActive!,
               activeTrackColor: Theme.of(context).primaryColor,
               onChanged: (bool? value) => onTap(),
-              inactiveTrackColor: Theme.of(context).primaryColor.withValues(alpha: 0.5),
+              inactiveTrackColor: FoxGoDesign.graphite.withValues(alpha: 0.14),
             ),
           ) : languageName != null ? Container(
             decoration: BoxDecoration(

@@ -14,6 +14,7 @@ import 'package:sixam_mart/helper/auth_helper.dart';
 import 'package:sixam_mart/helper/price_converter.dart';
 import 'package:sixam_mart/helper/responsive_helper.dart';
 import 'package:sixam_mart/util/dimensions.dart';
+import 'package:sixam_mart/util/foxgo_design.dart';
 import 'package:sixam_mart/util/styles.dart';
 import 'package:sixam_mart/features/checkout/widgets/coupon_section.dart';
 import 'package:sixam_mart/features/checkout/widgets/note_prescription_section.dart';
@@ -48,7 +49,7 @@ class BottomSection extends StatelessWidget {
     required this.discount, required this.couponController, required this.taxIncluded, required this.tax,
     required this.deliveryCharge, required this.todayClosed, required this.tomorrowClosed,
     required this.orderAmount, this.maxCodOrderAmount, this.storeId, this.taxPercent, required this.price,
-    required this.addOns, this.checkoutButton, required this.isPrescriptionRequired, required this.referralDiscount, 
+    required this.addOns, this.checkoutButton, required this.isPrescriptionRequired, required this.referralDiscount,
     required this.variationPrice, required this.extraDiscount, required this.tooltipController1, required this.tooltipController2});
 
   @override
@@ -59,8 +60,9 @@ class BottomSection extends StatelessWidget {
     return Container(
       decoration: ResponsiveHelper.isDesktop(context) ? BoxDecoration(
         color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
-        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.07)),
+        boxShadow: FoxGoDesign.premiumShadow(opacity: 0.08, blur: 20, offset: const Offset(0, 10)),
       ) : null,
       padding: const EdgeInsets.only(top: Dimensions.paddingSizeSmall),
       child: Column(children: [
@@ -78,9 +80,11 @@ class BottomSection extends StatelessWidget {
         Container(
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
-            boxShadow: [BoxShadow(color: Theme.of(context).primaryColor.withValues(alpha: 0.05), blurRadius: 10)],
+            borderRadius: BorderRadius.circular(30),
+            border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.08)),
+            boxShadow: FoxGoDesign.premiumShadow(opacity: 0.075, blur: 18, offset: const Offset(0, 8)),
           ),
-          padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeDefault, horizontal: Dimensions.paddingSizeLarge),
+          padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
             ///Additional Note & prescription..
@@ -110,7 +114,7 @@ class BottomSection extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      Text( 'total_amount'.tr, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge, color: Theme.of(context).primaryColor)),
+                      Text('total_amount'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge + 2, color: FoxGoDesign.graphite)),
                       storeId == null ? const SizedBox() : Text(
                         'Once_your_order_is_confirmed_you_will_receive'.tr,
                         style: robotoRegular.copyWith(
@@ -129,7 +133,7 @@ class BottomSection extends StatelessWidget {
               ),
               PriceConverter.convertAnimationPrice(
                 checkoutController.viewTotalPrice,
-                textStyle: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge, color: checkoutController.isPartialPay ? Theme.of(context).textTheme.bodyMedium!.color : Theme.of(context).primaryColor),
+                textStyle: robotoBold.copyWith(fontSize: Dimensions.fontSizeExtraLarge + 1, color: checkoutController.isPartialPay ? Theme.of(context).textTheme.bodyMedium!.color : Theme.of(context).primaryColor),
               ),
             ]) : const SizedBox(),
           ]),
@@ -151,7 +155,7 @@ class BottomSection extends StatelessWidget {
         alignment: Alignment.topLeft,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault, vertical: Dimensions.paddingSizeSmall),
-          child: Text('order_summary'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge)),
+          child: Text('order_summary'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge + 2, color: FoxGoDesign.graphite)),
         ),
       ) : const SizedBox(),
 
@@ -160,20 +164,20 @@ class BottomSection extends StatelessWidget {
         child: Column(
           children: [
             storeId == null ? Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-              Text(module.addOn! ? 'subtotal'.tr : 'item_price'.tr, style: robotoRegular),
+              Text(module.addOn! ? 'subtotal'.tr : 'item_price'.tr, style: robotoRegular.copyWith(color: Theme.of(context).hintColor)),
               Text(PriceConverter.convertPrice(subTotal), style: robotoMedium, textDirection: TextDirection.ltr),
             ]) : const SizedBox(),
             SizedBox(height: storeId == null ? Dimensions.paddingSizeSmall : 0),
 
             storeId == null ? Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-              Text('discount'.tr, style: robotoRegular),
+              Text('discount'.tr, style: robotoRegular.copyWith(color: Theme.of(context).hintColor)),
               Text('(-) ${PriceConverter.convertPrice(discount)}', style: robotoRegular, textDirection: TextDirection.ltr),
             ]) : const SizedBox(),
             const SizedBox(height: Dimensions.paddingSizeSmall),
 
             (couponController.discount! > 0 || couponController.freeDelivery) ? Column(children: [
               Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                Text('coupon_discount'.tr, style: robotoRegular),
+                Text('coupon_discount'.tr, style: robotoRegular.copyWith(color: Theme.of(context).hintColor)),
                 (couponController.coupon != null && couponController.coupon!.couponType == 'free_delivery') ? Text(
                   'free_delivery'.tr, style: robotoRegular.copyWith(color: Theme.of(context).primaryColor),
                 ) : Text(
@@ -221,7 +225,7 @@ class BottomSection extends StatelessWidget {
             SizedBox(height: storeId == null ? (checkoutController.store!.extraPackagingStatus! && Get.find<CartController>().needExtraPackage) ? Dimensions.paddingSizeSmall : 0.0 : 0.0),
 
             (AuthHelper.isGuestLoggedIn() && checkoutController.guestAddress == null) ? const SizedBox() : Row( children: [
-              Text('delivery_fee'.tr, style: robotoRegular),
+              Text('delivery_fee'.tr, style: robotoRegular.copyWith(color: Theme.of(context).hintColor)),
               const SizedBox(width: 5),
 
               (checkoutController.orderType == 'delivery') && (checkoutController.store?.selfDeliverySystem == 0) && (checkoutController.surgePrice?.customerNoteStatus == 1) ? CustomToolTip(
@@ -271,7 +275,7 @@ class BottomSection extends StatelessWidget {
 
             Padding(
               padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeSmall),
-              child: Divider(thickness: 1, color: Theme.of(context).hintColor.withValues(alpha: 0.5)),
+              child: Divider(thickness: 1, color: Theme.of(context).primaryColor.withValues(alpha: 0.10)),
             ),
           ],
         ),

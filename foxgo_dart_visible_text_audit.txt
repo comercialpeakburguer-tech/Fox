@@ -1,0 +1,4 @@
+AUDITORIA FOX GO - TEXTOS VISIVEIS HARDCODED EM DART
+Ignora logs, prints, imagens, URLs, interpolação, preço, rating, chaves de tradução e valores técnicos de rota/API.
+
+OK: nenhum texto visível hardcoded suspeito encontrado nos .dart.

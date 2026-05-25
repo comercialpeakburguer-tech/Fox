@@ -28,36 +28,42 @@ class CategoryView extends StatelessWidget {
               Row(children: [
                 Expanded(
                   child: SizedBox(
-                    height: 130,
+                    height: 146,
                     child: categoryController.categoryList != null ? ListView.builder(
                       controller: scrollController,
                       itemCount: categoryController.categoryList!.length > 15 ? 15 : categoryController.categoryList!.length,
-                      padding: const EdgeInsets.only(left: Dimensions.paddingSizeSmall, top: Dimensions.paddingSizeDefault),
+                      padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall, Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall),
                       physics: const BouncingScrollPhysics(),
                       scrollDirection: Axis.horizontal,
                       itemBuilder: (context, index) {
                         return Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 1, vertical: Dimensions.paddingSizeDefault),
+                          padding: const EdgeInsets.only(right: Dimensions.paddingSizeSmall, top: Dimensions.paddingSizeSmall, bottom: Dimensions.paddingSizeSmall),
                           child: InkWell(
                             onTap: () => Get.toNamed(RouteHelper.getCategoryItemRoute(
                               categoryController.categoryList![index].id, categoryController.categoryList![index].name!,
                               slug: categoryController.categoryList![index].slug??'',
                             )),
-                            child: SizedBox(
-                              width: 60,
+                            child: Container(
+                              width: 82,
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 9),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).cardColor,
+                                borderRadius: BorderRadius.circular(22),
+                                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.07), blurRadius: 14, spreadRadius: 0, offset: const Offset(0, 6))],
+                              ),
                               child: Column(children: [
                                 Container(
-                                  height: 50, width: 50,
+                                  height: 54, width: 54,
                                   margin: EdgeInsets.only(
                                     left: index == 0 ? 0 : Dimensions.paddingSizeExtraSmall,
                                     right: Dimensions.paddingSizeExtraSmall,
                                   ),
                                   child: Stack(children: [
                                     ClipRRect(
-                                      borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+                                      borderRadius: BorderRadius.circular(18),
                                       child: CustomImage(
                                         image: '${categoryController.categoryList![index].imageFullUrl}',
-                                        height: 50, width: 50, fit: BoxFit.cover,
+                                        height: 54, width: 54, fit: BoxFit.cover,
                                       ),
                                     ),
                                   ]),
@@ -68,7 +74,7 @@ class CategoryView extends StatelessWidget {
                                   padding: EdgeInsets.only(right: index == 0 ? Dimensions.paddingSizeExtraSmall : 0),
                                   child: Text(
                                     categoryController.categoryList![index].name!,
-                                    style: robotoMedium.copyWith(fontSize: 11),
+                                    style: robotoMedium.copyWith(fontSize: 11.5, height: 1.15),
                                     maxLines: Get.find<LocalizationController>().isLtr ? 2 : 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center,
                                   ),
                                 ),
@@ -92,10 +98,15 @@ class CategoryView extends StatelessWidget {
                         },
                         child: Padding(
                           padding: const EdgeInsets.only(right: Dimensions.paddingSizeSmall),
-                          child: CircleAvatar(
-                            radius: 35,
-                            backgroundColor: Theme.of(context).primaryColor,
-                            child: Text('view_all'.tr, style: TextStyle(fontSize: Dimensions.paddingSizeDefault, color: Theme.of(context).cardColor)),
+                          child: Container(
+                            height: 74, width: 74,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).primaryColor,
+                              borderRadius: BorderRadius.circular(22),
+                              boxShadow: [BoxShadow(color: Theme.of(context).primaryColor.withValues(alpha: 0.22), blurRadius: 16, offset: const Offset(0, 8))],
+                            ),
+                            child: Text('view_all'.tr, textAlign: TextAlign.center, style: TextStyle(fontSize: Dimensions.paddingSizeDefault, fontWeight: FontWeight.w700, color: Theme.of(context).cardColor)),
                           ),
                         ),
                       ),
@@ -138,9 +149,10 @@ class PharmacyCategoryView extends StatelessWidget {
                 )),
                 borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
                 child: Container(
-                  width: 70,
+                  width: 82,
                   decoration: BoxDecoration(
-                    borderRadius: const BorderRadius.only(topLeft: Radius.circular(100), topRight: Radius.circular(100)),
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.07), blurRadius: 14, offset: const Offset(0, 6))],
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
@@ -153,7 +165,7 @@ class PharmacyCategoryView extends StatelessWidget {
                   child: Column(children: [
 
                     ClipRRect(
-                      borderRadius: const BorderRadius.only(topLeft: Radius.circular(100), topRight: Radius.circular(100)),
+                      borderRadius: BorderRadius.circular(22),
                       child: CustomImage(
                         image: '${categoryController.categoryList![index].imageFullUrl}',
                         height: 60, width: double.infinity, fit: BoxFit.cover,
@@ -204,12 +216,18 @@ class FoodCategoryView extends StatelessWidget {
                     slug: categoryController.categoryList![index].slug??'',
                   )),
                   borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
-                  child: SizedBox(
-                    width: 60,
+                  child: Container(
+                    width: 82,
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 9),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).cardColor,
+                      borderRadius: BorderRadius.circular(22),
+                      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.07), blurRadius: 14, spreadRadius: 0, offset: const Offset(0, 6))],
+                    ),
                     child: Column(children: [
 
                       ClipRRect(
-                        borderRadius: const BorderRadius.all(Radius.circular(100)),
+                        borderRadius: BorderRadius.circular(18),
                         child: CustomImage(
                           image: '${categoryController.categoryList![index].imageFullUrl}',
                           height: 60, width: double.infinity, fit: BoxFit.cover,
@@ -242,7 +260,7 @@ class CategoryShimmer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 75,
+      height: 96,
       child: ListView.builder(
         itemCount: 14,
         padding: const EdgeInsets.only(left: Dimensions.paddingSizeSmall),
@@ -257,10 +275,10 @@ class CategoryShimmer extends StatelessWidget {
               enabled: categoryController.categoryList == null,
               child: Column(children: [
                 Container(
-                  height: 50, width: 50,
+                  height: 62, width: 74,
                   decoration: BoxDecoration(
                     color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+                    borderRadius: BorderRadius.circular(22),
                   ),
                 ),
                 const SizedBox(height: 5),

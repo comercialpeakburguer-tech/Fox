@@ -10,6 +10,7 @@ import 'package:sixam_mart/features/location/domain/models/zone_response_model.d
 import 'package:sixam_mart/helper/address_helper.dart';
 import 'package:sixam_mart/helper/route_helper.dart';
 import 'package:sixam_mart/util/dimensions.dart';
+import 'package:sixam_mart/util/foxgo_design.dart';
 import 'package:sixam_mart/util/styles.dart';
 import 'package:sixam_mart/common/widgets/custom_image.dart';
 import 'package:sixam_mart/common/widgets/custom_snackbar.dart';
@@ -32,8 +33,8 @@ class BannerView extends StatelessWidget {
 
       return (bannerList != null && bannerList.isEmpty) ? const SizedBox() : Container(
         width: MediaQuery.of(context).size.width,
-        height: GetPlatform.isDesktop ? 500 : MediaQuery.of(context).size.width * 0.45,
-        padding: const EdgeInsets.only(top: Dimensions.paddingSizeDefault),
+        height: GetPlatform.isDesktop ? 500 : MediaQuery.of(context).size.width * 0.48,
+        padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall, Dimensions.paddingSizeDefault, 0),
         child: bannerList != null ? Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -42,7 +43,7 @@ class BannerView extends StatelessWidget {
                 options: CarouselOptions(
                   autoPlay: bannerList.length > 1,
                   enableInfiniteScroll: bannerList.length > 1,
-                  enlargeCenterPage: true,
+                  enlargeCenterPage: false,
                   disableCenter: true,
                   viewportFraction: 1,
                   autoPlayInterval: const Duration(seconds: 7),
@@ -90,19 +91,35 @@ class BannerView extends StatelessWidget {
                     },
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Theme.of(context).cardColor,
-                        borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-                        boxShadow: [BoxShadow(offset : Offset(0, 2), color: Theme.of(context).disabledColor.withValues(alpha: 0.2), blurRadius: 8, spreadRadius: 2),],
+                        color: FoxGoDesign.card,
+                        borderRadius: BorderRadius.circular(30),
+                        border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.07), width: 1),
+                        boxShadow: FoxGoDesign.premiumShadow(opacity: 0.12, blur: 24, offset: const Offset(0, 10)),
                       ),
-                      margin: const EdgeInsets.all(Dimensions.paddingSizeSmall),
+                      margin: const EdgeInsets.symmetric(horizontal: 1, vertical: Dimensions.paddingSizeSmall),
                       child: ClipRRect(
-                        borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-                        child: GetBuilder<SplashController>(builder: (splashController) {
-                          return CustomImage(
-                            image: '${bannerList[index]}',
-                            fit: BoxFit.cover,
-                          );
-                        }),
+                        borderRadius: BorderRadius.circular(30),
+                        child: Stack(fit: StackFit.expand, children: [
+                          GetBuilder<SplashController>(builder: (splashController) {
+                            return CustomImage(
+                              image: '${bannerList[index]}',
+                              fit: BoxFit.cover,
+                            );
+                          }),
+                          Positioned(
+                            left: 14,
+                            bottom: 14,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.32),
+                                borderRadius: BorderRadius.circular(999),
+                                border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+                              ),
+                              child: Text('Oferta Fox GO', style: robotoBold.copyWith(color: Colors.white, fontSize: Dimensions.fontSizeExtraSmall)),
+                            ),
+                          ),
+                        ]),
                       ),
                     ),
                   );
@@ -116,12 +133,13 @@ class BannerView extends StatelessWidget {
               Center(
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Theme.of(context).disabledColor.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+                    color: FoxGoDesign.softRed,
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.10)),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall, vertical: 1),
+                  padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall, vertical: 2),
                   child: Text('${(bannerController.currentIndex) + 1}/${bannerList.length}',
-                      style: robotoBold.copyWith(color: Theme.of(context).textTheme.bodyLarge?.color, fontSize: 12),
+                      style: robotoBold.copyWith(color: Theme.of(context).primaryColor, fontSize: 12),
                   ),
                 ),
               ),
@@ -132,7 +150,7 @@ class BannerView extends StatelessWidget {
           duration: const Duration(seconds: 2),
           enabled: bannerList == null,
           child: Container(margin: const EdgeInsets.symmetric(horizontal: 10), decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+            borderRadius: BorderRadius.circular(30),
             color: Colors.grey[300],
           )),
         ),

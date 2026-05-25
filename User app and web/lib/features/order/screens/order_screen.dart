@@ -8,6 +8,7 @@ import 'package:sixam_mart/helper/auth_helper.dart';
 import 'package:sixam_mart/helper/responsive_helper.dart';
 import 'package:sixam_mart/helper/taxi_helper.dart';
 import 'package:sixam_mart/util/dimensions.dart';
+import 'package:sixam_mart/util/foxgo_design.dart';
 import 'package:sixam_mart/util/styles.dart';
 import 'package:sixam_mart/common/widgets/custom_app_bar.dart';
 import 'package:sixam_mart/common/widgets/menu_drawer.dart';
@@ -101,17 +102,17 @@ class OrderScreenState extends State<OrderScreen> with TickerProviderStateMixin 
                 haveTaxiModule && !ResponsiveHelper.isDesktop(context) ? Container(
                   decoration: BoxDecoration(
                     color: Theme.of(context).cardColor,
-                    boxShadow: [BoxShadow(color: Theme.of(context).disabledColor.withValues(alpha: 0.1), blurRadius: 5, offset: const Offset(0, 10))],
+                    boxShadow: FoxGoDesign.premiumShadow(opacity: 0.08, blur: 18, offset: const Offset(0, 8)),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall, vertical: Dimensions.paddingSizeSmall),
+                  padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall),
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
                     const SizedBox(height: Dimensions.paddingSizeSmall),
-                    Text('my_orders'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge)),
+                    Text('Meus pedidos', style: robotoBold.copyWith(fontSize: Dimensions.fontSizeExtraLarge + 4, height: 1.05, color: FoxGoDesign.graphite)),
                     const SizedBox(height: Dimensions.paddingSizeDefault),
 
                     SizedBox(
-                      height: 30,
+                      height: 46,
                       child: ListView.builder(
                           itemCount: type.length,
                           scrollDirection: Axis.horizontal,
@@ -120,8 +121,9 @@ class OrderScreenState extends State<OrderScreen> with TickerProviderStateMixin 
                             return Container(
                               decoration: BoxDecoration(
                                 color: selected ? Theme.of(context).primaryColor : Theme.of(context).cardColor,
-                                borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
-                                border: Border.all(color: Theme.of(context).disabledColor, width: 0.3),
+                                borderRadius: BorderRadius.circular(24),
+                                border: Border.all(color: selected ? Theme.of(context).primaryColor : Theme.of(context).disabledColor.withValues(alpha: 0.25), width: 0.8),
+                                boxShadow: selected ? [BoxShadow(color: Theme.of(context).primaryColor.withValues(alpha: 0.24), blurRadius: 16, offset: const Offset(0, 7))] : FoxGoDesign.premiumShadow(opacity: 0.04, blur: 10, offset: const Offset(0, 4)),
                               ),
                               alignment: Alignment.center,
                               margin: const EdgeInsets.only(right: Dimensions.paddingSizeSmall),
@@ -132,9 +134,9 @@ class OrderScreenState extends State<OrderScreen> with TickerProviderStateMixin 
                                   });
                                   initCall();
                                 },
-                                radius: Dimensions.radiusLarge,
+                                radius: 22,
                                 padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault),
-                                child: Text(type[index].tr, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge, color: selected ? Colors.white : Theme.of(context).textTheme.bodyLarge!.color!.withValues(alpha: 0.7))),
+                                child: Text(type[index].tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault, color: selected ? Colors.white : Theme.of(context).textTheme.bodyLarge!.color!.withValues(alpha: 0.72))),
                               ),
                             );
                           }),
@@ -161,15 +163,15 @@ class OrderScreenState extends State<OrderScreen> with TickerProviderStateMixin 
                               alignment: ResponsiveHelper.isDesktop(context) ? Alignment.centerLeft : Alignment.center,
                               child: Container(
                                 width: ResponsiveHelper.isDesktop(context) ? 300 : Dimensions.webMaxWidth,
-                                color: ResponsiveHelper.isDesktop(context) ? Colors.transparent : Theme.of(context).cardColor,
+                                decoration: BoxDecoration(color: ResponsiveHelper.isDesktop(context) ? Colors.transparent : Theme.of(context).cardColor, borderRadius: BorderRadius.circular(24), boxShadow: ResponsiveHelper.isDesktop(context) ? null : FoxGoDesign.premiumShadow(opacity: 0.06, blur: 14, offset: const Offset(0, 6))),
                                 child: TabBar(
                                   controller: _tabController,
-                                  indicatorColor: Theme.of(context).primaryColor,
-                                  indicatorWeight: 3,
+                                  indicatorColor: Colors.transparent,
+                                  indicatorWeight: 0,
                                   labelColor: Theme.of(context).primaryColor,
                                   unselectedLabelColor: Theme.of(context).disabledColor,
-                                  unselectedLabelStyle: robotoRegular.copyWith(color: Theme.of(context).disabledColor, fontSize: Dimensions.fontSizeSmall),
-                                  labelStyle: robotoBold.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).primaryColor),
+                                  unselectedLabelStyle: robotoRegular.copyWith(color: Theme.of(context).hintColor, fontSize: Dimensions.fontSizeDefault),
+                                  labelStyle: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault + 1, color: Theme.of(context).primaryColor),
                                   tabs: [
                                     Tab(text: 'running'.tr),
                                     Tab(text: 'history'.tr),
@@ -189,12 +191,12 @@ class OrderScreenState extends State<OrderScreen> with TickerProviderStateMixin 
                           isScrollable: haveTaxiModule ? true : false,
                           padding: EdgeInsets.zero,
                           tabAlignment: haveTaxiModule ? TabAlignment.start : null,
-                          indicatorColor: Theme.of(context).primaryColor,
-                          indicatorWeight: 3,
+                          indicatorColor: Colors.transparent,
+                          indicatorWeight: 0,
                           labelColor: Theme.of(context).primaryColor,
                           unselectedLabelColor: Theme.of(context).disabledColor,
-                          unselectedLabelStyle: robotoRegular.copyWith(color: Theme.of(context).disabledColor, fontSize: Dimensions.fontSizeSmall),
-                          labelStyle: robotoBold.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).primaryColor),
+                          unselectedLabelStyle: robotoRegular.copyWith(color: Theme.of(context).hintColor, fontSize: Dimensions.fontSizeDefault),
+                          labelStyle: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault + 1, color: Theme.of(context).primaryColor),
                           tabs: [
                             Tab(text: 'running'.tr),
                             Tab(text: 'history'.tr),

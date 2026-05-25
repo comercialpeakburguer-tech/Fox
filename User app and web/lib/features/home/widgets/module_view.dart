@@ -10,6 +10,7 @@ import 'package:sixam_mart/helper/address_helper.dart';
 import 'package:sixam_mart/helper/auth_helper.dart';
 import 'package:sixam_mart/helper/responsive_helper.dart';
 import 'package:sixam_mart/util/dimensions.dart';
+import 'package:sixam_mart/util/foxgo_design.dart';
 import 'package:sixam_mart/util/styles.dart';
 import 'package:sixam_mart/common/widgets/custom_image.dart';
 import 'package:sixam_mart/common/widgets/custom_loader.dart';
@@ -30,49 +31,93 @@ class ModuleView extends StatelessWidget {
       GetBuilder<BannerController>(builder: (bannerController) {
         return const BannerView(isFeatured: true);
       }),
-      SizedBox(height: Dimensions.paddingSizeDefault),
+      const SizedBox(height: Dimensions.paddingSizeDefault),
 
-      splashController.moduleList != null ? splashController.moduleList!.isNotEmpty ? GridView.builder(
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3, mainAxisSpacing: Dimensions.paddingSizeSmall,
-          crossAxisSpacing: Dimensions.paddingSizeSmall, childAspectRatio: (1/1),
-        ),
-        padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
-        itemCount: splashController.moduleList!.length,
-        shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
-        itemBuilder: (context, index) {
-          return Container(
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault),
+        child: Row(children: [
+          Expanded(
+            child: Text(
+              'Categorias Fox GO',
+              style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge + 1, color: FoxGoDesign.graphite, height: 1.05),
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-              color: Theme.of(context).cardColor,
-              border: Border.all(color: Theme.of(context).disabledColor, width: 0.05),
-              boxShadow: [BoxShadow(color: Theme.of(context).disabledColor.withValues(alpha: 0.2), spreadRadius: 1, blurRadius: 3)],
+              color: FoxGoDesign.softRed,
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.10)),
             ),
-            child: CustomInkWell(
-              onTap: () => splashController.switchModule(index, true),
-              radius: Dimensions.radiusDefault,
-              child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+            child: Text('Premium', style: robotoBold.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).primaryColor)),
+          ),
+        ]),
+      ),
+      const SizedBox(height: Dimensions.paddingSizeSmall),
 
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
-                  child: CustomImage(
-                    image: '${splashController.moduleList![index].iconFullUrl}',
-                    height: 50, width: 50,
-                  ),
+      splashController.moduleList != null ? splashController.moduleList!.isNotEmpty ? LayoutBuilder(builder: (context, constraints) {
+        final int columnCount = constraints.maxWidth < 360 ? 3 : 4;
+        return GridView.builder(
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: columnCount,
+            mainAxisSpacing: Dimensions.paddingSizeSmall,
+            crossAxisSpacing: Dimensions.paddingSizeSmall,
+            childAspectRatio: constraints.maxWidth < 360 ? 0.86 : 0.82,
+          ),
+          padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, 0, Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault),
+          itemCount: splashController.moduleList!.length,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemBuilder: (context, index) {
+            return Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(26),
+                color: FoxGoDesign.card,
+                border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.07), width: 1),
+                boxShadow: FoxGoDesign.premiumShadow(opacity: 0.065, blur: 18, offset: const Offset(0, 8)),
+              ),
+              child: CustomInkWell(
+                onTap: () => splashController.switchModule(index, true),
+                radius: 26,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 10),
+                  child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+
+                    Container(
+                      height: 54,
+                      width: 54,
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: FoxGoDesign.softRed,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: CustomImage(
+                          image: '${splashController.moduleList![index].iconFullUrl}',
+                          height: 38,
+                          width: 38,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: Dimensions.paddingSizeSmall),
+
+                    Text(
+                      splashController.moduleList![index].moduleName!,
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: robotoBold.copyWith(fontSize: Dimensions.fontSizeSmall + 1, height: 1.08, color: FoxGoDesign.graphite),
+                    ),
+
+                  ]),
                 ),
-                const SizedBox(height: Dimensions.paddingSizeSmall),
-
-                Center(child: Text(
-                  splashController.moduleList![index].moduleName!,
-                  textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis,
-                  style: robotoBold.copyWith(fontSize: Dimensions.fontSizeSmall),
-                )),
-
-              ]),
-            ),
-          );
-        },
-      ) : Center(child: Padding(
+              ),
+            );
+          },
+        );
+      }) : Center(child: Padding(
         padding: const EdgeInsets.only(top: Dimensions.paddingSizeSmall), child: Text('no_module_found'.tr),
       )) : ModuleShimmer(isEnabled: splashController.moduleList == null),
 
@@ -100,21 +145,21 @@ class ModuleView extends StatelessWidget {
             const SizedBox(height: Dimensions.paddingSizeLarge),
 
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall),
+              padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault),
               child: TitleWidget(title: 'deliver_to'.tr),
             ),
             const SizedBox(height: Dimensions.paddingSizeExtraSmall),
 
             SizedBox(
-              height: 80,
+              height: 88,
               child: ListView.builder(
                 physics: const BouncingScrollPhysics(),
                 itemCount: addressList.length,
                 scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.only(left: Dimensions.paddingSizeSmall, right: Dimensions.paddingSizeSmall, top: Dimensions.paddingSizeExtraSmall),
+                padding: const EdgeInsets.only(left: Dimensions.paddingSizeDefault, right: Dimensions.paddingSizeDefault, top: Dimensions.paddingSizeExtraSmall),
                 itemBuilder: (context, index) {
                   return Container(
-                    width: 300,
+                    width: 310,
                     padding: const EdgeInsets.only(right: Dimensions.paddingSizeSmall),
                     child: AddressWidget(
                       address: addressList[index],
@@ -161,9 +206,9 @@ class ModuleShimmer extends StatelessWidget {
       itemBuilder: (context, index) {
         return Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-            color: Theme.of(context).cardColor,
-            boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
+            borderRadius: BorderRadius.circular(26),
+            color: FoxGoDesign.card,
+            boxShadow: FoxGoDesign.premiumShadow(opacity: 0.055, blur: 16, offset: const Offset(0, 7)),
           ),
           child: Shimmer(
             duration: const Duration(seconds: 2),
@@ -171,8 +216,8 @@ class ModuleShimmer extends StatelessWidget {
             child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
 
               Container(
-                height: 50, width: 50,
-                decoration: BoxDecoration(borderRadius: BorderRadius.circular(Dimensions.radiusSmall), color: Colors.grey[300]),
+                height: 48, width: 48,
+                decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), color: Colors.grey[300]),
               ),
               const SizedBox(height: Dimensions.paddingSizeSmall),
 
@@ -203,23 +248,22 @@ class AddressShimmer extends StatelessWidget {
         const SizedBox(height: Dimensions.paddingSizeExtraSmall),
 
         SizedBox(
-          height: 70,
+          height: 76,
           child: ListView.builder(
             physics: const BouncingScrollPhysics(),
             itemCount: 5,
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall),
+            padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault),
             itemBuilder: (context, index) {
               return Container(
-                width: 300,
+                width: 310,
                 padding: const EdgeInsets.only(right: Dimensions.paddingSizeSmall),
                 child: Container(
-                  padding: EdgeInsets.all(ResponsiveHelper.isDesktop(context) ? Dimensions.paddingSizeDefault
-                      : Dimensions.paddingSizeSmall),
+                  padding: EdgeInsets.all(ResponsiveHelper.isDesktop(context) ? Dimensions.paddingSizeDefault : Dimensions.paddingSizeSmall),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).cardColor,
-                    borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
-                    boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
+                    color: FoxGoDesign.card,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: FoxGoDesign.premiumShadow(opacity: 0.055, blur: 16, offset: const Offset(0, 7)),
                   ),
                   child: Row(mainAxisSize: MainAxisSize.min, children: [
                     Icon(
@@ -248,5 +292,3 @@ class AddressShimmer extends StatelessWidget {
     );
   }
 }
-
-

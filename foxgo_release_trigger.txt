@@ -1,0 +1,6 @@
+Fox GO user client APK release trigger
+
+Branch: foxgo/user-app-apk-build
+Requested by: Peak Burguer
+Purpose: generate APK artifact foxgo-user-client-release-apk for immediate testing.
+Timestamp: 2026-05-23T23:10:00-03:00

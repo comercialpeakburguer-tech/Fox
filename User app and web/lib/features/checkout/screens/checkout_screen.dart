@@ -24,6 +24,7 @@ import 'package:sixam_mart/helper/route_helper.dart';
 import 'package:sixam_mart/helper/shallow_route_helper.dart';
 import 'package:sixam_mart/util/app_constants.dart';
 import 'package:sixam_mart/util/dimensions.dart';
+import 'package:sixam_mart/util/foxgo_design.dart';
 import 'package:sixam_mart/util/styles.dart';
 import 'package:sixam_mart/common/widgets/custom_app_bar.dart';
 import 'package:sixam_mart/common/widgets/custom_button.dart';
@@ -201,6 +202,7 @@ class CheckoutScreenState extends State<CheckoutScreen> {
     });
 
     return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: CustomAppBar(title: 'checkout'.tr),
       endDrawer: const MenuDrawer(),endDrawerEnableOpenDragGesture: false,
       body: guestCheckoutPermission || AuthHelper.isLoggedIn() ? GetBuilder<CheckoutController>(builder: (checkoutController) {
@@ -372,9 +374,13 @@ class CheckoutScreenState extends State<CheckoutScreen> {
           return (checkoutController.distance != null && checkoutController.store != null) ? Column(
             children: [
               ResponsiveHelper.isDesktop(context) ? Container(
-                height: 64,
-                color: Theme.of(context).primaryColor.withValues(alpha: 0.10),
-                child: Center(child: Text('checkout'.tr, style: robotoMedium)),
+                height: 74,
+                margin: const EdgeInsets.only(bottom: Dimensions.paddingSizeSmall),
+                decoration: BoxDecoration(
+                  gradient: FoxGoDesign.redGradient(),
+                  boxShadow: FoxGoDesign.premiumShadow(opacity: 0.12, blur: 18, offset: const Offset(0, 8)),
+                ),
+                child: Center(child: Text('checkout'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeExtraLarge + 2, color: Colors.white))),
               ) : const SizedBox(),
 
               Expanded(child: SingleChildScrollView(
@@ -383,7 +389,7 @@ class CheckoutScreenState extends State<CheckoutScreen> {
                 child: FooterView(child: SizedBox(
                   width: Dimensions.webMaxWidth,
                   child: ResponsiveHelper.isDesktop(context) ? Padding(
-                    padding: const EdgeInsets.only(top: Dimensions.paddingSizeLarge),
+                    padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeLarge, Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault),
                     child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
                       Expanded(flex: 6, child: TopSection(
@@ -451,7 +457,9 @@ class CheckoutScreenState extends State<CheckoutScreen> {
               ResponsiveHelper.isDesktop(context) ? const SizedBox() : Container(
                 decoration: BoxDecoration(
                   color: Theme.of(context).cardColor,
-                  boxShadow: [BoxShadow(color: Theme.of(context).primaryColor.withValues(alpha: 0.1), blurRadius: 10)],
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+                  border: Border(top: BorderSide(color: Theme.of(context).primaryColor.withValues(alpha: 0.06))),
+                  boxShadow: FoxGoDesign.premiumShadow(opacity: 0.12, blur: 24, offset: const Offset(0, -8)),
                 ),
                 child: Column(children: [
                   Padding(
@@ -459,7 +467,7 @@ class CheckoutScreenState extends State<CheckoutScreen> {
                     child: Row(children: [
                       Text(
                         checkoutController.isPartialPay ? 'due_payment'.tr : 'total_amount'.tr,
-                        style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge, color: Theme.of(context).primaryColor),
+                        style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge, color: FoxGoDesign.graphite),
                       ),
 
                       (checkoutController.taxIncluded == 1) ? Text(' ${'vat_tax_inc'.tr}', style: robotoMedium.copyWith(
@@ -470,7 +478,7 @@ class CheckoutScreenState extends State<CheckoutScreen> {
 
                       PriceConverter.convertAnimationPrice(
                         checkoutController.viewTotalPrice,
-                        textStyle: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge, color: Theme.of(context).primaryColor),
+                        textStyle: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge + 1, color: Theme.of(context).primaryColor),
                       ),
                     ]),
                   ),
@@ -496,7 +504,7 @@ class CheckoutScreenState extends State<CheckoutScreen> {
     return Container(
       width: Dimensions.webMaxWidth,
       alignment: Alignment.center,
-      padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeSmall, horizontal: Dimensions.paddingSizeLarge),
+      padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeLarge, Dimensions.paddingSizeSmall, Dimensions.paddingSizeLarge, Dimensions.paddingSizeDefault),
       child: SafeArea(
         child: CustomButton(
           isLoading: checkoutController.isLoading,

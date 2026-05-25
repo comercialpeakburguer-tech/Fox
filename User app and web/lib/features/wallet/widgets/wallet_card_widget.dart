@@ -7,6 +7,7 @@ import 'package:sixam_mart/features/profile/controllers/profile_controller.dart'
 import 'package:sixam_mart/helper/price_converter.dart';
 import 'package:sixam_mart/helper/responsive_helper.dart';
 import 'package:sixam_mart/util/dimensions.dart';
+import 'package:sixam_mart/util/foxgo_design.dart';
 import 'package:sixam_mart/util/styles.dart';
 import 'package:sixam_mart/features/wallet/widgets/add_fund_dialogue_widget.dart';
 
@@ -28,24 +29,25 @@ class WalletCardWidget extends StatelessWidget {
 
             Stack(children: [
               Container(
-                padding: EdgeInsets.all( isDesktop ? 35 : Dimensions.paddingSizeExtraLarge),
+                padding: EdgeInsets.all(isDesktop ? 36 : 28),
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-                  color: Theme.of(context).primaryColor,
+                  borderRadius: BorderRadius.circular(30),
+                  gradient: FoxGoDesign.redGradient(),
+                  boxShadow: FoxGoDesign.premiumShadow(opacity: 0.18, blur: 26, offset: const Offset(0, 12)),
                 ),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
-                  Text('wallet_amount'.tr,style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).cardColor)),
+                  Text('wallet_amount'.tr, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeDefault, color: Theme.of(context).cardColor.withValues(alpha: 0.90))),
                   const SizedBox(height: Dimensions.paddingSizeSmall),
 
                   Row(children: [
                     Text(
                       PriceConverter.convertPrice(profileController.userInfoModel!.walletBalance), textDirection: TextDirection.ltr,
-                      style: robotoBold.copyWith(fontSize: Dimensions.fontSizeOverLarge, color: Theme.of(context).cardColor),
+                      style: robotoBold.copyWith(fontSize: Dimensions.fontSizeOverLarge + 4, color: Theme.of(context).cardColor, height: 1.0),
                     ),
                     const SizedBox(width: Dimensions.paddingSizeSmall),
 
                     Get.find<SplashController>().configModel!.addFundStatus! && Get.find<SplashController>().configModel!.digitalPayment! ? JustTheTooltip(
-                      backgroundColor: Colors.black87,
+                      backgroundColor: FoxGoDesign.graphite,
                       controller: tooltipController,
                       preferredDirection: AxisDirection.right,
                       tailLength: 14,
@@ -59,7 +61,7 @@ class WalletCardWidget extends StatelessWidget {
                       ),
                       child: InkWell(
                         onTap: () => tooltipController.showTooltip(),
-                        child: Icon(Icons.info_outline, color: Theme.of(context).cardColor),
+                        child: Container(height: 34, width: 34, alignment: Alignment.center, decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.16), borderRadius: BorderRadius.circular(14)), child: Icon(Icons.info_outline, color: Theme.of(context).cardColor, size: 19)),
                       ),
                     ) : const SizedBox(),
                   ]),
@@ -67,7 +69,7 @@ class WalletCardWidget extends StatelessWidget {
               ),
 
               Get.find<SplashController>().configModel!.addFundStatus! && Get.find<SplashController>().configModel!.digitalPayment! ? Positioned(
-                top: 30, right: Get.find<LocalizationController>().isLtr ? 20 : null,
+                top: 24, right: Get.find<LocalizationController>().isLtr ? 22 : null,
                 left: Get.find<LocalizationController>().isLtr ? null : 10,
                 child: InkWell(
                   onTap: () {
@@ -78,9 +80,9 @@ class WalletCardWidget extends StatelessWidget {
                     );
                   },
                   child: Container(
-                    decoration: BoxDecoration(shape: BoxShape.circle, color: Theme.of(context).cardColor),
-                    padding: const EdgeInsets.all(Dimensions.paddingSizeExtraSmall),
-                    child: const Icon(Icons.add),
+                    decoration: BoxDecoration(shape: BoxShape.circle, color: Theme.of(context).cardColor, boxShadow: FoxGoDesign.premiumShadow(opacity: 0.12, blur: 14, offset: const Offset(0, 5))),
+                    padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
+                    child: Icon(Icons.add, color: Theme.of(context).primaryColor),
                   ),
                 ),
               ) : const SizedBox(),
@@ -89,7 +91,7 @@ class WalletCardWidget extends StatelessWidget {
             isDesktop ? const SizedBox() : const SizedBox(height: Dimensions.paddingSizeSmall),
             isDesktop ? const SizedBox(height: Dimensions.paddingSizeDefault) : const SizedBox(),
 
-            isDesktop ? Text('how_to_use'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge)) : const SizedBox(),
+            isDesktop ? Text('how_to_use'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge + 1, color: FoxGoDesign.graphite)) : const SizedBox(),
             isDesktop ? const SizedBox(height: Dimensions.paddingSizeDefault) : const SizedBox(),
 
             !isDesktop ? const SizedBox() : const WalletStepper(),
@@ -179,10 +181,10 @@ class WalletStepper extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('earn_money_to_your_wallet_by_completing_the_offer_challenged'.tr, style: robotoRegular),
-                Text('convert_your_loyalty_points_into_wallet_money'.tr, style: robotoRegular),
-                Text('amin_also_reward_their_top_customers_with_wallet_money'.tr, style: robotoRegular),
-                Text('send_your_wallet_money_while_order'.tr, style: robotoRegular),
+                Text('earn_money_to_your_wallet_by_completing_the_offer_challenged'.tr, style: robotoMedium.copyWith(color: FoxGoDesign.graphite)),
+                Text('convert_your_loyalty_points_into_wallet_money'.tr, style: robotoMedium.copyWith(color: FoxGoDesign.graphite)),
+                Text('amin_also_reward_their_top_customers_with_wallet_money'.tr, style: robotoMedium.copyWith(color: FoxGoDesign.graphite)),
+                Text('send_your_wallet_money_while_order'.tr, style: robotoMedium.copyWith(color: FoxGoDesign.graphite)),
               ],
             ),
           ),

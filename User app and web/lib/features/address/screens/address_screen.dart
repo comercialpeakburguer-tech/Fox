@@ -6,6 +6,7 @@ import 'package:sixam_mart/helper/auth_helper.dart';
 import 'package:sixam_mart/helper/responsive_helper.dart';
 import 'package:sixam_mart/helper/route_helper.dart';
 import 'package:sixam_mart/util/dimensions.dart';
+import 'package:sixam_mart/util/foxgo_design.dart';
 import 'package:sixam_mart/util/images.dart';
 import 'package:sixam_mart/util/styles.dart';
 import 'package:sixam_mart/common/widgets/custom_app_bar.dart';
@@ -48,13 +49,16 @@ class _AddressScreenState extends State<AddressScreen> {
     return GetBuilder<AddressController>(
       builder: (addressController) {
         return Scaffold(
+          backgroundColor: Theme.of(context).colorScheme.surface,
           appBar: CustomAppBar(title: 'my_address'.tr, backButton: widget.fromDashboard ? false : true),
           endDrawer: const MenuDrawer(), endDrawerEnableOpenDragGesture: false,
           floatingActionButton: ResponsiveHelper.isDesktop(context) || !isLoggedIn ? null : (addressController.addressList != null
-          && addressController.addressList!.isEmpty) ? null : FloatingActionButton(
+          && addressController.addressList!.isEmpty) ? null : FloatingActionButton.extended(
             backgroundColor: Theme.of(context).primaryColor,
+            elevation: 8,
             onPressed: () => Get.toNamed(RouteHelper.getAddAddressRoute(false, false, 0, isNavbar: true)),
-            child: Icon(Icons.add, color: Theme.of(context).cardColor),
+            icon: Icon(Icons.add_location_alt_rounded, color: Theme.of(context).cardColor),
+            label: Text('add_new_address'.tr, style: robotoBold.copyWith(color: Theme.of(context).cardColor)),
           ),
           floatingActionButtonLocation: ResponsiveHelper.isDesktop(context) ? FloatingActionButtonLocation.centerFloat : null,
           body: Container(
@@ -90,8 +94,8 @@ class _AddressScreenState extends State<AddressScreen> {
                               child: GridView.builder(
                                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                                   crossAxisSpacing: Dimensions.paddingSizeLarge,
-                                  mainAxisSpacing: ResponsiveHelper.isDesktop(context) ? Dimensions.paddingSizeLarge : 0.01,
-                                  childAspectRatio: ResponsiveHelper.isDesktop(context) ? 4 : 4.8,
+                                  mainAxisSpacing: ResponsiveHelper.isDesktop(context) ? Dimensions.paddingSizeLarge : Dimensions.paddingSizeSmall,
+                                  childAspectRatio: ResponsiveHelper.isDesktop(context) ? 3.8 : 4.25,
                                   crossAxisCount: ResponsiveHelper.isMobile(context) ? 1 : 3,
                                 ),
                                 physics: const NeverScrollableScrollPhysics(),
@@ -101,10 +105,11 @@ class _AddressScreenState extends State<AddressScreen> {
                                   return (ResponsiveHelper.isDesktop(context) && (index == addressController.addressList!.length)) ?
                                   Container(
                                       margin: const EdgeInsets.only(bottom: Dimensions.paddingSizeSmall),
-                                      decoration:  BoxDecoration(
+                                      decoration: BoxDecoration(
                                         color: Theme.of(context).cardColor,
-                                        borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-                                        boxShadow: [BoxShadow(color: Theme.of(context).primaryColor.withValues(alpha: 0.1), blurRadius: 5, spreadRadius: 1)],
+                                        borderRadius: BorderRadius.circular(26),
+                                        border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.08)),
+                                        boxShadow: FoxGoDesign.premiumShadow(opacity: 0.07, blur: 18, offset: const Offset(0, 8)),
                                       ),
                                       child: CustomInkWell(
                                         onTap: () => Get.toNamed(RouteHelper.getAddAddressRoute(false, false, 0)),
@@ -113,9 +118,9 @@ class _AddressScreenState extends State<AddressScreen> {
                                         child: Column(
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
-                                            Icon(Icons.add_circle_outline, color: Theme.of(context).primaryColor),
+                                            Container(height: 44, width: 44, alignment: Alignment.center, decoration: BoxDecoration(color: FoxGoDesign.softRed, borderRadius: BorderRadius.circular(16)), child: Icon(Icons.add_location_alt_rounded, color: Theme.of(context).primaryColor)),
                                             const SizedBox(height: Dimensions.paddingSizeSmall),
-                                            Text('add_new_address'.tr, style: robotoRegular.copyWith(color: Theme.of(context).primaryColor, fontSize: Dimensions.fontSizeSmall)),
+                                            Text('add_new_address'.tr, style: robotoBold.copyWith(color: Theme.of(context).primaryColor, fontSize: Dimensions.fontSizeDefault)),
                                           ],
                                         ),
                                       )

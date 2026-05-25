@@ -1,0 +1,14 @@
+Fox GO premium faithful release build marker.
+
+This commit intentionally has no [skip ci] to trigger one GitHub Actions APK build after the final premium UI alignment pass.
+
+Included scope:
+- Splash and onboarding premium alignment
+- Login/auth premium pass
+- Home header/search/hero/banner/categories
+- Bottom navigation and dashboard bottom bar
+- Store/product cards
+- Product details
+- Cart and checkout premium base
+- Profile/menu light-mode contrast fix
+- PT-BR visible text cleanup

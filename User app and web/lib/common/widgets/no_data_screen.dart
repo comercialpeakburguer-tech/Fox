@@ -44,7 +44,9 @@ class _NoDataView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.center, children: [
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeLarge),
+      child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.center, children: [
 
       if(fromInterestPage)...[
         Container(
@@ -56,16 +58,23 @@ class _NoDataView extends StatelessWidget {
       ],
 
       Center(
-        child: Image.asset(
-          fromAddress ? Images.address : isCart ? Images.emptyCart : Images.noDataFound,
-          width: MediaQuery.of(context).size.height*0.15, height: MediaQuery.of(context).size.height*0.15,
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Theme.of(context).primaryColor.withValues(alpha: 0.06),
+            shape: BoxShape.circle,
+          ),
+          child: Image.asset(
+            fromAddress ? Images.address : isCart ? Images.emptyCart : Images.noDataFound,
+            width: MediaQuery.of(context).size.height*0.13, height: MediaQuery.of(context).size.height*0.13,
+          ),
         ),
       ),
       SizedBox(height: MediaQuery.of(context).size.height*0.03),
 
       Text(
         isCart ? 'cart_is_empty'.tr : text!,
-        style: robotoMedium.copyWith(fontSize: MediaQuery.of(context).size.height*0.0175, color: fromAddress ? Theme.of(context).textTheme.bodyMedium!.color : Theme.of(context).disabledColor),
+        style: robotoBold.copyWith(fontSize: MediaQuery.of(context).size.height*0.0185, color: fromAddress ? Theme.of(context).textTheme.bodyMedium!.color : Theme.of(context).hintColor),
         textAlign: TextAlign.center,
       ),
       SizedBox(height: MediaQuery.of(context).size.height*0.03),
@@ -81,7 +90,7 @@ class _NoDataView extends StatelessWidget {
         onTap: () => Get.toNamed(RouteHelper.getAddAddressRoute(false, false, 0)),
         child: Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+            borderRadius: BorderRadius.circular(18),
             color: Theme.of(context).primaryColor,
           ),
           padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
@@ -107,6 +116,6 @@ class _NoDataView extends StatelessWidget {
         },
       ) : const SizedBox(),
 
-    ]);
+    ]));
   }
 }

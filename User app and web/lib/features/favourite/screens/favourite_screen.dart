@@ -42,6 +42,7 @@ class FavouriteScreenState extends State<FavouriteScreen> with SingleTickerProvi
     return Scaffold(
       appBar: CustomAppBar(title: 'favourite'.tr, backButton: false),
       endDrawer: const MenuDrawer(),endDrawerEnableOpenDragGesture: false,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: AuthHelper.isLoggedIn() ? SafeArea(child: Column(children: [
 
         WebScreenTitleWidget(title: 'favourite'.tr),
@@ -50,18 +51,24 @@ class FavouriteScreenState extends State<FavouriteScreen> with SingleTickerProvi
           width: Dimensions.webMaxWidth,
           child: Container(
             width: Dimensions.webMaxWidth,
-            color: Theme.of(context).cardColor,
+            margin: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault, vertical: Dimensions.paddingSizeSmall),
+            padding: const EdgeInsets.all(5),
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
+              borderRadius: BorderRadius.circular(22),
+              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 16, offset: const Offset(0, 7))],
+            ),
             alignment: Alignment.bottomLeft,
             child: TabBar(
               tabAlignment: ResponsiveHelper.isDesktop(context) ? TabAlignment.start : null,
               isScrollable: ResponsiveHelper.isDesktop(context) ? true : false,
               controller: _tabController,
-              indicatorColor: Theme.of(context).primaryColor,
-              indicatorWeight: 3,
+              indicatorColor: Colors.transparent,
+              indicatorWeight: 0,
               labelColor: Theme.of(context).primaryColor,
               unselectedLabelColor: Theme.of(context).disabledColor,
               unselectedLabelStyle: robotoRegular.copyWith(color: Theme.of(context).disabledColor, fontSize: Dimensions.fontSizeSmall),
-              labelStyle: robotoBold.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).primaryColor),
+              labelStyle: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault, color: Theme.of(context).primaryColor),
               tabs: [
                 Tab(text: 'item'.tr),
                 Tab(text: Get.find<SplashController>().configModel!.moduleConfig!.module!.showRestaurantText!

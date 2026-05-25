@@ -6,6 +6,7 @@ import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
 import 'package:sixam_mart/features/profile/controllers/profile_controller.dart';
 import 'package:sixam_mart/helper/responsive_helper.dart';
 import 'package:sixam_mart/util/dimensions.dart';
+import 'package:sixam_mart/util/foxgo_design.dart';
 import 'package:sixam_mart/util/images.dart';
 import 'package:sixam_mart/util/styles.dart';
 import 'package:sixam_mart/common/widgets/custom_button.dart';
@@ -22,31 +23,32 @@ class LoyaltyCardWidget extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              padding: EdgeInsets.all( ResponsiveHelper.isDesktop(context) ? 35 : Dimensions.paddingSizeExtraLarge),
+              padding: EdgeInsets.all(ResponsiveHelper.isDesktop(context) ? 36 : 28),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-                color: Theme.of(context).disabledColor.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(30),
+                gradient: FoxGoDesign.redGradient(),
+                boxShadow: FoxGoDesign.premiumShadow(opacity: 0.18, blur: 26, offset: const Offset(0, 12)),
               ),
               child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
 
-                Image.asset(Images.loyal , height: 60, width: 60),
+                Container(height: 70, width: 70, padding: const EdgeInsets.all(14), decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.16), borderRadius: BorderRadius.circular(24)), child: Image.asset(Images.loyal, height: 46, width: 46)),
                 const SizedBox(width: Dimensions.paddingSizeExtraLarge),
 
                 Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
 
                   ResponsiveHelper.isDesktop(context) ? const SizedBox() : Text(
                     '${'convertible_points'.tr} !',
-                    style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).textTheme.bodyLarge!.color),
+                    style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeDefault, color: Theme.of(context).cardColor.withValues(alpha: 0.90)),
                   ),
 
                   Text(
                     profileController.userInfoModel!.loyaltyPoint == null ? '0' : profileController.userInfoModel!.loyaltyPoint.toString(),
-                    style: robotoBold.copyWith(fontSize: Dimensions.fontSizeOverLarge, color: Theme.of(context).textTheme.bodyLarge!.color),
+                    style: robotoBold.copyWith(fontSize: Dimensions.fontSizeOverLarge + 6, color: Theme.of(context).cardColor, height: 1.0),
                   ),
 
                   ResponsiveHelper.isDesktop(context) ? Text(
                     '${'convertible_points'.tr} !',
-                    style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).textTheme.bodyLarge!.color),
+                    style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeDefault, color: Theme.of(context).cardColor.withValues(alpha: 0.90)),
                   ) : const SizedBox(),
 
                   const SizedBox(height: Dimensions.paddingSizeSmall),
@@ -56,7 +58,7 @@ class LoyaltyCardWidget extends StatelessWidget {
 
             ResponsiveHelper.isDesktop(context) ? const SizedBox(height: Dimensions.paddingSizeDefault) : const SizedBox(),
 
-            ResponsiveHelper.isDesktop(context) ? Text('how_to_use'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge)) : const SizedBox(),
+            ResponsiveHelper.isDesktop(context) ? Text('how_to_use'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge + 1, color: FoxGoDesign.graphite)) : const SizedBox(),
             ResponsiveHelper.isDesktop(context) ? const SizedBox(height: Dimensions.paddingSizeDefault) : const SizedBox(),
 
             !ResponsiveHelper.isDesktop(context) ? const SizedBox() : const LoyaltyStepper(),
@@ -118,8 +120,8 @@ class LoyaltyStepper extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('convert_your_loyalty_point_to_wallet_money'.tr, style: robotoRegular),
-                    Text('${'minimun'.tr} ${Get.find<SplashController>().configModel!.loyaltyPointExchangeRate} ${'points_required_to_convert_into_currency'.tr}', style: robotoRegular),
+                    Text('convert_your_loyalty_point_to_wallet_money'.tr, style: robotoMedium.copyWith(color: FoxGoDesign.graphite)),
+                    Text('${'minimun'.tr} ${Get.find<SplashController>().configModel!.loyaltyPointExchangeRate} ${'points_required_to_convert_into_currency'.tr}', style: robotoMedium.copyWith(color: Theme.of(context).hintColor)),
                   ],
                 ),
               ),
@@ -129,7 +131,7 @@ class LoyaltyStepper extends StatelessWidget {
         ),
         const SizedBox(height: Dimensions.paddingSizeDefault),
         CustomButton(
-          radius: Dimensions.radiusSmall,
+          radius: 22,
           isBold: true,
           buttonText: 'convert_to_currency_now'.tr,
           onPressed: () {

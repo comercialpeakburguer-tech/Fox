@@ -20,8 +20,8 @@ class PopularStoreCard extends StatelessWidget {
       width: ResponsiveHelper.isDesktop(context) ? 315 : 260,
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-        boxShadow: [BoxShadow(color: Colors.grey.withValues(alpha: 0.1), spreadRadius: 1, blurRadius: 5, offset: const Offset(0, 0))],
+        borderRadius: BorderRadius.circular(26),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.09), spreadRadius: 0, blurRadius: 18, offset: const Offset(0, 8))],
       ),
       child: TextHover(
         builder: (hovered) {
@@ -31,24 +31,24 @@ class PopularStoreCard extends StatelessWidget {
                 arguments: StoreScreen(store: store, fromModule: false),
               );
             },
-            radius: Dimensions.radiusDefault,
+            radius: 26,
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+              borderRadius: BorderRadius.circular(26),
               child: Stack(
                 children: [
                   CustomImage(
                     isHovered: hovered,
                     image: '${store.coverPhotoFullUrl}',
-                    fit: BoxFit.cover, width: double.infinity, height: 170,
+                    fit: BoxFit.cover, width: double.infinity, height: 178,
                   ),
 
                   Positioned(
                     bottom: 0, left: 0, right: 0,
                     child: Container(
-                      width: double.infinity, height: 89,
+                      width: double.infinity, height: 96,
                       decoration: BoxDecoration(
                         color: Theme.of(context).cardColor,
-                        borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
                       ),
                       child: CustomInkWell(
                         onTap: () {
@@ -65,13 +65,13 @@ class PopularStoreCard extends StatelessWidget {
                               Container(
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(100),
-                                  border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.3), width: 1),
+                                  border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.22), width: 2),
                                 ),
                                 child: ClipRRect(
                                   borderRadius: BorderRadius.circular(100),
                                   child: CustomImage(
                                     image: '${store.logoFullUrl}',
-                                    height: 40, width: 40,
+                                    height: 44, width: 44,
                                   ),
                                 ),
                               ),
@@ -81,8 +81,8 @@ class PopularStoreCard extends StatelessWidget {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Text(store.name ?? '', maxLines: 1, overflow: TextOverflow.ellipsis, style: robotoMedium),
-                                    Text(store.address ?? '', maxLines: 1, overflow: TextOverflow.ellipsis, style: robotoRegular.copyWith(color: Theme.of(context).disabledColor)),
+                                    Text(store.name ?? '', maxLines: 1, overflow: TextOverflow.ellipsis, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault)),
+                                    Text(store.address ?? '', maxLines: 1, overflow: TextOverflow.ellipsis, style: robotoRegular.copyWith(color: Theme.of(context).hintColor, fontSize: Dimensions.fontSizeExtraSmall)),
 
                                     Row(
                                       children: [

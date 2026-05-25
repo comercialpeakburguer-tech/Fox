@@ -1,4 +1,5 @@
 import 'package:sixam_mart/util/dimensions.dart';
+import 'package:sixam_mart/util/foxgo_design.dart';
 import 'package:sixam_mart/util/styles.dart';
 import 'package:flutter/material.dart';
 
@@ -15,28 +16,29 @@ class SupportButtonWidget extends StatelessWidget {
     return InkWell(
       onTap: onTap as void Function()?,
       child: Container(
-        padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
+        padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+          borderRadius: BorderRadius.circular(24),
           color: Theme.of(context).cardColor,
-          boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
+          border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.07)),
+          boxShadow: FoxGoDesign.premiumShadow(opacity: 0.065, blur: 16, offset: const Offset(0, 7)),
         ),
         child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
 
           Container(
-            height: 40, width: 40,
+            height: 46, width: 46,
             decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: color.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(17),
+              color: color.withValues(alpha: 0.12),
             ),
-            child: Icon(icon, color: color, size: 20),
+            child: Icon(icon, color: color, size: 22),
           ),
           const SizedBox(width: Dimensions.paddingSizeSmall),
 
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(title, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall, color: color)),
+            Text(title, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault, color: FoxGoDesign.graphite)),
             const SizedBox(height: Dimensions.paddingSizeExtraSmall),
-            Text(info!, style: robotoRegular, maxLines: 1, overflow: TextOverflow.ellipsis),
+            Text(info!, style: robotoMedium.copyWith(color: Theme.of(context).hintColor), maxLines: 1, overflow: TextOverflow.ellipsis),
           ])),
 
         ]),

@@ -11,6 +11,7 @@ import 'package:sixam_mart/helper/date_converter.dart';
 import 'package:sixam_mart/helper/price_converter.dart';
 import 'package:sixam_mart/helper/responsive_helper.dart';
 import 'package:sixam_mart/util/dimensions.dart';
+import 'package:sixam_mart/util/foxgo_design.dart';
 import 'package:sixam_mart/util/images.dart';
 import 'package:sixam_mart/util/styles.dart';
 
@@ -25,18 +26,18 @@ class CouponCardWidget extends StatelessWidget {
     Size size = MediaQuery.of(context).size;
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
-        boxShadow: [BoxShadow(color: Get.isDarkMode ? Colors.black.withValues(alpha: 0.2) : Colors.grey.withValues(alpha: 0.1), spreadRadius: 1, blurRadius: 10, offset: const Offset(0, 1))],
+        borderRadius: BorderRadius.circular(26),
+        boxShadow: FoxGoDesign.premiumShadow(opacity: 0.08, blur: 18, offset: const Offset(0, 8)),
       ),
       child: Stack(children: [
 
         ClipRRect(
-          borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+          borderRadius: BorderRadius.circular(26),
           child: Transform.rotate(
             angle: Get.find<LocalizationController>().isLtr ? 0 : pi,
             child: Image.asset(
               Get.find<ThemeController>().darkTheme ? Images.couponBgDark : Images.couponBgLight,
-              height: ResponsiveHelper.isMobilePhone() ? 160 : 150, width: size.width,
+              height: ResponsiveHelper.isMobilePhone() ? 174 : 160, width: size.width,
               fit: ResponsiveHelper.isMobilePhone() ? BoxFit.cover : BoxFit.contain,
             ),
           ),
@@ -54,23 +55,23 @@ class CouponCardWidget extends StatelessWidget {
                 Image.asset(
                   coupon.discountType == 'percent' ? Images.percentCouponOffer : coupon.couponType
                       == 'free_delivery' ? Images.freeDelivery : Images.money,
-                  height: 25, width: 25,
+                  height: 30, width: 30,
                 ),
                 const SizedBox(height: Dimensions.paddingSizeExtraSmall),
 
                 Text(
                   coupon.couponType == 'free_delivery' ? 'free_delivery'.tr : '${coupon.discount}${coupon.discountType == 'percent' ? '%' : Get.find<SplashController>().configModel!.currencySymbol} ${'off'.tr}',
-                  style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault),
+                  style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault + 1, color: FoxGoDesign.graphite),
                 ),
                 const SizedBox(height: Dimensions.paddingSizeExtraSmall),
 
                 coupon.store == null ?  Flexible(child: Text(
                   coupon.couponType == 'store_wise' ? '${'on'.tr} ${coupon.data}' : Get.find<SplashController>().module?.moduleName == 'Rental' ? "on_all_provider".tr : 'on_all_store'.tr,
-                  style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeExtraSmall),
+                  style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).hintColor),
                   maxLines: 1, overflow: TextOverflow.ellipsis,
                 )) : Flexible(child: Text(
                   coupon.couponType == 'store_wise' ? '${'on'.tr} ${coupon.data}' : coupon.couponType == 'default' ? '${coupon.store!.name}' : '',
-                  style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeExtraSmall),
+                  style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).hintColor),
                   maxLines: 1, overflow: TextOverflow.ellipsis,
                 )),
               ]),
@@ -81,7 +82,7 @@ class CouponCardWidget extends StatelessWidget {
               child: Column(crossAxisAlignment: CrossAxisAlignment.center, mainAxisAlignment: MainAxisAlignment.center, children: [
 
                 JustTheTooltip(
-                  backgroundColor: Get.find<ThemeController>().darkTheme ? Theme.of(context).cardColor : Colors.black87,
+                  backgroundColor: FoxGoDesign.graphite,
                   controller: toolTipController?[index],
                   preferredDirection: AxisDirection.up,
                   tailLength: 14,
@@ -95,25 +96,25 @@ class CouponCardWidget extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall),
                     child: DottedBorder(
                       options: RoundedRectDottedBorderOptions(
-                        color: Colors.blueAccent,
+                        color: Theme.of(context).primaryColor,
                         strokeWidth: 1,
                         strokeCap: StrokeCap.butt,
                         dashPattern: const [5, 5],
                         padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault, vertical: Dimensions.paddingSizeExtraSmall),
-                        radius: const Radius.circular(50),
+                        radius: const Radius.circular(999),
                       ),
                       child: Row(mainAxisSize: MainAxisSize.min, children: [
 
                         Flexible(
                           child: Text(
                             '${coupon.code}',
-                            style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall),
+                            style: robotoBold.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).primaryColor),
                             maxLines: 1, overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         const SizedBox(width: Dimensions.paddingSizeSmall),
 
-                        Icon(Icons.copy_rounded, color: Colors.blueAccent, size: 20),
+                        Icon(Icons.copy_rounded, color: Theme.of(context).primaryColor, size: 20),
 
                       ]),
                     ),
@@ -123,7 +124,7 @@ class CouponCardWidget extends StatelessWidget {
 
                 Text(
                   '${DateConverter.stringDateTimeToDate(coupon.startDate!)} - ${DateConverter.stringDateTimeToDate(coupon.expireDate!)}',
-                  style: robotoMedium.copyWith(color: Theme.of(context).textTheme.bodyLarge?.color, fontSize: Dimensions.fontSizeSmall),
+                  style: robotoMedium.copyWith(color: FoxGoDesign.graphite, fontSize: Dimensions.fontSizeSmall),
                   maxLines: 1, overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: Dimensions.paddingSizeExtraSmall),
@@ -134,13 +135,13 @@ class CouponCardWidget extends StatelessWidget {
 
                   Text(
                     '${'min_purchase'.tr} ',
-                    style: robotoRegular.copyWith(color: Theme.of(context).disabledColor, fontSize: Dimensions.fontSizeSmall),
+                    style: robotoRegular.copyWith(color: Theme.of(context).hintColor, fontSize: Dimensions.fontSizeSmall),
                     maxLines: 1, overflow: TextOverflow.ellipsis,
                   ),
 
                   Text(
                     PriceConverter.convertPrice(coupon.minPurchase),
-                    style: robotoMedium.copyWith(color: Theme.of(context).disabledColor, fontSize: Dimensions.fontSizeSmall),
+                    style: robotoBold.copyWith(color: Theme.of(context).hintColor, fontSize: Dimensions.fontSizeSmall),
                     maxLines: 1, overflow: TextOverflow.ellipsis, textDirection: TextDirection.ltr,
                   ),
 
@@ -152,13 +153,13 @@ class CouponCardWidget extends StatelessWidget {
 
                   Text(
                     '${'max_discount'.tr} ',
-                    style: robotoRegular.copyWith(color: Theme.of(context).disabledColor, fontSize: Dimensions.fontSizeSmall),
+                    style: robotoRegular.copyWith(color: Theme.of(context).hintColor, fontSize: Dimensions.fontSizeSmall),
                     maxLines: 1, overflow: TextOverflow.ellipsis,
                   ),
 
                   Text(
                     PriceConverter.convertPrice(coupon.maxDiscount),
-                    style: robotoMedium.copyWith(color: Theme.of(context).disabledColor, fontSize: Dimensions.fontSizeSmall),
+                    style: robotoBold.copyWith(color: Theme.of(context).hintColor, fontSize: Dimensions.fontSizeSmall),
                     maxLines: 1, overflow: TextOverflow.ellipsis, textDirection: TextDirection.ltr,
                   ),
 

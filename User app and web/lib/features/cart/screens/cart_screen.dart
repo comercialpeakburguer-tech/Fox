@@ -19,6 +19,7 @@ import 'package:sixam_mart/helper/price_converter.dart';
 import 'package:sixam_mart/helper/responsive_helper.dart';
 import 'package:sixam_mart/helper/route_helper.dart';
 import 'package:sixam_mart/util/dimensions.dart';
+import 'package:sixam_mart/util/foxgo_design.dart';
 import 'package:sixam_mart/util/images.dart';
 import 'package:sixam_mart/util/styles.dart';
 import 'package:sixam_mart/common/widgets/custom_app_bar.dart';
@@ -167,12 +168,14 @@ class _CartScreenState extends State<CartScreen> {
                     }
                   },
                   child: Container(
-                    color: Theme.of(context).cardColor,
+                    color: Colors.transparent,
+                    padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault),
                     child: Container(
-                      constraints: const BoxConstraints.expand(height: 30),
+                      constraints: const BoxConstraints.expand(height: 34),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).disabledColor.withValues(alpha: 0.3),
-                        borderRadius: const BorderRadius.only(topLeft: Radius.circular(Dimensions.radiusDefault), topRight: Radius.circular(Dimensions.radiusDefault)),
+                        color: Theme.of(context).cardColor,
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+                        boxShadow: FoxGoDesign.premiumShadow(opacity: 0.10, blur: 18, offset: const Offset(0, -6)),
                       ),
                       child: Icon(Icons.drag_handle, color: Theme.of(context).hintColor, size: 25),
                     ),
@@ -205,15 +208,15 @@ class _CartScreenState extends State<CartScreen> {
                                       Container(
                                         decoration: BoxDecoration(
                                           color: Theme.of(context).cardColor,
-                                          boxShadow: !ResponsiveHelper.isMobile(context) ? [const BoxShadow()] : [const BoxShadow(
-                                            color: Colors.black12, blurRadius: 10, spreadRadius: 0,
-                                          )],
+                                          borderRadius: BorderRadius.circular(28),
+                                          border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.07)),
+                                          boxShadow: FoxGoDesign.premiumShadow(opacity: 0.08, blur: 20, offset: const Offset(0, 10)),
                                         ),
                                         child: ListView.builder(
                                           physics: const NeverScrollableScrollPhysics(),
                                           shrinkWrap: true,
                                           itemCount: cartController.cartList.length,
-                                          padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
+                                          padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault),
                                           itemBuilder: (context, index) {
                                             return CartItemWidget(cart: cartController.cartList[index], cartIndex: index, addOns: cartController.addOnsList.isNotEmpty ? cartController.addOnsList[index] : [], isAvailable: cartController.availableList.isNotEmpty ? cartController.availableList[index] : false, showDivider: index != cartController.cartList.length - 1);
                                           },
@@ -232,8 +235,8 @@ class _CartScreenState extends State<CartScreen> {
                                             );
                                             Get.offNamed(RouteHelper.getStoreRoute(id: cartController.cartList[0].item!.storeId, page: 'item', slug: Get.find<StoreController>().store?.slug??''));
                                           },
-                                          icon: Icon(Icons.add_circle_outline_sharp, color: Theme.of(context).primaryColor),
-                                          label: Text('add_more_items'.tr, style: robotoMedium.copyWith(color: Theme.of(context).primaryColor, fontSize: Dimensions.fontSizeDefault)),
+                                          icon: Container(width: 38, height: 38, decoration: BoxDecoration(color: FoxGoDesign.softRed, borderRadius: BorderRadius.circular(15)), child: Icon(Icons.add_rounded, color: Theme.of(context).primaryColor, size: 22)),
+                                          label: Text('add_more_items'.tr, style: robotoBold.copyWith(color: Theme.of(context).primaryColor, fontSize: Dimensions.fontSizeDefault)),
                                         ),
                                       ),
 
@@ -275,16 +278,15 @@ class _CartScreenState extends State<CartScreen> {
                   key: _widgetKey,
                   decoration: BoxDecoration(
                     color: Theme.of(context).cardColor,
-                    borderRadius: const BorderRadius.only(topLeft: Radius.circular(Dimensions.radiusDefault), topRight: Radius.circular(Dimensions.radiusDefault)),
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+                    boxShadow: FoxGoDesign.premiumShadow(opacity: 0.10, blur: 20, offset: const Offset(0, -8)),
                   ),
                   child: Column(children: [
                     Container(
-                      padding: const EdgeInsets.only(
-                        left: Dimensions.paddingSizeSmall, right: Dimensions.paddingSizeSmall, top: Dimensions.paddingSizeSmall,
-                      ),
+                      padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall),
                       decoration: BoxDecoration(
                         color: Theme.of(context).cardColor,
-                        borderRadius: const BorderRadius.only(topLeft: Radius.circular(Dimensions.radiusDefault), topRight: Radius.circular(Dimensions.radiusDefault)),
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
                       ),
                       child: Column(children: [
                         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
@@ -348,8 +350,9 @@ class _CartScreenState extends State<CartScreen> {
     return Container(
       decoration: isDesktop ? BoxDecoration(
         color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular( isDesktop ? Dimensions.radiusDefault : Dimensions.radiusSmall),
-        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.07)),
+        boxShadow: FoxGoDesign.premiumShadow(opacity: 0.08, blur: 20, offset: const Offset(0, 10)),
       ) : null,
       child: GetBuilder<StoreController>(
         builder: (storeController) {
@@ -361,7 +364,7 @@ class _CartScreenState extends State<CartScreen> {
               alignment: Alignment.topLeft,
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault, vertical: Dimensions.paddingSizeSmall),
-                child: Text('order_summary'.tr, style: robotoBold),
+                child: Text('order_summary'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge, color: FoxGoDesign.graphite)),
               ),
             ) : const SizedBox(),
 
@@ -369,7 +372,8 @@ class _CartScreenState extends State<CartScreen> {
             && (storeController.store != null && storeController.store!.cutlery!) ? Container(
               decoration: BoxDecoration(
                 color: Theme.of(context).cardColor,
-                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 2, spreadRadius: 1, offset: const Offset(0, 1))],
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: FoxGoDesign.premiumShadow(opacity: 0.06, blur: 16, offset: const Offset(0, 7)),
               ),
               padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault, vertical: Dimensions.paddingSizeSmall),
               margin: const EdgeInsets.only(bottom: Dimensions.paddingSizeSmall),
@@ -404,10 +408,11 @@ class _CartScreenState extends State<CartScreen> {
             isDesktop ? const SizedBox() : Container(
               decoration: BoxDecoration(
                 color: Theme.of(context).cardColor,
-                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 2, spreadRadius: 1, offset: const Offset(0, 1))],
-                // border: Border.all(color: Theme.of(context).primaryColor, width: 0.5),
+                borderRadius: BorderRadius.circular(26),
+                border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.08)),
+                boxShadow: FoxGoDesign.premiumShadow(opacity: 0.065, blur: 16, offset: const Offset(0, 7)),
               ),
-              padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
+              padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall),
               margin: isDesktop ? const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault, vertical: Dimensions.paddingSizeSmall) : EdgeInsets.only(bottom: Dimensions.paddingSizeLarge),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -503,7 +508,8 @@ class _CartScreenState extends State<CartScreen> {
   Widget suggestedItemView(List<CartModel> cartList){
     bool isDesktop = ResponsiveHelper.isDesktop(context);
     return Container(
-      decoration: BoxDecoration(color: Theme.of(context).cardColor),
+      margin: const EdgeInsets.only(top: Dimensions.paddingSizeSmall),
+      decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(28), border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.06)), boxShadow: FoxGoDesign.premiumShadow(opacity: 0.055, blur: 15, offset: const Offset(0, 7))),
       width: double.infinity,
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
@@ -527,7 +533,7 @@ class _CartScreenState extends State<CartScreen> {
               const SizedBox(height: Dimensions.paddingSizeSmall),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault, vertical: Dimensions.paddingSizeExtraSmall),
-                child: Text('you_may_also_like'.tr, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeDefault)),
+                child: Text('you_may_also_like'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge, color: FoxGoDesign.graphite)),
               ),
 
               SizedBox(
@@ -581,10 +587,12 @@ class CheckoutButton extends StatelessWidget {
 
     return Container(
       width: Dimensions.webMaxWidth,
-      padding:  const EdgeInsets.all(Dimensions.paddingSizeSmall),
+      padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(isDesktop ? Dimensions.radiusDefault : 0),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(isDesktop ? 28 : 30)),
+        border: Border(top: BorderSide(color: Theme.of(context).primaryColor.withValues(alpha: 0.06))),
+        boxShadow: isDesktop ? null : FoxGoDesign.premiumShadow(opacity: 0.12, blur: 24, offset: const Offset(0, -8)),
       ),
       child: GetBuilder<StoreController>(
         builder: (storeController) {
@@ -631,7 +639,7 @@ class CheckoutButton extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('subtotal'.tr, style: robotoMedium.copyWith(color: Theme.of(context).textTheme.bodyLarge!.color)),
+                    Text('subtotal'.tr, style: robotoBold.copyWith(color: FoxGoDesign.graphite, fontSize: Dimensions.fontSizeDefault)),
                     PriceConverter.convertAnimationPrice(subTotal, textStyle: robotoBold.copyWith()),
                   ],
                 ),
@@ -672,11 +680,11 @@ class CheckoutButton extends StatelessWidget {
               Container(
                 width: Dimensions.webMaxWidth,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+                  borderRadius: BorderRadius.circular(24),
                   color: Theme.of(context).cardColor,
-                  border: Border.all(color: Theme.of(context).disabledColor.withValues(alpha: 0.2), width: 0.5),
+                  border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.08), width: 1),
                 ),
-                padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
+                padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -694,7 +702,7 @@ class CheckoutButton extends StatelessWidget {
                       },
                       child: Row(children: [
                         Expanded(child: Text('if_any_product_is_not_available'.tr, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall), maxLines: 2, overflow: TextOverflow.ellipsis)),
-                        const Icon(Icons.keyboard_arrow_down, size: 18),
+                        Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: Theme.of(context).primaryColor),
                       ]),
                     ),
                     const SizedBox(height: Dimensions.paddingSizeExtraSmall),
@@ -766,9 +774,9 @@ class CheckoutButton extends StatelessWidget {
               SafeArea(
                 child: CustomButton(
                   buttonText: 'confirm_delivery_details'.tr,
-                  fontSize: isDesktop ? Dimensions.fontSizeSmall : Dimensions.fontSizeLarge,
+                  fontSize: isDesktop ? Dimensions.fontSizeDefault : Dimensions.fontSizeLarge,
                   isBold:  isDesktop ? false : true,
-                  radius: isDesktop ? Dimensions.radiusSmall : Dimensions.radiusDefault,
+                  radius: isDesktop ? 20 : 24,
                   onPressed: () async {
                     Get.find<CheckoutController>().updateFirstTime();
                     Get.find<CheckoutController>().updateFirstTimeCodActive();

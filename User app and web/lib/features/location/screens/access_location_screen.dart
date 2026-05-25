@@ -129,13 +129,20 @@ class _AccessLocationScreenState extends State<AccessLocationScreen> {
               physics: const BouncingScrollPhysics(),
               child: FooterView(child: SizedBox( width: 700,
                   child: Column(mainAxisAlignment: MainAxisAlignment.center,children: [
-                    Image.asset(Images.deliveryLocation, height: 220),
+                    Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).primaryColor.withValues(alpha: 0.07),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Image.asset(Images.deliveryLocation, height: 180),
+                    ),
                     const SizedBox(height: Dimensions.paddingSizeLarge),
 
-                    Text('find_stores_and_items'.tr.toUpperCase(), textAlign: TextAlign.center, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeExtraLarge)),
+                    Text('find_stores_and_items'.tr, textAlign: TextAlign.center, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeExtraLarge + 2, height: 1.12)),
                     Padding(padding: const EdgeInsets.all(Dimensions.paddingSizeLarge),
                       child: Text('by_allowing_location_access'.tr, textAlign: TextAlign.center,
-                        style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).disabledColor),
+                        style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeDefault, height: 1.35, color: Theme.of(context).hintColor),
                       ),
                     ),
                     const SizedBox(height: Dimensions.paddingSizeLarge),
@@ -197,9 +204,9 @@ class BottomButton extends StatelessWidget {
         style: TextButton.styleFrom(
           shape: RoundedRectangleBorder(
             side: BorderSide(width: 1, color: Theme.of(context).primaryColor),
-            borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+            borderRadius: BorderRadius.circular(18),
           ),
-          minimumSize: const Size(Dimensions.webMaxWidth, 50),
+          minimumSize: const Size(Dimensions.webMaxWidth, 54),
           padding: EdgeInsets.zero,
         ),
         onPressed: () {

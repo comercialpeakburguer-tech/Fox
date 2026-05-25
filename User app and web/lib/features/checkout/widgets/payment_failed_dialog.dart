@@ -81,7 +81,7 @@ class PaymentFailedDialog extends StatelessWidget {
 
               TextButton(
                 onPressed: () {
-                  Get.find<OrderController>().cancelOrder(orderID: int.parse(orderID!), reason: 'Digital payment issue', isParcel: false, guestId: guestId.isNotEmpty ? guestId : null).then((success) {
+                  Get.find<OrderController>().cancelOrder(orderID: int.parse(orderID!), reason: 'Problema no pagamento online', isParcel: false, guestId: guestId.isNotEmpty ? guestId : null).then((success) {
                     if(success){
                       Get.offAllNamed(RouteHelper.getInitialRoute());
                     }

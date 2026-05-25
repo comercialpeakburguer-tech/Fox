@@ -2,7 +2,9 @@ import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
 import 'package:sixam_mart/features/support/widgets/web_help_support_widget.dart';
 import 'package:sixam_mart/helper/responsive_helper.dart';
 import 'package:sixam_mart/util/dimensions.dart';
+import 'package:sixam_mart/util/foxgo_design.dart';
 import 'package:sixam_mart/util/images.dart';
+import 'package:sixam_mart/util/styles.dart';
 import 'package:sixam_mart/common/widgets/custom_app_bar.dart';
 import 'package:sixam_mart/common/widgets/custom_snackbar.dart';
 import 'package:sixam_mart/common/widgets/footer_view.dart';
@@ -25,8 +27,9 @@ class _SupportScreenState extends State<SupportScreen> {
     return Scaffold(
       appBar: CustomAppBar(title: 'help_support'.tr),
       endDrawer: const MenuDrawer(),endDrawerEnableOpenDragGesture: false,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: SingleChildScrollView(
-        padding: ResponsiveHelper.isDesktop(context) ? EdgeInsets.zero : const EdgeInsets.all(Dimensions.paddingSizeSmall),
+        padding: ResponsiveHelper.isDesktop(context) ? EdgeInsets.zero : const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeLarge, Dimensions.paddingSizeDefault, Dimensions.paddingSizeLarge),
         physics: const BouncingScrollPhysics(),
         child: Center(child: FooterView(
           child: ResponsiveHelper.isDesktop(context) ? const SizedBox(
@@ -35,11 +38,36 @@ class _SupportScreenState extends State<SupportScreen> {
           ) : SizedBox(width: Dimensions.webMaxWidth, child: Column(children: [
             const SizedBox(height: Dimensions.paddingSizeSmall),
 
-            Image.asset(Images.supportImage, height: 120),
-            const SizedBox(height: 30),
+            Container(
+              height: 132,
+              width: 132,
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                gradient: FoxGoDesign.redGradient(),
+                borderRadius: BorderRadius.circular(34),
+                boxShadow: FoxGoDesign.premiumShadow(opacity: 0.14, blur: 24, offset: const Offset(0, 10)),
+              ),
+              child: Image.asset(Images.supportImage, fit: BoxFit.contain),
+            ),
+            const SizedBox(height: Dimensions.paddingSizeLarge),
 
-            Image.asset(Images.logo, width: 200),
-            const SizedBox(height: 40),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardColor,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.07)),
+                boxShadow: FoxGoDesign.premiumShadow(opacity: 0.06, blur: 16, offset: const Offset(0, 7)),
+              ),
+              child: Column(children: [
+                Image.asset(Images.logo, width: 150),
+                const SizedBox(height: Dimensions.paddingSizeSmall),
+                Text('Ajuda rápida Fox GO', style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge, color: FoxGoDesign.graphite)),
+                const SizedBox(height: Dimensions.paddingSizeExtraSmall),
+                Text('Fale com a gente pelos canais oficiais abaixo.', style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).hintColor), textAlign: TextAlign.center),
+              ]),
+            ),
+            const SizedBox(height: Dimensions.paddingSizeLarge),
 
             SupportButtonWidget(
               icon: Icons.location_on, title: 'address'.tr, color: Colors.blue,

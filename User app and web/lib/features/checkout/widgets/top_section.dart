@@ -10,6 +10,7 @@ import 'package:sixam_mart/features/checkout/controllers/checkout_controller.dar
 import 'package:sixam_mart/helper/auth_helper.dart';
 import 'package:sixam_mart/helper/responsive_helper.dart';
 import 'package:sixam_mart/util/dimensions.dart';
+import 'package:sixam_mart/util/foxgo_design.dart';
 import 'package:sixam_mart/util/styles.dart';
 import 'package:sixam_mart/common/widgets/custom_dropdown.dart';
 import 'package:sixam_mart/features/cart/widgets/delivery_option_button_widget.dart';
@@ -82,13 +83,14 @@ class TopSection extends StatelessWidget {
     return Container(
       decoration: ResponsiveHelper.isDesktop(context) ? BoxDecoration(
         color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
-        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.07)),
+        boxShadow: FoxGoDesign.premiumShadow(opacity: 0.08, blur: 20, offset: const Offset(0, 10)),
       ) : null,
       child: Column(children: [
 
         !AuthHelper.isGuestLoggedIn() && storeId != null ? Padding(
-          padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeLarge, vertical: Dimensions.paddingSizeSmall),
+          padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
           child: UploadPrescriptionWidget(
             checkoutController: checkoutController, storeId: storeId, isPrescriptionRequired: storeId != null,
             tooltipController1: tooltipController1, tooltipController2: tooltipController2,
@@ -100,13 +102,15 @@ class TopSection extends StatelessWidget {
         Container(
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
-            boxShadow: [BoxShadow(color: Theme.of(context).primaryColor.withValues(alpha: 0.05), blurRadius: 10)],
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.08)),
+            boxShadow: FoxGoDesign.premiumShadow(opacity: 0.065, blur: 16, offset: const Offset(0, 7)),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeLarge, vertical: Dimensions.paddingSizeSmall),
+          padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeLarge, Dimensions.paddingSizeDefault, Dimensions.paddingSizeLarge, Dimensions.paddingSizeDefault),
           width: double.infinity,
           child: Column(crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('delivery_type'.tr, style: robotoMedium),
+              Text('delivery_type'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge, color: FoxGoDesign.graphite)),
               const SizedBox(height: Dimensions.paddingSizeSmall),
 
               storeId != null ? DeliveryOptionButtonWidget(
@@ -173,9 +177,11 @@ class TopSection extends StatelessWidget {
         Container(
           decoration: isDesktop ? const BoxDecoration() : BoxDecoration(
             color: Theme.of(context).cardColor,
-            boxShadow: [BoxShadow(color: Theme.of(context).primaryColor.withValues(alpha: 0.05), blurRadius: 10)],
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.08)),
+            boxShadow: FoxGoDesign.premiumShadow(opacity: 0.065, blur: 16, offset: const Offset(0, 7)),
           ),
-          padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeLarge, horizontal: Dimensions.paddingSizeLarge),
+          padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
           child: Column(children: [
 
             PaymentSection(

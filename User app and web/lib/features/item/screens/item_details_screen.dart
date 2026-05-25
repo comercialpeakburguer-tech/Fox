@@ -13,6 +13,7 @@ import 'package:sixam_mart/helper/price_converter.dart';
 import 'package:sixam_mart/helper/responsive_helper.dart';
 import 'package:sixam_mart/helper/route_helper.dart';
 import 'package:sixam_mart/util/dimensions.dart';
+import 'package:sixam_mart/util/foxgo_design.dart';
 import 'package:sixam_mart/util/images.dart';
 import 'package:sixam_mart/util/styles.dart';
 import 'package:sixam_mart/common/widgets/cart_snackbar.dart';
@@ -136,7 +137,7 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
 
           return Scaffold(
             key: _globalKey,
-            backgroundColor: Theme.of(context).cardColor,
+            backgroundColor: FoxGoDesign.softBackground,
             endDrawer: const MenuDrawer(),endDrawerEnableOpenDragGesture: false,
             appBar: ResponsiveHelper.isDesktop(context)? const CustomAppBar(title: '') : DetailsAppBarWidget(key: _key),
 
@@ -144,31 +145,49 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
               cartModel: cartModel, stock: stock, priceWithAddOns: priceWithAddons, cart: cart,
             ) : Column(children: [
               Expanded(child: SingleChildScrollView(
-                padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
+                padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall, Dimensions.paddingSizeDefault, Dimensions.paddingSizeLarge),
                 physics: const BouncingScrollPhysics(),
                 child: Center(child: SizedBox(width: Dimensions.webMaxWidth, child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      ItemImageViewWidget(item: item, isCampaign: widget.isCampaign),
-                      const SizedBox(height: 20),
-
-                      Builder(
-                        builder: (context) {
-                          return ItemTitleViewWidget(
-                            item: item, inStorePage: widget.inStorePage, isCampaign: item.availableDateStarts != null,
-                            isOutOfStock: (Get.find<SplashController>().configModel!.moduleConfig!.module!.stock! && stock! <= 0),
-                          );
-                        }
+                      Container(
+                        decoration: BoxDecoration(
+                          color: FoxGoDesign.card,
+                          borderRadius: BorderRadius.circular(32),
+                          border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.07), width: 1),
+                          boxShadow: FoxGoDesign.premiumShadow(opacity: 0.10, blur: 24, offset: const Offset(0, 10)),
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        child: ItemImageViewWidget(item: item, isCampaign: widget.isCampaign),
                       ),
-                      Divider(height: 20, thickness: 1, color: Theme.of(context).disabledColor),
-                      const SizedBox(height: Dimensions.paddingSizeSmall),
+                      const SizedBox(height: 16),
+
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(18),
+                        decoration: BoxDecoration(
+                          color: FoxGoDesign.card,
+                          borderRadius: BorderRadius.circular(28),
+                          border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.07), width: 1),
+                          boxShadow: FoxGoDesign.premiumShadow(opacity: 0.065, blur: 18, offset: const Offset(0, 8)),
+                        ),
+                        child: Builder(
+                          builder: (context) {
+                            return ItemTitleViewWidget(
+                              item: item, inStorePage: widget.inStorePage, isCampaign: item.availableDateStarts != null,
+                              isOutOfStock: (Get.find<SplashController>().configModel!.moduleConfig!.module!.stock! && stock! <= 0),
+                            );
+                          }
+                        ),
+                      ),
+                      const SizedBox(height: Dimensions.paddingSizeDefault),
 
                       item.isPrescriptionRequired! ? Container(
                         padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall, vertical: Dimensions.paddingSizeExtraSmall),
                         margin: const EdgeInsets.only(bottom: Dimensions.paddingSizeSmall),
                         decoration: BoxDecoration(
                           color: Theme.of(context).colorScheme.error.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+                          borderRadius: BorderRadius.circular(18),
                         ),
                         child: Text(
                           '* ${'prescription_required'.tr}',
@@ -176,31 +195,40 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                         ),
                       ) : const SizedBox(),
 
-                      (item.description != null && item.description!.isNotEmpty) ? Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('description'.tr, style: robotoMedium),
-                          const SizedBox(height: Dimensions.paddingSizeExtraSmall),
-                          ReadMoreText(
-                            item.description!,
-                            style: robotoRegular.copyWith(color: Theme.of(context).textTheme.bodyLarge!.color?.withValues(alpha: 0.7)),
-                            trimMode: TrimMode.Line,
-                            trimLines: 3,
-                            colorClickableText: Theme.of(context).primaryColor,
-                            lessStyle: robotoBold.copyWith(color: Colors.blueAccent),
-                            trimCollapsedText: 'read_more'.tr,
-                            moreStyle: robotoBold.copyWith(color: Colors.blueAccent, decoration: TextDecoration.underline),
-                            trimExpandedText: ' ${'show_less'.tr}',
-                          ),
-                          // Text(item.description!, style: robotoRegular),
-                          const SizedBox(height: Dimensions.paddingSizeLarge),
-                        ],
+                      (item.description != null && item.description!.isNotEmpty) ? Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
+                        decoration: BoxDecoration(
+                          color: FoxGoDesign.card,
+                          borderRadius: BorderRadius.circular(26),
+                          border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.06)),
+                          boxShadow: FoxGoDesign.premiumShadow(opacity: 0.045, blur: 14, offset: const Offset(0, 7)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('description'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge, color: FoxGoDesign.graphite)),
+                            const SizedBox(height: Dimensions.paddingSizeExtraSmall),
+                            ReadMoreText(
+                              item.description!,
+                              style: robotoRegular.copyWith(color: FoxGoDesign.textMuted, fontSize: Dimensions.fontSizeDefault, height: 1.38),
+                              trimMode: TrimMode.Line,
+                              trimLines: 3,
+                              colorClickableText: Theme.of(context).primaryColor,
+                              lessStyle: robotoBold.copyWith(color: Theme.of(context).primaryColor),
+                              trimCollapsedText: 'read_more'.tr,
+                              moreStyle: robotoBold.copyWith(color: Theme.of(context).primaryColor, decoration: TextDecoration.none),
+                              trimExpandedText: ' ${'show_less'.tr}',
+                            ),
+                          ],
+                        ),
                       ) : const SizedBox(),
+                      (item.description != null && item.description!.isNotEmpty) ? const SizedBox(height: Dimensions.paddingSizeLarge) : const SizedBox(),
 
                       (item.nutritionsName != null && item.nutritionsName!.isNotEmpty) ? Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('nutrition_details'.tr, style: robotoMedium),
+                          Text('nutrition_details'.tr, style: robotoBold),
                           const SizedBox(height: Dimensions.paddingSizeExtraSmall),
 
                           Wrap(children: List.generate(item.nutritionsName!.length, (index) {
@@ -216,7 +244,7 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                       (item.allergiesName != null && item.allergiesName!.isNotEmpty) ? Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('allergic_ingredients'.tr, style: robotoMedium),
+                          Text('allergic_ingredients'.tr, style: robotoBold),
                           const SizedBox(height: Dimensions.paddingSizeExtraSmall),
 
                           Wrap(children: List.generate(item.allergiesName!.length, (index) {
@@ -229,18 +257,17 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                         ],
                       ) : const SizedBox(),
 
-                      // Variation
                       ListView.builder(
                         shrinkWrap: true,
                         itemCount: item.choiceOptions!.length,
                         physics: const NeverScrollableScrollPhysics(),
                         itemBuilder: (context, index) {
                           return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                            Text(item.choiceOptions![index].title!, style:robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge)),
+                            Text(item.choiceOptions![index].title!, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge, color: FoxGoDesign.graphite)),
                             const SizedBox(height: Dimensions.paddingSizeExtraSmall),
 
                             SizedBox(
-                              height: 35,
+                              height: 42,
                               child: ListView.builder(
                                 scrollDirection: Axis.horizontal,
                                   itemCount: item.choiceOptions![index].options!.length,
@@ -253,17 +280,17 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                                         },
                                         child: Container(
                                           alignment: Alignment.center,
-                                          padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall),
+                                          padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault),
                                           decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(5),
-                                            color: itemController.variationIndex![index] != i ? Theme.of(context).cardColor : Theme.of(context).primaryColor,
-                                            border: Border.all(color: itemController.variationIndex![index] != i ? Theme.of(context).disabledColor : Theme.of(context).primaryColor, width: 1),
+                                            borderRadius: BorderRadius.circular(18),
+                                            color: itemController.variationIndex![index] != i ? FoxGoDesign.card : Theme.of(context).primaryColor,
+                                            border: Border.all(color: itemController.variationIndex![index] != i ? Theme.of(context).primaryColor.withValues(alpha: 0.10) : Theme.of(context).primaryColor, width: 1),
                                           ),
                                           child: Text(
                                             item.choiceOptions![index].options![i].trim(), maxLines: 1, overflow: TextOverflow.ellipsis,
-                                            style: itemController.variationIndex![index] != i ? robotoRegular.copyWith(
-                                              color: Theme.of(context).textTheme.bodyLarge!.color!.withValues(alpha: 0.5),
-                                            ) : robotoMedium.copyWith(color: Theme.of(context).cardColor),
+                                            style: itemController.variationIndex![index] != i ? robotoMedium.copyWith(
+                                              color: FoxGoDesign.textMuted,
+                                            ) : robotoBold.copyWith(color: Colors.white),
                                           ),
                                         ),
                                       ),
@@ -283,81 +310,86 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
 
               Container(
                 decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor,
-                  boxShadow: [BoxShadow(
-                    color: Colors.grey.withValues(alpha: 0.2),
-                    spreadRadius: 1,
-                    blurRadius: 7,
-                    offset: const Offset(0, -3), // changes position of shadow
-                  )],
+                  color: FoxGoDesign.card,
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+                  border: Border(top: BorderSide(color: Theme.of(context).primaryColor.withValues(alpha: 0.06))),
+                  boxShadow: FoxGoDesign.premiumShadow(opacity: 0.12, blur: 24, offset: const Offset(0, -8)),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall),
+                padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall, Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault),
                 child: Column(
                   children: [
-                    const SizedBox(height: Dimensions.paddingSizeSmall),
+                    Container(width: 42, height: 4, margin: const EdgeInsets.only(bottom: Dimensions.paddingSizeSmall), decoration: BoxDecoration(color: Theme.of(context).hintColor.withValues(alpha: 0.16), borderRadius: BorderRadius.circular(999))),
 
                     Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                      Text('total_amount'.tr, style:robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge, color: Theme.of(context).primaryColor)),
+                      Text('total_amount'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault, color: FoxGoDesign.graphite)),
 
                       Text(
                         PriceConverter.convertPrice(itemController.cartIndex != -1
                             ? _getItemDetailsDiscountPrice(cart: Get.find<CartController>().cartList[itemController.cartIndex])
                             : priceWithAddons), textDirection: TextDirection.ltr,
-                        style:robotoBold.copyWith(color: Theme.of(context).primaryColor, fontSize: Dimensions.fontSizeLarge),
+                        style: robotoBold.copyWith(color: Theme.of(context).primaryColor, fontSize: Dimensions.fontSizeExtraLarge),
                       ),
                     ]),
+                    const SizedBox(height: Dimensions.paddingSizeSmall),
 
                     Row(
                       children: [
 
                         GetBuilder<CartController>(
                             builder: (cartController) {
-                              return Row(children: [
-                                InkWell(
-                                  onTap: cartController.isLoading ? null : () {
-                                    if(itemController.cartIndex != -1) {
-                                      if(cartController.cartList[itemController.cartIndex].quantity! > 1) {
-                                        cartController.setQuantity(false, itemController.cartIndex, stock, cartController.cartList[itemController.cartIndex].quantity);
+                              return Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: FoxGoDesign.softRed,
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                                child: Row(children: [
+                                  InkWell(
+                                    onTap: cartController.isLoading ? null : () {
+                                      if(itemController.cartIndex != -1) {
+                                        if(cartController.cartList[itemController.cartIndex].quantity! > 1) {
+                                          cartController.setQuantity(false, itemController.cartIndex, stock, cartController.cartList[itemController.cartIndex].quantity);
+                                        }
+                                      }else {
+                                        if(itemController.quantity! > 1) {
+                                          itemController.setQuantity(false, stock, item.quantityLimit);
+                                        }
                                       }
-                                    }else {
-                                      if(itemController.quantity! > 1) {
-                                        itemController.setQuantity(false, stock, item.quantityLimit);
-                                      }
-                                    }
-                                  },
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color: Theme.of(context).disabledColor.withValues(alpha: 0.3),
-                                      shape: BoxShape.circle,
+                                    },
+                                    child: Container(
+                                      decoration: const BoxDecoration(
+                                        color: Colors.white,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      padding: const EdgeInsets.all(9),
+                                      child: Icon(Icons.remove, size: 19, color: Theme.of(context).primaryColor),
                                     ),
-                                    padding: EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall, vertical: Dimensions.paddingSizeExtraSmall),
-                                    child: Icon(Icons.remove, size: 20),
                                   ),
-                                ),
 
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall),
-                                  child: Text(
-                                    itemController.cartIndex != -1 ? cartController.cartList[itemController.cartIndex].quantity.toString()
-                                        : itemController.quantity.toString(),
-                                    style:robotoMedium.copyWith(fontSize: Dimensions.fontSizeExtraLarge),
-                                  ),
-                                ),
-
-                                InkWell(
-                                  onTap: cartController.isLoading ? null : () => itemController.cartIndex != -1
-                                      ? cartController.setQuantity(true, itemController.cartIndex, stock, cartController.cartList[itemController.cartIndex].quantityLimit)
-                                      : itemController.setQuantity(true, stock, item.quantityLimit),
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color: Theme.of(context).primaryColor,
-                                      shape: BoxShape.circle,
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall),
+                                    child: Text(
+                                      itemController.cartIndex != -1 ? cartController.cartList[itemController.cartIndex].quantity.toString()
+                                          : itemController.quantity.toString(),
+                                      style:robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge, color: FoxGoDesign.graphite),
                                     ),
-                                    padding: EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall, vertical: Dimensions.paddingSizeExtraSmall),
-                                    child: Icon(Icons.add, size: 20, color: Colors.white),
                                   ),
-                                ),
-                              ]);
+
+                                  InkWell(
+                                    onTap: cartController.isLoading ? null : () => itemController.cartIndex != -1
+                                        ? cartController.setQuantity(true, itemController.cartIndex, stock, cartController.cartList[itemController.cartIndex].quantityLimit)
+                                        : itemController.setQuantity(true, stock, item.quantityLimit),
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: Theme.of(context).primaryColor,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      padding: const EdgeInsets.all(9),
+                                      child: const Icon(Icons.add, size: 19, color: Colors.white),
+                                    ),
+                                  ),
+                                ]),
+                              );
                             }
                         ),
                         const SizedBox(width: Dimensions.paddingSizeSmall),
@@ -367,7 +399,7 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                             builder: (cartController) {
                               return Container(
                                 width: 1170,
-                                padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
+                                padding: const EdgeInsets.only(left: Dimensions.paddingSizeSmall),
                                 child: CustomButton(
                                   isLoading: cartController.isLoading,
                                   buttonText: (Get.find<SplashController>().configModel!.moduleConfig!.module!.stock! && stock! <= 0) ? 'out_of_stock'.tr
@@ -530,10 +562,10 @@ class QuantityButton extends StatelessWidget {
         }
       },
       child: Container(
-        height: 30, width: 30,
+        height: 36, width: 36,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: (quantity! == 1 && !isIncrement) || cartController.isLoading ? Theme.of(context).disabledColor.withValues(alpha: 0.1) : Theme.of(context).primaryColor,
+          color: (quantity! == 1 && !isIncrement) || cartController.isLoading ? FoxGoDesign.softRed : Theme.of(context).primaryColor,
         ),
         child: Center(
           child: Icon(

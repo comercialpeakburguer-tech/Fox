@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:sixam_mart/common/widgets/hover/on_hover.dart';
 import 'package:sixam_mart/features/auth/controllers/auth_controller.dart';
@@ -12,6 +13,7 @@ import 'package:sixam_mart/helper/auth_helper.dart';
 import 'package:sixam_mart/helper/responsive_helper.dart';
 import 'package:sixam_mart/helper/route_helper.dart';
 import 'package:sixam_mart/util/dimensions.dart';
+import 'package:sixam_mart/util/foxgo_design.dart';
 import 'package:sixam_mart/util/images.dart';
 import 'package:sixam_mart/util/styles.dart';
 import 'package:sixam_mart/common/widgets/confirmation_dialog.dart';
@@ -127,7 +129,7 @@ class MenuDrawerState extends State<MenuDrawer> with SingleTickerProviderStateMi
         ));
       }
 
-      
+
     }
 
     _menuList.add(Menu(icon: Images.logOut, title: AuthHelper.isLoggedIn() ? 'logout'.tr : 'sign_in'.tr, onTap: () {
@@ -190,27 +192,39 @@ class MenuDrawerState extends State<MenuDrawer> with SingleTickerProviderStateMi
 
   Widget _buildContent() {
     return Align(alignment: Get.find<LocalizationController>().isLtr ? Alignment.topRight : Alignment.topLeft, child: Container(
-      width: 300,
-      decoration: BoxDecoration(color: Theme.of(context).cardColor),
+      width: 330,
+      decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Container(
-          padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeLarge, horizontal: 25),
+          padding: const EdgeInsets.fromLTRB(22, 24, 16, 22),
           decoration: BoxDecoration(
-            color: Theme.of(context).primaryColor.withValues(alpha: 0.10),
+            gradient: FoxGoDesign.redGradient(),
+            borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(30), bottomRight: Radius.circular(30)),
+            boxShadow: FoxGoDesign.premiumShadow(opacity: 0.14, blur: 22, offset: const Offset(0, 10)),
           ),
           alignment: Alignment.centerLeft,
-          child: Row( mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            Text('menu'.tr, style: robotoBold.copyWith(fontSize: 20 )),
-            IconButton( padding: const EdgeInsets.all(0), onPressed: () => Get.back(), icon: const Icon(Icons.close))
-          ],
-          ),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+              SvgPicture.asset(Images.foxGoLogoLight, width: 150),
+              IconButton(
+                padding: const EdgeInsets.all(0),
+                style: IconButton.styleFrom(backgroundColor: Colors.white.withValues(alpha: 0.16)),
+                onPressed: () => Get.back(),
+                icon: const Icon(Icons.close, color: Colors.white),
+              ),
+            ]),
+            const SizedBox(height: 18),
+            Text('Menu Fox GO', style: robotoBold.copyWith(fontSize: 22, color: Colors.white, height: 1.05)),
+            const SizedBox(height: 6),
+            Text('Acesse sua conta, pedidos, carteira e benefícios.', style: robotoRegular.copyWith(fontSize: 13.5, color: Colors.white.withValues(alpha: 0.88), height: 1.25)),
+          ]),
         ),
         Expanded(
           child: ListView.builder(
             itemCount: _menuList.length,
             physics: const AlwaysScrollableScrollPhysics(),
             shrinkWrap: true,
-            padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
+            padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeLarge, Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault),
             itemBuilder: (context, index) {
               return AnimatedBuilder(
                 animation: _staggeredController,
@@ -234,20 +248,46 @@ class MenuDrawerState extends State<MenuDrawer> with SingleTickerProviderStateMi
                   fromMenu: true,
                   child: InkWell(
                     onTap: _menuList[index].onTap as void Function()?,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall, vertical: Dimensions.paddingSizeExtraSmall),
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 10),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).cardColor,
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.06)),
+                        boxShadow: FoxGoDesign.premiumShadow(opacity: 0.055, blur: 14, offset: const Offset(0, 6)),
+                      ),
                       child: Row(children: [
                         Container(
-                          height: 55, width: 55, alignment: Alignment.center,
+                          height: 48, width: 48, alignment: Alignment.center,
                           decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
-                            color: index != _menuList.length-1 ? Theme.of(context).primaryColor : AuthHelper.isLoggedIn() ? Theme.of(context).colorScheme.error : Colors.green,
+                            borderRadius: BorderRadius.circular(18),
+                            color: index != _menuList.length-1
+                                ? FoxGoDesign.softRed
+                                : AuthHelper.isLoggedIn()
+                                    ? Theme.of(context).colorScheme.error.withValues(alpha: 0.10)
+                                    : Colors.green.withValues(alpha: 0.10),
                           ),
-                          child: Image.asset(_menuList[index].icon, color: Colors.white, height: 30, width: 30),
+                          child: Image.asset(
+                            _menuList[index].icon,
+                            color: index != _menuList.length-1
+                                ? Theme.of(context).primaryColor
+                                : AuthHelper.isLoggedIn()
+                                    ? Theme.of(context).colorScheme.error
+                                    : Colors.green,
+                            height: 24,
+                            width: 24,
+                          ),
                         ),
-                        const SizedBox(width: Dimensions.paddingSizeSmall),
+                        const SizedBox(width: 13),
 
-                        Expanded(child: Text(_menuList[index].title, style: robotoMedium, overflow: TextOverflow.ellipsis, maxLines: 1)),
+                        Expanded(child: Text(
+                          _menuList[index].title,
+                          style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault, color: FoxGoDesign.graphite),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        )),
+                        Icon(Icons.chevron_right_rounded, color: Theme.of(context).hintColor, size: 22),
 
                       ]),
                     ),

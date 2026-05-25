@@ -17,6 +17,7 @@ import 'package:sixam_mart/helper/price_converter.dart';
 import 'package:sixam_mart/helper/responsive_helper.dart';
 import 'package:sixam_mart/helper/route_helper.dart';
 import 'package:sixam_mart/util/dimensions.dart';
+import 'package:sixam_mart/util/foxgo_design.dart';
 import 'package:sixam_mart/util/images.dart';
 import 'package:sixam_mart/util/styles.dart';
 import 'package:sixam_mart/common/widgets/confirmation_dialog.dart';
@@ -35,33 +36,36 @@ class _MenuScreenState extends State<MenuScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // backgroundColor: Theme.of(context).cardColor,
+      backgroundColor: FoxGoDesign.softBackground,
       body: GetBuilder<ProfileController>(builder: (profileController) {
         final bool isLoggedIn = AuthHelper.isLoggedIn();
 
         return Column(children: [
 
           Container(
-            decoration: BoxDecoration(color: Theme.of(context).primaryColor),
+            decoration: const BoxDecoration(color: FoxGoDesign.softBackground),
             child: Padding(
               padding: const EdgeInsets.only(
                 left: Dimensions.paddingSizeLarge, right: Dimensions.paddingSizeLarge,
-                top: 45, bottom: Dimensions.paddingSizeDefault,
+                top: 42, bottom: Dimensions.paddingSizeDefault,
               ),
               child: Column(
                 children: [
+                  Image.asset(Images.logo, width: 145, fit: BoxFit.contain),
+                  const SizedBox(height: Dimensions.paddingSizeLarge),
                   Row(children: [
 
                     Container(
                       decoration: BoxDecoration(
-                        color: Theme.of(context).primaryColor,
+                        color: FoxGoDesign.card,
                         shape: BoxShape.circle,
+                        boxShadow: FoxGoDesign.premiumShadow(opacity: 0.14, blur: 18, offset: const Offset(0, 8)),
                       ),
                       padding: const EdgeInsets.all(1),
                       child: ClipOval(child: CustomImage(
                         placeholder: Images.guestIconLight,
                         image: '${(profileController.userInfoModel != null && isLoggedIn) ? profileController.userInfoModel!.imageFullUrl : ''}',
-                        height: 50, width: 50, fit: BoxFit.cover,
+                        height: 58, width: 58, fit: BoxFit.cover,
                       )),
                     ),
                     const SizedBox(width: Dimensions.paddingSizeDefault),
@@ -72,13 +76,13 @@ class _MenuScreenState extends State<MenuScreen> {
                           child: Container(
                             height: 15, width: 150,
                             decoration: BoxDecoration(
-                              color: Theme.of(context).cardColor,
+                              color: FoxGoDesign.card,
                               borderRadius: BorderRadius.circular(5),
                             ),
                           ),
                         ) : Text(
                           isLoggedIn ? '${profileController.userInfoModel?.fName ?? ''} ${profileController.userInfoModel?.lName ?? ''}' : 'guest_user'.tr,
-                          style: robotoBold.copyWith(fontSize: Dimensions.fontSizeExtraLarge, color: Theme.of(context).cardColor),
+                          style: robotoBold.copyWith(fontSize: Dimensions.fontSizeExtraLarge + 5, color: FoxGoDesign.graphite, height: 1.05),
                         ),
                         SizedBox(height: isLoggedIn && profileController.userInfoModel == null ? Dimensions.paddingSizeSmall : Dimensions.paddingSizeExtraSmall),
 
@@ -86,13 +90,13 @@ class _MenuScreenState extends State<MenuScreen> {
                           child: Container(
                             height: 15, width: 100,
                             decoration: BoxDecoration(
-                              color: Theme.of(context).cardColor,
+                              color: FoxGoDesign.card,
                               borderRadius: BorderRadius.circular(5),
                             ),
                           ),
                         ) : isLoggedIn ? Text(
                           '${'joined'.tr} ${profileController.userInfoModel != null ? DateConverter.containTAndZToUTCFormat(profileController.userInfoModel!.createdAt!) : ''}',
-                          style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).cardColor),
+                          style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeDefault, color: FoxGoDesign.textMuted),
                         ) : SizedBox(),
 
                       ]),
@@ -102,7 +106,20 @@ class _MenuScreenState extends State<MenuScreen> {
                       onPressed: (){
                         Get.find<ThemeController>().toggleTheme();
                       },
-                      icon: Get.find<ThemeController>().darkTheme ? Icon(Icons.sunny, color:Colors.white) : Image.asset(Images.moon, height: 30, color: Colors.white,),
+                      icon: Container(
+                        height: 42,
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        decoration: BoxDecoration(
+                          color: FoxGoDesign.graphite,
+                          borderRadius: BorderRadius.circular(18),
+                          boxShadow: FoxGoDesign.premiumShadow(opacity: 0.08, blur: 16, offset: const Offset(0, 7)),
+                        ),
+                        child: Row(mainAxisSize: MainAxisSize.min, children: [
+                          Icon(Icons.dark_mode_outlined, color: Colors.white, size: 18),
+                          const SizedBox(width: 8),
+                          Text('Modo escuro', style: robotoBold.copyWith(color: Colors.white, fontSize: Dimensions.fontSizeSmall)),
+                        ]),
+                      ),
                     ),
 
 
@@ -111,23 +128,23 @@ class _MenuScreenState extends State<MenuScreen> {
 
                   !isLoggedIn ? Column(children: [
                     Divider(
-                      thickness: 0.2, color: Theme.of(context).cardColor,
+                      thickness: 0.2, color: Theme.of(context).hintColor.withValues(alpha: 0.20),
                     ),
 
                     Row(children: [
                       Expanded(child: Text(
                         'for_more_personalised_and_smooth_experience'.tr,
-                        style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).cardColor),
+                        style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeDefault, color: FoxGoDesign.textMuted),
                       )),
                       const SizedBox(width: Dimensions.paddingSizeSmall),
 
                       TextButton(
                         style:  TextButton.styleFrom(
-                          backgroundColor: Theme.of(context).cardColor.withValues(alpha: 0.8),
+                          backgroundColor: Theme.of(context).cardColor,
                           minimumSize: Size(130, 30),
                           padding: EdgeInsets.zero,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+                            borderRadius: BorderRadius.circular(28),
                             side: BorderSide.none,
                           ),
                         ),
@@ -152,7 +169,7 @@ class _MenuScreenState extends State<MenuScreen> {
           ),
 
           Expanded(child: SingleChildScrollView(
-            padding: const EdgeInsets.only(top: Dimensions.paddingSizeDefault),
+            padding: const EdgeInsets.fromLTRB(0, Dimensions.paddingSizeLarge, 0, Dimensions.paddingSizeDefault),
             child: Column(children: [
 
               if(isLoggedIn && profileController.userInfoModel != null)
@@ -174,17 +191,17 @@ class _MenuScreenState extends State<MenuScreen> {
                   padding: const EdgeInsets.only(left: Dimensions.paddingSizeDefault, right: Dimensions.paddingSizeDefault, top: Dimensions.paddingSizeSmall),
                   child: Text(
                     'general'.tr,
-                    style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeDefault, color: Theme.of(context).disabledColor),
+                    style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault + 1, color: FoxGoDesign.graphite),
                   ),
                 ),
 
                 Container(
                   decoration: BoxDecoration(
-                    color: Theme.of(context).cardColor,
-                    borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-                    boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
+                    color: FoxGoDesign.card,
+                    borderRadius: BorderRadius.circular(28),
+                    boxShadow: FoxGoDesign.premiumShadow(opacity: 0.055, blur: 18, offset: const Offset(0, 8)),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeLarge, vertical: Dimensions.paddingSizeDefault),
+                  padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall, Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall),
                   margin: const EdgeInsets.all(Dimensions.paddingSizeDefault),
                   child: Column(children: [
                     PortionWidget(icon: Images.profileIcon, title: 'edit_profile'.tr, route: RouteHelper.getUpdateProfileRoute()),
@@ -201,17 +218,17 @@ class _MenuScreenState extends State<MenuScreen> {
                   padding: const EdgeInsets.only(left: Dimensions.paddingSizeDefault, right: Dimensions.paddingSizeDefault),
                   child: Text(
                     'promotional_activity'.tr,
-                    style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeDefault, color: Theme.of(context).disabledColor),
+                    style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault + 1, color: FoxGoDesign.graphite),
                   ),
                 ),
 
                 Container(
                   decoration: BoxDecoration(
-                    color: Theme.of(context).cardColor,
-                    borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-                    boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
+                    color: FoxGoDesign.card,
+                    borderRadius: BorderRadius.circular(28),
+                    boxShadow: FoxGoDesign.premiumShadow(opacity: 0.055, blur: 18, offset: const Offset(0, 8)),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeLarge, vertical: Dimensions.paddingSizeDefault),
+                  padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall, Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall),
                   margin: const EdgeInsets.all(Dimensions.paddingSizeDefault),
                   child: Column(children: [
                     PortionWidget(
@@ -240,17 +257,17 @@ class _MenuScreenState extends State<MenuScreen> {
                   padding: const EdgeInsets.only(left: Dimensions.paddingSizeDefault, right: Dimensions.paddingSizeDefault),
                   child: Text(
                     'earnings'.tr,
-                    style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeDefault, color: Theme.of(context).disabledColor),
+                    style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault + 1, color: FoxGoDesign.graphite),
                   ),
                 ),
 
                 Container(
                   decoration: BoxDecoration(
-                    color: Theme.of(context).cardColor,
-                    borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-                    boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
+                    color: FoxGoDesign.card,
+                    borderRadius: BorderRadius.circular(28),
+                    boxShadow: FoxGoDesign.premiumShadow(opacity: 0.055, blur: 18, offset: const Offset(0, 8)),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeLarge, vertical: Dimensions.paddingSizeDefault),
+                  padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall, Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall),
                   margin: const EdgeInsets.all(Dimensions.paddingSizeDefault),
                   child: Column(children: [
 
@@ -279,17 +296,17 @@ class _MenuScreenState extends State<MenuScreen> {
                   padding: const EdgeInsets.only(left: Dimensions.paddingSizeDefault, right: Dimensions.paddingSizeDefault),
                   child: Text(
                     'help_and_support'.tr,
-                    style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeDefault, color: Theme.of(context).disabledColor),
+                    style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault + 1, color: FoxGoDesign.graphite),
                   ),
                 ),
 
                 Container(
                   decoration: BoxDecoration(
-                    color: Theme.of(context).cardColor,
-                    borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-                    boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
+                    color: FoxGoDesign.card,
+                    borderRadius: BorderRadius.circular(28),
+                    boxShadow: FoxGoDesign.premiumShadow(opacity: 0.055, blur: 18, offset: const Offset(0, 8)),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeLarge, vertical: Dimensions.paddingSizeDefault),
+                  padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall, Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall),
                   margin: const EdgeInsets.all(Dimensions.paddingSizeDefault),
                   child: Column(children: [
                     PortionWidget(icon: Images.chatIcon, title: 'live_chat'.tr, route: RouteHelper.getConversationRoute()),
@@ -373,31 +390,31 @@ class _MenuScreenState extends State<MenuScreen> {
     return  Expanded(
       child: Container(
         decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+          color: FoxGoDesign.card,
+          borderRadius: BorderRadius.circular(28),
           border: Border.all(color: Theme.of(context).disabledColor, width: 0.2),
-          boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
+          boxShadow: FoxGoDesign.premiumShadow(opacity: 0.055, blur: 18, offset: const Offset(0, 8)),
         ),
         // margin: const EdgeInsets.all(Dimensions.paddingSizeExtraSmall+3),
         padding: const EdgeInsets.all(Dimensions.paddingSizeExtraSmall),
         child: Column(children: [
           const SizedBox(height: Dimensions.paddingSizeSmall),
 
-          Image.asset(image, height: 30, width: 30),
+          Container(height: 42, width: 42, padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: FoxGoDesign.softRed, borderRadius: BorderRadius.circular(16)), child: Image.asset(image, height: 26, width: 26)),
           const SizedBox(height: Dimensions.paddingSizeExtraSmall),
 
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall, vertical: Dimensions.paddingSizeExtraSmall),
             child: Text(
               isAmount ? PriceConverter.convertPrice(value, forMenuWallet: true) : value.toStringAsFixed(0),
-              style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge),
+              style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge, color: FoxGoDesign.graphite),
             ),
           ),
           Padding(
             padding: const EdgeInsets.only(bottom: Dimensions.paddingSizeSmall),
             child: Text(
               title,
-              style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).textTheme.bodyLarge!.color!.withValues(alpha: 0.5)),
+              style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).hintColor),
             ),
           ),
         ]),

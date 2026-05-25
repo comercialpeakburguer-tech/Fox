@@ -17,7 +17,7 @@ class PaymentButtonNew extends StatelessWidget {
         onTap: onTap as void Function()?,
         child: Container(
           decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+              borderRadius: BorderRadius.circular(22),
               border: Border.all(color: isSelected ? Theme.of(context).primaryColor : Theme.of(context).disabledColor.withValues(alpha: 0.5))
           ),
           padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall, vertical: Dimensions.paddingSizeLarge),

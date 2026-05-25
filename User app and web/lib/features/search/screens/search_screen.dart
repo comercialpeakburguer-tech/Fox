@@ -10,6 +10,7 @@ import 'package:sixam_mart/helper/auth_helper.dart';
 import 'package:sixam_mart/helper/responsive_helper.dart';
 import 'package:sixam_mart/helper/voice_permission_handler.dart';
 import 'package:sixam_mart/util/dimensions.dart';
+import 'package:sixam_mart/util/foxgo_design.dart';
 import 'package:sixam_mart/util/images.dart';
 import 'package:sixam_mart/util/styles.dart';
 import 'package:sixam_mart/common/widgets/custom_image.dart';
@@ -83,8 +84,9 @@ class SearchScreenState extends State<SearchScreen> with TickerProviderStateMixi
       child: Scaffold(
         appBar: ResponsiveHelper.isDesktop(context) ? const WebMenuBar() : null,
         endDrawer: const MenuDrawer(), endDrawerEnableOpenDragGesture: false,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         body: SafeArea(child: Padding(
-          padding: ResponsiveHelper.isDesktop(context) ? EdgeInsets.zero : const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeSmall),
+          padding: ResponsiveHelper.isDesktop(context) ? EdgeInsets.zero : EdgeInsets.zero,
           child: GetBuilder<search.SearchController>(builder: (searchController) {
             if(!GetPlatform.isWeb) {
               _searchController.text = searchController.searchText!;
@@ -92,13 +94,13 @@ class SearchScreenState extends State<SearchScreen> with TickerProviderStateMixi
             return Column(children: [
               ResponsiveHelper.isDesktop(context) ? Container(
                 width : double.infinity,
-                color: Theme.of(context).primaryColor.withValues(alpha: 0.10),
+                color: FoxGoDesign.softRed,
                 child: SizedBox(
                   width: Dimensions.webMaxWidth,
                   child: Column(
                     children: [
                       const SizedBox(height: Dimensions.paddingSizeDefault),
-                      Text('search_items_and_stores'.tr, style: robotoMedium),
+                      Text('search_items_and_stores'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeExtraLarge, color: FoxGoDesign.graphite)),
                       const SizedBox(height: Dimensions.paddingSizeDefault),
 
                       SizedBox(width: Dimensions.webMaxWidth, child: GetBuilder<search.SearchController>(builder: (searchController) {
@@ -179,11 +181,13 @@ class SearchScreenState extends State<SearchScreen> with TickerProviderStateMixi
 
               widget.queryText!.isNotEmpty ? const SizedBox() : Center(child: ResponsiveHelper.isDesktop(context) ? const SizedBox() : Container(
                 width: Dimensions.webMaxWidth,
+                margin: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall),
                 decoration: BoxDecoration(
                   color: Get.find<ThemeController>().darkTheme ? Colors.black12 : Theme.of(context).cardColor,
-                  boxShadow: Get.find<ThemeController>().darkTheme ? null : [BoxShadow(color: Theme.of(context).disabledColor.withValues(alpha: 0.2), blurRadius: 3, offset: const Offset(0, 5))]
+                  borderRadius: BorderRadius.circular(26),
+                  boxShadow: Get.find<ThemeController>().darkTheme ? null : FoxGoDesign.premiumShadow(opacity: 0.08, blur: 18, offset: const Offset(0, 8))
                 ),
-              padding: const EdgeInsets.only(bottom: 5),
+              padding: const EdgeInsets.fromLTRB(6, 6, 6, 6),
               child: Row(children: [
 
                 IconButton(
@@ -201,16 +205,16 @@ class SearchScreenState extends State<SearchScreen> with TickerProviderStateMixi
 
                 Expanded(child: Container(
                   decoration: BoxDecoration(
-                    border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.2), width: 1),
-                    borderRadius: BorderRadius.circular(50),
+                    border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.08), width: 1),
+                    borderRadius: BorderRadius.circular(24),
                   ),
                   child: SearchFieldWidget(
                     controller: _searchController,
-                    radius: 40,
-                    filledColor: Theme.of(context).disabledColor.withValues(alpha: 0.05),
+                    radius: 24,
+                    filledColor: FoxGoDesign.softBackground,
                     hint: Get.find<SplashController>().configModel!.moduleConfig!.module!.showRestaurantText!
                         ? 'search_food_or_restaurant'.tr : 'search_item_or_store'.tr,
-                    suffixIcon: _searchController.text.isNotEmpty ? Icons.clear : Icons.keyboard_voice_sharp,
+                    suffixIcon: _searchController.text.isNotEmpty ? Icons.clear : Icons.tune_rounded,
                     prefixIcon: CupertinoIcons.search,
                     iconPressed: () async {
                       if(_searchController.text.isNotEmpty) {
@@ -243,9 +247,12 @@ class SearchScreenState extends State<SearchScreen> with TickerProviderStateMixi
               Expanded(child: searchController.isSearchMode ? _showSuggestion ? showSuggestions(
                 context, searchController, _itemsAndStors,
               ) : SingleChildScrollView(
-                padding: ResponsiveHelper.isDesktop(context) ? EdgeInsets.zero : const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall),
+                padding: ResponsiveHelper.isDesktop(context) ? EdgeInsets.zero : const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault),
                 child: FooterView(
                   child: SizedBox(width: Dimensions.webMaxWidth, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+
+                    const _FoxGoSearchFilterChips(),
+                    const SizedBox(height: Dimensions.paddingSizeDefault),
 
                     searchController.historyList.isNotEmpty ? Padding(
                       padding: const EdgeInsets.only(top: Dimensions.paddingSizeSmall),
@@ -277,7 +284,7 @@ class SearchScreenState extends State<SearchScreen> with TickerProviderStateMixi
                             margin: const EdgeInsets.only(right: Dimensions.paddingSizeSmall),
                              padding: const EdgeInsets.symmetric(horizontal : Dimensions.paddingSizeDefault),
                               decoration: BoxDecoration(
-                                color: Theme.of(context).primaryColor.withValues(alpha: 0.10),
+                                color: FoxGoDesign.softRed,
                                 border: Border.all(color: Theme.of(context).primaryColor),
                                 borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
                               ),
@@ -531,4 +538,43 @@ class SearchScreenState extends State<SearchScreen> with TickerProviderStateMixi
     );
   }
 
+}
+
+
+class _FoxGoSearchFilterChips extends StatelessWidget {
+  const _FoxGoSearchFilterChips();
+
+  @override
+  Widget build(BuildContext context) {
+    const filters = [
+      ('Entrega grátis', Icons.delivery_dining_rounded),
+      ('Mais bem avaliados', Icons.star_rounded),
+      ('Até 30 min', Icons.timer_rounded),
+    ];
+
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text('Melhores lojas próximas', style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge + 1, color: FoxGoDesign.graphite)),
+      const SizedBox(height: 12),
+      SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(children: filters.map((item) {
+          return Container(
+            margin: const EdgeInsets.only(right: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.10)),
+              boxShadow: FoxGoDesign.premiumShadow(opacity: 0.05, blur: 12, offset: const Offset(0, 5)),
+            ),
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              Icon(item.$2, size: 17, color: Theme.of(context).primaryColor),
+              const SizedBox(width: 6),
+              Text(item.$1, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeSmall, color: FoxGoDesign.graphite)),
+            ]),
+          );
+        }).toList()),
+      ),
+    ]);
+  }
 }

@@ -29,7 +29,9 @@ import 'package:sixam_mart/helper/route_helper.dart';
 import 'package:sixam_mart/helper/taxi_helper.dart';
 import 'package:sixam_mart/util/app_constants.dart';
 import 'package:sixam_mart/util/dimensions.dart';
+import 'package:sixam_mart/util/foxgo_design.dart';
 import 'package:sixam_mart/util/images.dart';
+import 'package:sixam_mart/util/styles.dart';
 import 'package:sixam_mart/common/widgets/cart_widget.dart';
 import 'package:sixam_mart/common/widgets/custom_dialog.dart';
 import 'package:sixam_mart/features/checkout/widgets/congratulation_dialogue.dart';
@@ -235,23 +237,24 @@ class DashboardScreenState extends State<DashboardScreen> {
                                 const MenuScreen()
                               ];
                               return Container(
-                                width: size.width, height: GetPlatform.isIOS ? 80 : 65,
+                                width: size.width, height: GetPlatform.isIOS ? 104 : 94,
                                 decoration: BoxDecoration(
-                                  color: Theme.of(context).cardColor,
-                                  borderRadius: const BorderRadius.vertical(top: Radius.circular(Dimensions.radiusLarge)),
-                                    boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
+                                  color: FoxGoDesign.card,
+                                  borderRadius: const BorderRadius.vertical(top: Radius.circular(34)),
+                                  border: Border(top: BorderSide(color: Theme.of(context).primaryColor.withValues(alpha: 0.06))),
+                                  boxShadow: FoxGoDesign.premiumShadow(opacity: 0.13, blur: 28, offset: const Offset(0, -8)),
                                 ),
                                 child: Stack(children: [
 
                                   Center(
-                                    heightFactor: 0.6,
+                                    heightFactor: 0.58,
                                     child: ResponsiveHelper.isDesktop(context) ? null : (widget.fromSplash && Get.find<LocationController>().showLocationSuggestion && active) ? null
                                       : (orderController.showBottomSheet && orderController.runningOrderModel != null && orderController.runningOrderModel!.orders!.isNotEmpty && _isLogin) ? const SizedBox() : Container(
-                                        width: 60, height: 60,
+                                        width: 72, height: 72,
                                         decoration: BoxDecoration(
-                                          border: Border.all(color: Theme.of(context).cardColor, width: 5),
-                                          borderRadius: BorderRadius.circular(30),
-                                          boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
+                                          border: Border.all(color: FoxGoDesign.card, width: 6),
+                                          borderRadius: BorderRadius.circular(36),
+                                          boxShadow: FoxGoDesign.premiumShadow(opacity: 0.24, blur: 24, offset: const Offset(0, 10)),
                                         ),
                                         child: FloatingActionButton(
                                           backgroundColor: Theme.of(context).primaryColor,
@@ -275,18 +278,28 @@ class DashboardScreenState extends State<DashboardScreen> {
                                           },
                                           elevation: 0,
                                           child: isTaxiWithCache
-                                              ? TaxiCartWidget(color: Theme.of(context).cardColor, size: 22)
-                                              : isParcel ? Icon(CupertinoIcons.add, size: 34, color: Theme.of(context).cardColor)
+                                              ? TaxiCartWidget(color: FoxGoDesign.card, size: 22)
+                                              : isParcel ? Icon(CupertinoIcons.add, size: 34, color: FoxGoDesign.card)
                                               : isRide ? const RideCart()
-                                              : CartWidget(color: Theme.of(context).cardColor, size: 22),
+                                              : CartWidget(color: FoxGoDesign.card, size: 22),
                                         ),
+                                    ),
+                                  ),
+
+                                  ResponsiveHelper.isDesktop(context) ? const SizedBox() : (widget.fromSplash && Get.find<LocationController>().showLocationSuggestion && active) ? const SizedBox()
+                                  : (orderController.showBottomSheet && orderController.runningOrderModel != null && orderController.runningOrderModel!.orders!.isNotEmpty && _isLogin) ? const SizedBox() : Positioned(
+                                    bottom: 10,
+                                    left: 0,
+                                    right: 0,
+                                    child: Center(
+                                      child: Text('cart'.tr, style: robotoBold.copyWith(color: Theme.of(context).primaryColor, fontSize: 10.6, height: 1)),
                                     ),
                                   ),
 
                                   ResponsiveHelper.isDesktop(context) ? const SizedBox() : (widget.fromSplash && Get.find<LocationController>().showLocationSuggestion && active) ? const SizedBox()
                                   : (orderController.showBottomSheet && orderController.runningOrderModel != null && orderController.runningOrderModel!.orders!.isNotEmpty && _isLogin) ? const SizedBox() : Center(
                                     child: SizedBox(
-                                        width: size.width, height: 80,
+                                        width: size.width, height: 88,
                                         child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
                                           BottomNavItemWidget(
                                             title: 'home'.tr, selectedIcon: Images.homeSelect,
@@ -294,10 +307,11 @@ class DashboardScreenState extends State<DashboardScreen> {
                                             onTap: () => _setPage(0),
                                           ),
                                           BottomNavItemWidget(
-                                            title: isParcel ? 'address'.tr : isTaxi ? 'wishlist'.tr : isRide ? 'my_activity'.tr  : 'favourite'.tr,
-                                            selectedIcon: isParcel ? Images.addressSelect : isRide ? Images.orderSelect : Images.favouriteSelect,
-                                            unSelectedIcon: isParcel ? Images.addressUnselect : isRide ? Images.orderUnselect : Images.favouriteUnselect,
-                                            isSelected: _pageIndex == 1, onTap: () => _setPage(1),
+                                            title: 'search'.tr,
+                                            selectedIcon: Images.searchIcon,
+                                            unSelectedIcon: Images.searchIcon,
+                                            isSelected: false,
+                                            onTap: () => Get.toNamed(RouteHelper.getSearchRoute()),
                                           ),
                                           Container(width: size.width * 0.2),
                                           BottomNavItemWidget(
@@ -307,7 +321,7 @@ class DashboardScreenState extends State<DashboardScreen> {
                                             isSelected: _pageIndex == 3, onTap: () => _setPage(3),
                                           ),
                                           BottomNavItemWidget(
-                                            title: 'menu'.tr, selectedIcon: Images.menu, unSelectedIcon: Images.menu,
+                                            title: 'profile'.tr, selectedIcon: Images.profileIcon, unSelectedIcon: Images.profileIcon,
                                             isSelected: _pageIndex == 4, onTap: () => _setPage(4),
                                           ),
                                         ]),
@@ -321,7 +335,7 @@ class DashboardScreenState extends State<DashboardScreen> {
                         ),
                       ]),
 
-                    persistentContentHeight: (widget.fromSplash && Get.find<LocationController>().showLocationSuggestion && active) ? 0 : GetPlatform.isIOS ? 110 : 100,
+                    persistentContentHeight: (widget.fromSplash && Get.find<LocationController>().showLocationSuggestion && active) ? 0 : GetPlatform.isIOS ? 118 : 108,
 
                     onIsContractedCallback: () {
                       if(!orderController.showOneOrder) {

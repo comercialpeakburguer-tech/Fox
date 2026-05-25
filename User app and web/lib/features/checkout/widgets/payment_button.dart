@@ -21,8 +21,8 @@ class PaymentButton extends StatelessWidget {
             Container(
               decoration: BoxDecoration(
                 color: Theme.of(context).cardColor,
-                borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
-                boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: const [BoxShadow(color: Colors.black.withValues(alpha: 0.07), blurRadius: 18, spreadRadius: 0, offset: const Offset(0, 8))],
               ),
               child: ListTile(
                 contentPadding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeExtraSmall),

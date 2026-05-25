@@ -9,6 +9,7 @@ import 'package:sixam_mart/helper/auth_helper.dart';
 import 'package:sixam_mart/helper/responsive_helper.dart';
 import 'package:sixam_mart/helper/route_helper.dart';
 import 'package:sixam_mart/util/dimensions.dart';
+import 'package:sixam_mart/util/foxgo_design.dart';
 import 'package:sixam_mart/common/widgets/custom_app_bar.dart';
 import 'package:sixam_mart/common/widgets/footer_view.dart';
 import 'package:sixam_mart/common/widgets/menu_drawer.dart';
@@ -110,7 +111,7 @@ class _WalletScreenState extends State<WalletScreen> {
         }
       },
       child: Scaffold(
-        backgroundColor: Theme.of(context).cardColor,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         endDrawer: const MenuDrawer(),endDrawerEnableOpenDragGesture: false,
         appBar: CustomAppBar(title: 'wallet'.tr, backButton: true, onBackPressed: () {
           if(widget.fromNotification) {
@@ -144,8 +145,8 @@ class _WalletScreenState extends State<WalletScreen> {
                                             Container(
                                               decoration: ResponsiveHelper.isDesktop(context) ? BoxDecoration(
                                                 color: Theme.of(context).cardColor,
-                                                borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
-                                                boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
+                                                borderRadius: BorderRadius.circular(28),
+                                                boxShadow: FoxGoDesign.premiumShadow(opacity: 0.07, blur: 18, offset: const Offset(0, 8)),
                                               ) : null,
                                               padding: const EdgeInsets.all(Dimensions.paddingSizeLarge),
                                               child: WalletCardWidget(tooltipController: tooltipController)
@@ -159,8 +160,8 @@ class _WalletScreenState extends State<WalletScreen> {
                                           Container(
                                             decoration: ResponsiveHelper.isDesktop(context) ? BoxDecoration(
                                               color: Theme.of(context).cardColor,
-                                              borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
-                                              boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
+                                              borderRadius: BorderRadius.circular(28),
+                                              boxShadow: FoxGoDesign.premiumShadow(opacity: 0.07, blur: 18, offset: const Offset(0, 8)),
                                             ) : null,
                                             padding: const EdgeInsets.all(Dimensions.paddingSizeLarge),
                                             child: const WalletHistoryWidget(),
@@ -172,13 +173,13 @@ class _WalletScreenState extends State<WalletScreen> {
                                : Column(children: [
 
                                   Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeLarge),
+                                    padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeLarge, Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall),
                                     child: WalletCardWidget(tooltipController: tooltipController),
                                   ),
                                   const BonusBannerWidget(),
 
                                   const Padding(
-                                    padding: EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeLarge),
+                                    padding: EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall, Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault),
                                     child: WalletHistoryWidget(),
                                   ),
 

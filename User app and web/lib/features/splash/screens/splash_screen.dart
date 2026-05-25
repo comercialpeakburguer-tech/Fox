@@ -10,6 +10,7 @@ import 'package:sixam_mart/util/dimensions.dart';
 import 'package:sixam_mart/util/images.dart';
 import 'package:sixam_mart/common/widgets/no_internet_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -170,14 +171,56 @@ class SplashScreenState extends State<SplashScreen> {
     return Scaffold(
       key: _globalKey,
       body: GetBuilder<SplashController>(builder: (splashController) {
-        return Center(
-          child: splashController.hasConnection ? Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Image.asset(Images.logo, width: 200),
-              const SizedBox(height: Dimensions.paddingSizeSmall),
-            ],
-          ) : NoInternetScreen(child: SplashScreen(body: widget.body, deeplinkUrl: widget.deeplinkUrl)),
+        return Container(
+          width: double.infinity,
+          height: double.infinity,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: const [
+                Color(0xFFFF4B1F),
+                Color(0xFFF7272F),
+                Color(0xFFE30613),
+              ],
+            ),
+          ),
+          child: Center(
+            child: splashController.hasConnection ? Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(22),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).cardColor,
+                    borderRadius: BorderRadius.circular(34),
+                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.18), blurRadius: 28, offset: const Offset(0, 12))],
+                  ),
+                  child: SvgPicture.asset(Images.foxGoMark, width: 138, height: 138),
+                ),
+                const SizedBox(height: 22),
+                SvgPicture.asset(Images.foxGoLogoLight, width: 230),
+                const SizedBox(height: 14),
+                Text(
+                  'Mercado, restaurantes, farmácia\ne entregas em um só app',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.white, fontSize: 17, height: 1.45, fontWeight: FontWeight.w400),
+                ),
+                const SizedBox(height: 96),
+                Row(mainAxisSize: MainAxisSize.min, children: List.generate(4, (index) {
+                  return Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 6),
+                    width: index == 0 ? 10 : 9,
+                    height: index == 0 ? 10 : 9,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: index == 0 ? 1 : 0.32),
+                      shape: BoxShape.circle,
+                    ),
+                  );
+                })),
+              ],
+            ) : NoInternetScreen(child: SplashScreen(body: widget.body, deeplinkUrl: widget.deeplinkUrl)),
+          ),
         );
       }),
     );
