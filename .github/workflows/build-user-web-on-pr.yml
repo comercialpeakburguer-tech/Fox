@@ -62,14 +62,30 @@ jobs:
           path: User app and web/build/web
           if-no-files-found: error
 
+      - name: Validate deploy secrets
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        working-directory: .
+        env:
+          DEPLOY_KEY: ${{ secrets.VPS_SSH_KEY || secrets.SSH_PRIVATE_KEY || secrets.SSH_KEY || secrets.DEPLOY_KEY || secrets.SERVER_SSH_KEY || secrets.HOSTINGER_SSH_KEY }}
+          DEPLOY_HOST: ${{ secrets.VPS_HOST || secrets.REMOTE_HOST || secrets.SSH_HOST || secrets.SERVER_HOST || secrets.HOSTINGER_HOST }}
+          DEPLOY_USER: ${{ secrets.VPS_USER || secrets.REMOTE_USER || secrets.SSH_USER || secrets.SERVER_USER || secrets.HOSTINGER_USER }}
+          DEPLOY_PORT: ${{ secrets.VPS_PORT || secrets.REMOTE_PORT || secrets.SSH_PORT || secrets.SERVER_PORT || '22' }}
+        run: |
+          missing=0
+          if [ -z "$DEPLOY_KEY" ]; then echo "Secret da chave SSH não encontrado. Aceitos: VPS_SSH_KEY, SSH_PRIVATE_KEY, SSH_KEY, DEPLOY_KEY, SERVER_SSH_KEY, HOSTINGER_SSH_KEY"; missing=1; fi
+          if [ -z "$DEPLOY_HOST" ]; then echo "Secret do host não encontrado. Aceitos: VPS_HOST, REMOTE_HOST, SSH_HOST, SERVER_HOST, HOSTINGER_HOST"; missing=1; fi
+          if [ -z "$DEPLOY_USER" ]; then echo "Secret do usuário não encontrado. Aceitos: VPS_USER, REMOTE_USER, SSH_USER, SERVER_USER, HOSTINGER_USER"; missing=1; fi
+          if [ -z "$DEPLOY_PORT" ]; then echo "Secret da porta não encontrado. Aceitos: VPS_PORT, REMOTE_PORT, SSH_PORT, SERVER_PORT ou padrão 22"; missing=1; fi
+          exit $missing
+
       - name: Deploy User Web to VPS
         if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         uses: easingthemes/ssh-deploy@main
         env:
-          SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_KEY }}
-          REMOTE_HOST: ${{ secrets.VPS_HOST }}
-          REMOTE_USER: ${{ secrets.VPS_USER }}
-          REMOTE_PORT: ${{ secrets.VPS_PORT }}
+          SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_KEY || secrets.SSH_PRIVATE_KEY || secrets.SSH_KEY || secrets.DEPLOY_KEY || secrets.SERVER_SSH_KEY || secrets.HOSTINGER_SSH_KEY }}
+          REMOTE_HOST: ${{ secrets.VPS_HOST || secrets.REMOTE_HOST || secrets.SSH_HOST || secrets.SERVER_HOST || secrets.HOSTINGER_HOST }}
+          REMOTE_USER: ${{ secrets.VPS_USER || secrets.REMOTE_USER || secrets.SSH_USER || secrets.SERVER_USER || secrets.HOSTINGER_USER }}
+          REMOTE_PORT: ${{ secrets.VPS_PORT || secrets.REMOTE_PORT || secrets.SSH_PORT || secrets.SERVER_PORT || '22' }}
           SOURCE: 'User app and web/build/web/'
           TARGET: '/opt/foxgo/web_public/'
           ARGS: '-avz --delete'
