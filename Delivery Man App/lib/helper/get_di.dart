@@ -26,6 +26,11 @@ import 'package:sixam_mart_delivery/features/disbursement/domain/repositories/di
 import 'package:sixam_mart_delivery/features/disbursement/domain/repositories/disbursement_repository_interface.dart';
 import 'package:sixam_mart_delivery/features/disbursement/domain/services/disbursement_service.dart';
 import 'package:sixam_mart_delivery/features/disbursement/domain/services/disbursement_service_interface.dart';
+import 'package:sixam_mart_delivery/features/earning_reports/controllers/earning_report_controller.dart';
+import 'package:sixam_mart_delivery/features/earning_reports/domain/repositories/report_repository.dart';
+import 'package:sixam_mart_delivery/features/earning_reports/domain/repositories/report_repository_interface.dart';
+import 'package:sixam_mart_delivery/features/earning_reports/domain/services/report_service.dart';
+import 'package:sixam_mart_delivery/features/earning_reports/domain/services/report_service_interface.dart';
 import 'package:sixam_mart_delivery/features/forgot_password/controllers/forgot_password_controller.dart';
 import 'package:sixam_mart_delivery/features/forgot_password/domain/repositories/forgot_password_repository.dart';
 import 'package:sixam_mart_delivery/features/forgot_password/domain/repositories/forgot_password_repository_interface.dart';
@@ -122,6 +127,9 @@ Future<Map<String, Map<String, String>>> init() async {
   MyAccountRepositoryInterface myAccountRepositoryInterface = MyAccountRepository(apiClient: Get.find(), sharedPreferences: Get.find());
   Get.lazyPut(() => myAccountRepositoryInterface);
 
+  EarningReportRepositoryInterface earningReportRepositoryInterface = EarningReportRepository(apiClient: Get.find(), sharedPreferences: Get.find());
+  Get.lazyPut(() => earningReportRepositoryInterface);
+
   ForgotPasswordRepositoryInterface forgotPasswordRepositoryInterface = ForgotPasswordRepository(apiClient: Get.find(), sharedPreferences: Get.find());
   Get.lazyPut(() => forgotPasswordRepositoryInterface);
 
@@ -181,6 +189,9 @@ Future<Map<String, Map<String, String>>> init() async {
   MyAccountServiceInterface myAccountServiceInterface = MyAccountService(myAccountRepositoryInterface: Get.find());
   Get.lazyPut(() => myAccountServiceInterface);
 
+  EarningReportServiceInterface earningReportServiceInterface = EarningReportService(earningReportRepositoryInterface: Get.find());
+  Get.lazyPut(() => earningReportServiceInterface);
+
   ForgotPasswordServiceInterface forgotPasswordServiceInterface = ForgotPasswordService(forgotPasswordRepositoryInterface: Get.find());
   Get.lazyPut(() => forgotPasswordServiceInterface);
 
@@ -234,6 +245,7 @@ Future<Map<String, Map<String, String>>> init() async {
   Get.lazyPut(() => HtmlService(htmlRepositoryInterface: Get.find()));
   Get.lazyPut(() => DisbursementService(disbursementRepositoryInterface: Get.find()));
   Get.lazyPut(() => MyAccountService(myAccountRepositoryInterface: Get.find()));
+  Get.lazyPut(() => EarningReportService(earningReportRepositoryInterface: Get.find()));
   Get.lazyPut(() => ForgotPasswordService(forgotPasswordRepositoryInterface: Get.find()));
   Get.lazyPut(() => ChatService(chatRepositoryInterface: Get.find()));
   Get.lazyPut(() => LanguageService(languageRepositoryInterface: Get.find()));
@@ -252,6 +264,7 @@ Future<Map<String, Map<String, String>>> init() async {
   Get.lazyPut(() => HtmlController(htmlServiceInterface: Get.find()));
   Get.lazyPut(() => DisbursementController(disbursementServiceInterface: Get.find()));
   Get.lazyPut(() => MyAccountController(myAccountServiceInterface: Get.find()));
+  Get.lazyPut(() => EarningReportController(earningReportServiceInterface: Get.find()));
   Get.lazyPut(() => ThemeController(sharedPreferences: Get.find()));
   Get.lazyPut(() => ForgotPasswordController(forgotPasswordServiceInterface: Get.find()));
   Get.lazyPut(() => ChatController(chatServiceInterface: Get.find()));

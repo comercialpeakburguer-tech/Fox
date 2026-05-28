@@ -44,6 +44,14 @@ class ProfileController extends GetxController implements GetxService {
   LevelModel? _levelModel;
   LevelModel? get levelModel => _levelModel;
 
+  void _closeTransientUiIfOpen() {
+    final bool dialogOpen = Get.isDialogOpen ?? false;
+    final bool bottomSheetOpen = Get.isBottomSheetOpen ?? false;
+    if (dialogOpen || bottomSheetOpen) {
+      Get.back();
+    }
+  }
+
   Future<void> getProfileLevelInfo() async{
     Response response = await profileServiceInterface.getProfileLevelInfo();
     if(response.statusCode == 200){
@@ -128,7 +136,7 @@ class ProfileController extends GetxController implements GetxService {
 
     ResponseModel responseModel = await profileServiceInterface.updateActiveStatus();
     if (responseModel.isSuccess) {
-      Get.back();
+      _closeTransientUiIfOpen();
       _profileModel!.active = _profileModel!.active == 0 ? 1 : 0;
       showCustomSnackBar(responseModel.message, isError: false);
       if (_profileModel!.active == 1) {
@@ -191,33 +199,47 @@ class ProfileController extends GetxController implements GetxService {
 
   void stopLocationRecord() {
     _timer?.cancel();
+    _timer = null;
   }
 
   Future<void> recordLocation() async {
-    if (GetPlatform.isMobile && Get.find<PermissionFlowController>().hasCriticalMissing) {
-      stopLocationRecord();
-      return;
-    }
-    final Position locationResult = await Geolocator.getCurrentPosition();
-    String address = await profileServiceInterface.addressPlaceMark(locationResult);
-    String zoneId = await profileServiceInterface.getZoneId(locationResult);
+    try {
+      if (GetPlatform.isMobile && Get.find<PermissionFlowController>().hasCriticalMissing) {
+        stopLocationRecord();
+        return;
+      }
+      if(_profileModel != null && _profileModel!.active != 1) {
+        stopLocationRecord();
+        return;
+      }
 
-    _recordLocation = RecordLocationBodyModel(
-      location: address, latitude: locationResult.latitude, longitude: locationResult.longitude, zoneId: zoneId
-    );
+      final Position locationResult = await Geolocator.getCurrentPosition();
+      String address = await profileServiceInterface.addressPlaceMark(locationResult);
+      String zoneId = await profileServiceInterface.getZoneId(locationResult);
 
-    List<String> status = ['accepted','ongoing'];
-    if(Get.find<RideController>().tripDetail != null && status.contains(Get.find<RiderMapController>().currentRideState.name) && Get.find<AuthController>().getUserToken() != ''){
-      Get.find<RideController>().remainingDistance(Get.find<RideController>().tripDetail!.id!);
-    }
+      _recordLocation = RecordLocationBodyModel(
+        location: address, latitude: locationResult.latitude, longitude: locationResult.longitude, zoneId: zoneId
+      );
+      update();
 
-    //await profileServiceInterface.recordLocation(_recordLocation!);
-    /// todo Need to integrate Pusher
-    if(Get.find<AuthController>().isLoggedIn()){
-      if(Get.find<SplashController>().configModel!.webSocketStatus!) {
-        await profileServiceInterface.recordWebSocketLocation(_recordLocation!, zoneId);
-      } else {
-        await profileServiceInterface.recordLocation(_recordLocation!, zoneId);
+      List<String> status = ['accepted','ongoing'];
+      if(Get.find<RideController>().tripDetail != null && status.contains(Get.find<RiderMapController>().currentRideState.name) && Get.find<AuthController>().getUserToken() != ''){
+        Get.find<RideController>().remainingDistance(Get.find<RideController>().tripDetail!.id!);
+      }
+
+      if(Get.find<AuthController>().isLoggedIn()){
+        if(Get.find<SplashController>().configModel!.webSocketStatus!) {
+          await profileServiceInterface.recordWebSocketLocation(_recordLocation!, zoneId);
+        } else {
+          await profileServiceInterface.recordLocation(_recordLocation!, zoneId);
+        }
+      }
+    } catch (error, stackTrace) {
+      debugPrint('FoxGoLocation recordLocation erro=$error\n$stackTrace');
+      if(error is PermissionDeniedException || error is LocationServiceDisabledException) {
+        stopLocationRecord();
+        await FoxGoOnlineServiceHelper.stop();
+        await DeliverymanAvailabilityHelper.setOffline();
       }
     }
   }

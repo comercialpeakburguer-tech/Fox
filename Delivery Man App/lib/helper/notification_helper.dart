@@ -38,9 +38,6 @@ import 'package:sixam_mart_delivery/helper/get_di.dart' as di;
 import 'package:sixam_mart_delivery/helper/global_call_route_helper.dart';
 import 'package:sixam_mart_delivery/features/ride_module/ride_order/screens/ride_details_screen.dart';
 
-
-
-
 class NotificationHelper {
   static String? _lastForegroundOrderRequestId;
   static DateTime? _lastForegroundOrderRequestAt;
@@ -116,7 +113,6 @@ class NotificationHelper {
     return true;
   }
 
-
   static Future<void> initialize(FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin) async {
     var androidInitialize = const AndroidInitializationSettings('notification_icon');
     var iOSInitialize = const DarwinInitializationSettings();
@@ -133,6 +129,11 @@ class NotificationHelper {
         if(load.payload!.isNotEmpty){
           NotificationBodyModel payload = NotificationBodyModel.fromJson(jsonDecode(load.payload!));
 
+          if(payload.notificationType == NotificationType.ride_request) {
+            await notificationToRoute(payload);
+            return;
+          }
+
           final Map<NotificationType, Function> notificationActions = {
             NotificationType.order: () => Get.toNamed(RouteHelper.getOrderDetailsRoute(payload.orderId, fromNotification: true)),
             NotificationType.order_request: () => Get.toNamed(RouteHelper.getMainRoute('order-request')),
@@ -143,6 +144,7 @@ class NotificationHelper {
             NotificationType.message: () => Get.toNamed(RouteHelper.getChatRoute(notificationBody: payload, conversationId: payload.conversationId, fromNotification: true)),
             NotificationType.withdraw: () => Get.toNamed(RouteHelper.getMyAccountRoute()),
             NotificationType.general: () => Get.toNamed(RouteHelper.getNotificationRoute(fromNotification: true)),
+            NotificationType.ride_request: () => notificationToRoute(payload),
           };
 
           notificationActions[payload.notificationType]?.call();
@@ -193,7 +195,6 @@ class NotificationHelper {
           Get.find<RideController>().setRideGetMessage(true);
         }
 
-
       if(_isNewCallCandidate(message.data)) {
         final profile = Get.find<ProfileController>().profileModel;
         final isOnline = profile != null && profile.active == 1;
@@ -212,48 +213,35 @@ class NotificationHelper {
       }
 
       if (message.data['action'] == "driver_new_ride_request" && pusherDisconnected) {
-
         print("Connected =====> Connection get from Notification/ Current Pusher Status=====> ${Get.find<SplashController>().pusherConnectionStatus}");
-
         _whenNewRequestFound(message);
-
       }
       else if (message.data['action'] == "driver_trip_request_canceled" && pusherDisconnected) {
-
         Get.find<RideController>().getPendingRideRequestList(1);
         Get.find<RiderMapController>().setRideCurrentState(RideState.initial);
-
       }
       else if (message.data['action'] == "trip_completed") {
         _whenRideComplete(message);
-
       }
       else if (message.data['action'] == "driver_bid_accepted") {
-        ///Bid Ride Accepted in this case....
         _whenCustomerBidAccept(message);
-
       }
       else if (message.data['action'] == "coupon_removed" || message.data['action'] == "coupon_applied") {
         Get.find<RideController>().getFinalFare(message.data['ride_request_id']);
-
       }
       else if (message.data['action'] == "payment_successful" && message.data['type'] == "ride_request") {
         _whenRidePaymentSuccess(message);
-
       }
       else if (message.data['action'] == "driver_customer_canceled_trip" && pusherDisconnected) {
         print("Connected =====> Connection get from Notification/ Current Pusher Status=====> ${Get.find<SplashController>().pusherConnectionStatus}");
         _whenCustomerCancelTrip(message);
-
       }
       else if (message.data['action'] == "another_driver_assigned") {
         _whenCustomerCancelTrip(message, isAnotherDriverAssigned: true);
-
       }
-      else if ((message.data['action'] == "customer_trip_completed" || message.data['action'] == "another_driver_assigned") && pusherDisconnected) {
+      else if ((message.data['action'] == "customer_trip_completed" || message.data['action'] == "customer_trip_canceled" || message.data['action'] == "another_driver_assigned") && pusherDisconnected) {
         print("Connected =====> Connection get from Notification/ Current Pusher Status=====> ${Get.find<SplashController>().pusherConnectionStatus}");
         Get.offAll(()=> RideDetailsScreen(rideId: message.data['ride_request_id']));
-
       }
       else if (message.data['type'] != 'message' && checkContainsAction(message.data['action'])) {
         Get.find<ProfileController>().getProfile().then((value) {
@@ -262,54 +250,38 @@ class NotificationHelper {
             Get.offAllNamed(RouteHelper.getInitialRoute());
           }
         });
-
       }
       else if(message.data['action'] == "customer_rejected_bid"){
         if((Get.find<RideController>().ongoingRide ?? []).isEmpty){
-          // Get.offAll(() => const DashboardScreen());
           Get.offAllNamed(RouteHelper.getInitialRoute());
         }else{
           if(Get.currentRoute == '/RideRequestScreen'){
             Get.back();
           }
         }
-
       }
       else if(message.data['action'] == 'identity_image_approved' || message.data['action'] == 'identity_image_rejected'){
         Get.find<ProfileController>().getProfile();
-
       }
       else if(message.data['action'] == 'other_level_up'){
         _whenDriverLevelUp(message);
-
       }
       else if(message.data['action'] == "other_withdraw_request_rejected" || message.data['action'] == "other_withdraw_request_approved"){
         Get.find<ProfileController>().getProfile();
-        // Get.find<WalletController>().getWithdrawPendingList(1);
-
       }
       else if(message.data['action'] == "other_withdraw_request_settled"){
         Get.find<ProfileController>().getProfile();
-        // Get.find<WalletController>().getWithdrawSettledList(1);
-
       }
       else if(message.data['action'] == "other_admin_collected_cash"){
         Get.find<ProfileController>().getProfile();
-        // Get.find<WalletController>().getPayableHistoryList(1);
-
       }
       else if(message.data['action'] == 'trip_canceled'){
-        // Get.offAll(const DashboardScreen());
         Get.offAllNamed(RouteHelper.getInitialRoute());
-
       }
       else if(message.data['action'] == 'other_referral_reward_received' && Get.find<AuthController>().isLoggedIn()){
-        // Get.find<TransactionController>().getRideIncomeStatement(1);
-        // Get.find<ProfileController>().getProfile();
       }
       else if(message.data['action'] == 'other_safety_problem_resolved'){
         Get.find<SafetyAlertController>().getSafetyAlertDetails(message.data['ride_request_id']);
-
       }
       else if( message.data['action'] =="customer_payment_successful" && pusherDisconnected){
         print("Connected =====> Connection get from Notification/ Current Pusher Status=====> ${Get.find<SplashController>().pusherConnectionStatus}");
@@ -320,8 +292,6 @@ class NotificationHelper {
         Get.find<RiderMapController>().setRideCurrentState(RideState.initial);
         Get.offAllNamed(RouteHelper.getInitialRoute());
       }
-
-
     });
 
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) async {
@@ -333,6 +303,11 @@ class NotificationHelper {
         if(message.data.isNotEmpty){
           await routeNewCallMessage(message, source: 'fcm-opened-refresh');
           NotificationBodyModel notificationBody = convertNotification(message.data)!;
+
+          if (notificationBody.notificationType == NotificationType.ride_request) {
+            await notificationToRoute(notificationBody, formSplash: true);
+            return;
+          }
 
           final Map<NotificationType, Function> notificationActions = {
             NotificationType.order: () => Get.toNamed(RouteHelper.getOrderDetailsRoute(int.parse(message.data['order_id']), fromNotification: true)),
@@ -357,46 +332,29 @@ class NotificationHelper {
     });
   }
 
-
   static Future<void> notificationToRoute(NotificationBodyModel data, {bool formSplash = false, String? userName}) async {
-    // if (data['action'] == "new_message") {
-    //   Get.find<ChatController>().getConversation(data['type'], 1);
-    //   _toRoute(formSplash, MessageScreen(channelId: data['type'], tripId: data['ride_request_id'], userName: userName ?? data['user_name']));
-    //
-    // }
-
-
     if (data.action == "driver_new_ride_request") {
-
       Get.find<RideController>().ongoingTripList().then((value){
         if((Get.find<RideController>().ongoingRide ?? []).isEmpty){
           Get.find<RideController>().getRideDetailBeforeAccept(data.rideRequestId!).then((value) {
             if (value.statusCode == 200) {
               Get.find<RideController>().getPendingRideRequestList(1, limit: 100);
-              // Get.find<RideController>().setRideId(data['ride_request_id']);
               Get.find<RiderMapController>().getPickupToDestinationPolyline();
               Get.find<RiderMapController>().setRideCurrentState(RideState.pending);
               Get.find<RideController>().updateRoute(false, notify: true);
-
               _toRoute(formSplash, const MapScreen());
-
             }
           });
-
         }else{
           if(Get.currentRoute != '/RideRequestScreen'){
             _toRoute(formSplash, const OrderScreen(index: 1));
           }else{
             Get.find<RideController>().getPendingRideRequestList(1, limit: 100);
           }
-
         }
       });
-
-
     }
     else if (data.action == "driver_bid_accepted") {
-      ///Bid Ride Accepted in this case....
       Get.find<RideController>().getRideDetails(data.rideRequestId!).then((value) {
         if (value != null) {
           Get.find<RiderMapController>().setRideCurrentState(RideState.accepted);
@@ -406,7 +364,6 @@ class NotificationHelper {
       });
     }
     else if (data.action == "customer_payment_successful" && data.action == "ride_request") {
-
       Get.find<RideController>().getRideDetails( data.rideRequestId!).then((value){
         Get.offAll(() => RideDetailsScreen(rideId: data.rideRequestId!));
       });
@@ -419,62 +376,38 @@ class NotificationHelper {
           Get.offAllNamed(RouteHelper.getInitialRoute());
         }
       });
-
     }
     else if (checkContainsAction(data.action!)) {
       Get.find<ProfileController>().getProfile().then((value) {
         if (value != null) {
           Get.find<RiderMapController>().setRideCurrentState(RideState.initial);
-          // Get.find<ProfileController>().setProfileTypeIndex(2,isUpdate: true);
-          // _toRoute(formSplash, const ProfileScreen());
-
         }
       });
-
       if(formSplash){
         Get.offAllNamed(RouteHelper.getInitialRoute());
       }
-
-
     }
     else if(data.action == "other_withdraw_request_rejected" || data.action == "other_withdraw_request_approved" ||
         data.action== "other_admin_collected_cash" || data.action == "other_withdraw_request_reversed") {
-      // Get.offAllNamed(RouteHelper.getInitialRoute());
-      // Get.find<BottomMenuController>().setTabIndex(3);
       _toRoute(formSplash, const MyAccountScreen());
-
     }
     else if(data.action == "other_withdraw_request_settled") {
       _toRoute(formSplash, const MyAccountScreen());
-      // Get.offAll(() => const DashboardScreen());
-      // Get.find<BottomMenuController>().setTabIndex(3);
-      // Get.find<TransactionController>().setSelectedHistoryIndex(1, true);
-
     }
     else if(data.action == "customer_rejected_bid"){
-      // Get.offAll(() => const DashboardScreen());
       Get.offAllNamed(RouteHelper.getInitialRoute());
     }
     else if(data.action == "other_review_from_customer"){
       _toRoute(formSplash, const ReviewScreen());
-
     }
     else if(data.action == 'identity_image_approved' || data.action == 'identity_image_rejected'){
-
       if(formSplash){
         Get.offAllNamed(RouteHelper.getInitialRoute());
       }
-      // Get.find<ProfileController>().getProfile().then((value) {
-      //   _toRoute(formSplash, ProfileEditScreen(profileInfo: Get.find<ProfileController>().profileInfo!));
-      // });
-
     }
     else if(data.action == 'other_level_up'){
-
       Get.find<ProfileController>().getProfileLevelInfo();
-
       _toRoute(formSplash, const DashboardScreen(pageIndex: 3,));
-
       Future.delayed(Duration(seconds: 3), (){
         showDialog(
           context: Get.context!,
@@ -486,50 +419,7 @@ class NotificationHelper {
           ),
         );
       });
-
     }
-    // else if(data['action'] == 'privacy_policy_page_updated'){
-    //   Get.find<SplashController>().getConfigData().then((value){
-    //     _toRoute(formSplash, PolicyViewerScreen(
-    //       htmlType: HtmlType.privacyPolicy,
-    //       image: Get.find<SplashController>().config?.privacyPolicy?.image??'',
-    //     ));
-    //   });
-    //
-    // }
-    // else if(data['action'] == 'legal_updated'){
-    //   Get.find<SplashController>().getConfigData().then((value){
-    //     _toRoute(formSplash, PolicyViewerScreen(
-    //         htmlType: HtmlType.legal,
-    //         image: Get.find<SplashController>().config?.legal?.image??''
-    //     ));
-    //   });
-    //
-    // }
-    // else if(data['action'] == 'terms_and_conditions_updated'){
-    //   Get.find<SplashController>().getConfigData().then((value){
-    //     _toRoute(formSplash, PolicyViewerScreen(htmlType: HtmlType.termsAndConditions,
-    //         image: Get.find<SplashController>().config?.termsAndConditions?.image??''
-    //     ));
-    //   });
-    //
-    // }
-    // else if(data['action'] == 'referral_reward_received'){
-    //   _toRoute(formSplash, const ReferAndEarnScreen());
-    // }
-    // else if(data['action'] == 'parcel_amount_deducted'){
-    //   _toRoute(formSplash, TripDetails(tripId: data['ride_request_id']));
-    // }
-    // else if(data['action'] == 'refund_accepted'){
-    //   _toRoute(formSplash, TripDetails(tripId: data['ride_request_id']));
-    // }
-    // else if(data['action'] == 'refund_denied'){
-    //   _toRoute(formSplash, TripDetails(tripId: data['ride_request_id']));
-    // }
-    // else if(data['action'] == 'parcel_amount_debited'){
-    //   Get.offAll(() => const DashboardScreen());
-    //   Get.find<BottomMenuController>().setTabIndex(3);
-    // }
     else if(data.action == 'driver_tips_from_customer' || data.action == 'customer_payment_successful'){
       _toRoute(formSplash, RideDetailsScreen(rideId: data.rideRequestId!));
     }
@@ -548,18 +438,15 @@ class NotificationHelper {
           }
         }
       });
-
     }
     else {
       Get.offAll(() => const DashboardScreen(pageIndex: 0,));
     }
-
   }
 
   static Future _toRoute(bool formSplash, Widget page) async {
     if(formSplash) {
       await Get.offAll(() => page);
-
     }else {
       await Get.to(() => page);
     }
@@ -595,14 +482,12 @@ class NotificationHelper {
             Get.to(() => const MapScreen());
           }
         });
-
       }else{
         if(Get.currentRoute == '/MapScreen'){
           Get.find<RideController>().getPendingRideRequestList(1,limit: 100);
         }else{
           Get.to(()=> OrderRequestScreen(onTap: (){}));
         }
-
       }
     });
   }
@@ -632,8 +517,6 @@ class NotificationHelper {
   }
 
   static void _whenCustomerCancelTrip(RemoteMessage message, {bool isAnotherDriverAssigned = false}){
-
-
     if(Get.find<RideController>().tripDetail?.id == message.data['ride_request_id']){
       Get.find<SafetyAlertController>().cancelDriverNeedSafetyStream();
       Get.find<RideController>().tripDetail = null;
@@ -649,11 +532,9 @@ class NotificationHelper {
           if (value?.statusCode == 200) {
             Get.find<RiderMapController>().setRideCurrentState(RideState.initial);
             Get.find<RideController>().getLastRideDetail();
-            //Get.offAllNamed(RouteHelper.getInitialRoute());
           }
         });
       }
-
     }else{
       Get.find<RideController>().ongoingTripList();
       Get.find<RideController>().getPendingRideRequestList(1,limit: 100);
@@ -680,7 +561,6 @@ class NotificationHelper {
             Get.to(() => const MapScreen());
           }
         });
-
       }else{
         if(Get.currentRoute == '/RideRequestScreen'){
           Get.back();
@@ -766,6 +646,7 @@ class NotificationHelper {
   static NotificationBodyModel? convertNotification(Map<String, dynamic> data){
     final type = data['type'];
     final orderId = data['order_id'];
+    final rideRequestId = (data['ride_request_id'] ?? data['rideRequestId'] ?? data['trip_id'])?.toString();
 
     switch (type) {
       case 'cash_collect':
@@ -777,6 +658,8 @@ class NotificationHelper {
       case 'new_order':
       case 'order_request':
         return NotificationBodyModel(orderId: int.tryParse(orderId?.toString() ?? ''), notificationType: NotificationType.order_request);
+      case 'ride_request':
+        return NotificationBodyModel(notificationType: NotificationType.ride_request, rideRequestId: rideRequestId, action: data['action']?.toString());
       case 'block':
         return NotificationBodyModel(notificationType: NotificationType.block);
       case 'unblock':
@@ -790,6 +673,9 @@ class NotificationHelper {
       case 'deliveryman_referral':
         return NotificationBodyModel(notificationType: NotificationType.general);
       default:
+        if(data['action'] == 'driver_new_ride_request' && rideRequestId != null && rideRequestId.isNotEmpty) {
+          return NotificationBodyModel(notificationType: NotificationType.ride_request, rideRequestId: rideRequestId, action: data['action']?.toString());
+        }
         return NotificationBodyModel(notificationType: NotificationType.general);
     }
   }
@@ -806,8 +692,6 @@ class NotificationHelper {
   }
 
 }
-
-
 
 Map<String, dynamic> _buildOverlayPayloadFromMessage(Map<String, dynamic> data) {
   final String rawType = (data['module_type'] ?? data['moduleType'] ?? _payloadType(data) ?? '').toString();
@@ -927,13 +811,12 @@ bool _isNewCallCandidate(Map<String, dynamic> data) {
       || type == 'order_request'
       || type == 'assign'
       || type == 'latest_orders'
+      || type == 'ride_request'
       || action == 'driver_new_ride_request'
       || action.contains('new_order')
       || action.contains('order_request')
       || _payloadOrderId(data) != null && (titleBody.contains('nova ordem') || titleBody.contains('novo pedido') || titleBody.contains('new order') || titleBody.contains('order request'));
 }
-
-
 
 bool _isSuspiciousIncompleteOrderPayload(RemoteMessage message) {
   final data = message.data;
@@ -968,7 +851,6 @@ Future<void> _triggerBackgroundOrderRefresh({required String source, String? rea
 
 final AudioPlayer _audioPlayer = AudioPlayer();
 
-/// Background FCM message handler
 @pragma('vm:entry-point')
 Future<void> myBackgroundMessageHandler(RemoteMessage message) async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -977,11 +859,10 @@ Future<void> myBackgroundMessageHandler(RemoteMessage message) async {
 
   final notificationBody = NotificationHelper.convertNotification(message.data);
 
-  if (notificationBody != null && (notificationBody.notificationType == NotificationType.order || notificationBody.notificationType == NotificationType.order_request)) {
-
+  if (notificationBody != null && (notificationBody.notificationType == NotificationType.order || notificationBody.notificationType == NotificationType.order_request || notificationBody.notificationType == NotificationType.ride_request)) {
     FlutterForegroundTask.initCommunicationPort();
     await _initService();
-    await _startService(notificationBody.orderId?.toString(), notificationBody.notificationType!);
+    await _startService(notificationBody.orderId?.toString() ?? notificationBody.rideRequestId, notificationBody.notificationType!);
   }
 
   final isCandidate = _isNewCallCandidate(message.data);
@@ -1011,14 +892,13 @@ Future<void> myBackgroundMessageHandler(RemoteMessage message) async {
       await _triggerBackgroundOrderRefresh(source: 'fcm-background-fallback', reason: 'overlay-nao-subiu');
       FlutterForegroundTask.initCommunicationPort();
       await _initService();
-      await _startService(message.data['order_id']?.toString(), NotificationType.order_request);
+      await _startService(message.data['order_id']?.toString() ?? message.data['ride_request_id']?.toString(), NotificationType.order_request);
     }
   } else if (isSuspicious) {
     await _triggerBackgroundOrderRefresh(source: 'fcm-background-fallback', reason: 'payload-suspeito-incompleto');
   }
 }
 
-/// Initialize Foreground Service
 @pragma('vm:entry-point')
 Future<void> _initService() async {
   FlutterForegroundTask.init(
@@ -1042,7 +922,6 @@ Future<void> _initService() async {
   );
 }
 
-/// Start Foreground Service
 @pragma('vm:entry-point')
 Future<ServiceRequestResult> _startService(String? orderId, NotificationType notificationType) async {
   if (await FlutterForegroundTask.isRunningService) {
@@ -1050,14 +929,13 @@ Future<ServiceRequestResult> _startService(String? orderId, NotificationType not
   } else {
     return FlutterForegroundTask.startService(
       serviceId: 256,
-      notificationTitle: notificationType == NotificationType.order_request ? 'Order Notification' : 'You have been assigned a new order ($orderId)',
-      notificationText: notificationType == NotificationType.order_request ? 'New order request arrived, you can confirm this.' : 'Open app and check order details.',
+      notificationTitle: notificationType == NotificationType.order_request || notificationType == NotificationType.ride_request ? 'Order Notification' : 'You have been assigned a new order ($orderId)',
+      notificationText: notificationType == NotificationType.order_request || notificationType == NotificationType.ride_request ? 'New order request arrived, you can confirm this.' : 'Open app and check order details.',
       callback: startCallback,
     );
   }
 }
 
-/// Stop Foreground Service
 @pragma('vm:entry-point')
 Future<ServiceRequestResult> stopService() async {
   try {
@@ -1069,13 +947,11 @@ Future<ServiceRequestResult> stopService() async {
   return FlutterForegroundTask.stopService();
 }
 
-/// Foreground Service entry point
 @pragma('vm:entry-point')
 void startCallback() {
   FlutterForegroundTask.setTaskHandler(MyTaskHandler());
 }
 
-/// Foreground Service Task Handler
 class MyTaskHandler extends TaskHandler {
   AudioPlayer? _localPlayer;
 

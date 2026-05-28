@@ -87,9 +87,9 @@ class MyAccountRepository implements MyAccountRepositoryInterface {
     Response response;
 
     if(startDate != null && endDate != null) {
-      response = await apiClient.getData('${AppConstants.earningReportUri}?limit=10&offset=$offset&type=$type&date_range=$dateRange&start_date=$startDate&end_date=$endDate&token=${_getUserToken()}');
+      response = await apiClient.getData('${AppConstants.newEarningReportUri}?limit=10&offset=$offset&type=$type&date_range=$dateRange&start_date=$startDate&end_date=$endDate&token=${_getUserToken()}');
     } else {
-      response = await apiClient.getData('${AppConstants.earningReportUri}?limit=10&offset=$offset&type=$type&date_range=$dateRange&start_date=&end_date=&token=${_getUserToken()}');
+      response = await apiClient.getData('${AppConstants.newEarningReportUri}?limit=10&offset=$offset&type=$type&date_range=$dateRange&start_date=&end_date=&token=${_getUserToken()}');
     }
 
     if(response.statusCode == 200) {

@@ -14,7 +14,6 @@ import 'package:sixam_mart_delivery/main.dart';
 import 'package:sixam_mart_delivery/util/app_constants.dart';
 import 'package:sixam_mart_delivery/util/dimensions.dart';
 import 'package:sixam_mart_delivery/common/widgets/custom_alert_dialog_widget.dart';
-import 'package:sixam_mart_delivery/features/dashboard/widgets/bottom_nav_item_widget.dart';
 import 'package:sixam_mart_delivery/features/dashboard/widgets/new_request_dialog_widget.dart';
 import 'package:sixam_mart_delivery/features/home/screens/home_screen.dart';
 import 'package:sixam_mart_delivery/features/profile/screens/profile_screen.dart';
@@ -25,7 +24,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:sixam_mart_delivery/util/enums.dart';
-import 'package:sixam_mart_delivery/util/images.dart';
 
 class DashboardScreen extends StatefulWidget {
   final int pageIndex;
@@ -45,6 +43,7 @@ class DashboardScreenState extends State<DashboardScreen> {
   DisbursementHelper disbursementHelper = DisbursementHelper();
   bool _canExit = false;
   bool isRideActive = AppConstants.appMode == AppMode.ride;
+
   @override
   void initState() {
     super.initState();
@@ -53,7 +52,11 @@ class DashboardScreenState extends State<DashboardScreen> {
     _pageController = PageController(initialPage: widget.pageIndex);
 
     _screens = [
-      HomeScreen(onNavigateToOrders: () => _setPage(2)),
+      HomeScreen(
+        onNavigateToOrders: () => _setPage(2),
+        onNavigateToRequests: () => _setPage(1),
+        onNavigateToProfile: () => _setPage(3),
+      ),
       isRideActive
           ? RideRequestScreen(onTap: () => _setPage(0))
           : OrderRequestScreen(onTap: () => _setPage(0)),
@@ -71,9 +74,8 @@ class DashboardScreenState extends State<DashboardScreen> {
       reject: (payload) => OrderRequestOverlayHelper.rejectFromOverlayPayload(payload),
       dismissed: (_) {},
     );
-    
-    _stream = FirebaseMessaging.onMessage.listen((RemoteMessage message) {
 
+    _stream = FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       String? type = message.data['body_loc_key'] ?? message.data['type'] ?? message.data['message_type'] ?? message.data['notification_type'];
       String? orderID = message.data['title_loc_key'] ?? message.data['order_id'] ?? message.data['orderId'];
       debugPrint('FoxGoDashboardRoute entrou Dashboard listener keys=${message.data.keys.toList()} type=$type orderId=$orderID');
@@ -102,7 +104,6 @@ class DashboardScreenState extends State<DashboardScreen> {
         Get.offAllNamed(RouteHelper.getSignInRoute());
       }
     });
-
   }
 
   Future<void> showDisbursementWarningMessage() async{
@@ -119,9 +120,8 @@ class DashboardScreenState extends State<DashboardScreen> {
 
   @override
   void dispose() {
-    super.dispose();
-
     _stream.cancel();
+    super.dispose();
   }
 
   @override
@@ -157,22 +157,7 @@ class DashboardScreenState extends State<DashboardScreen> {
         }
       },
       child: Scaffold(
-        bottomNavigationBar: GetPlatform.isDesktop ? const SizedBox() : Container(
-          height: 70 + MediaQuery.of(context).padding.bottom,
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            boxShadow: [BoxShadow(color: Colors.grey[Get.isDarkMode ? 800 : 200]!, spreadRadius: 1, blurRadius: 5)],
-          ),
-          padding: EdgeInsets.only(top: 14),
-          child: Row(children: [
-            BottomNavItemWidget(iconData: Images.home, label: 'home'.tr, isSelected: _pageIndex == 0, onTap: () => _setPage(0)),
-            BottomNavItemWidget(iconData: Images.request, label: 'request'.tr, isSelected: _pageIndex == 1, pageIndex: 1, onTap: () {
-              _navigateRequestPage();
-            }),
-            BottomNavItemWidget(iconData: Images.bag, label: isRideActive ? "history".tr : 'orders'.tr, isSelected: _pageIndex == 2, onTap: () => _setPage(2)),
-            BottomNavItemWidget(iconData: Images.userP, label: 'profile'.tr, isSelected: _pageIndex == 3, onTap: () => _setPage(3)),
-          ]),
-        ),
+        bottomNavigationBar: const SizedBox.shrink(),
         body: PageView.builder(
           controller: _pageController,
           itemCount: _screens.length,

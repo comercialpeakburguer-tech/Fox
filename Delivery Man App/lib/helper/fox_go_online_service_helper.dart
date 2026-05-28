@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -14,7 +16,18 @@ class FoxGoOnlineServiceHelper {
         'startOnlineForegroundService',
       );
       debugPrint('FoxGoOnlineService start result=$started');
-      return started ?? false;
+
+      await Future<void>.delayed(const Duration(milliseconds: 900));
+      bool running = await isRunning();
+      if (!running && started == true) {
+        debugPrint('FoxGoOnlineService start verificacao falhou; tentando iniciar novamente');
+        await _channel.invokeMethod<bool>('startOnlineForegroundService');
+        await Future<void>.delayed(const Duration(milliseconds: 900));
+        running = await isRunning();
+      }
+
+      debugPrint('FoxGoOnlineService start verifiedRunning=$running');
+      return (started ?? false) && running;
     } catch (error, stackTrace) {
       debugPrint('FoxGoOnlineService erro ao iniciar: $error');
       debugPrint('$stackTrace');
@@ -29,7 +42,10 @@ class FoxGoOnlineServiceHelper {
         'stopOnlineForegroundService',
       );
       debugPrint('FoxGoOnlineService stop result=$stopped');
-      return stopped ?? false;
+      await Future<void>.delayed(const Duration(milliseconds: 350));
+      final bool stillRunning = await isRunning();
+      debugPrint('FoxGoOnlineService stop verifiedStillRunning=$stillRunning');
+      return (stopped ?? false) && !stillRunning;
     } catch (error, stackTrace) {
       debugPrint('FoxGoOnlineService erro ao parar: $error');
       debugPrint('$stackTrace');

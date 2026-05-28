@@ -59,6 +59,12 @@ class MainActivity : FlutterActivity() {
                 "openAppLocationSettings" -> {
                     result.success(openAppLocationSettings())
                 }
+                "openAppLocationPermissionSettingsSmart" -> {
+                    result.success(openAppLocationSettings())
+                }
+                "openNotificationSettingsSmart" -> {
+                    result.success(openNotificationSettingsSmart())
+                }
                 "getDeviceInfo" -> {
                     result.success(mapOf(
                         "manufacturer" to Build.MANUFACTURER,
@@ -69,7 +75,6 @@ class MainActivity : FlutterActivity() {
                     ))
                 }
                 "isFullScreenIntentAvailable" -> {
-                    // Full-screen intent é complementar; Android 14+ pode restringir por política do sistema.
                     val allowed = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                         val manager = getSystemService(android.app.NotificationManager::class.java)
                         manager?.canUseFullScreenIntent() ?: false
@@ -157,7 +162,6 @@ class MainActivity : FlutterActivity() {
                 candidates += Intent().apply { component = ComponentName("com.vivo.permissionmanager", "com.vivo.permissionmanager.activity.SoftPermissionDetailActivity"); putExtra("packagename", packageName) }
             }
             manufacturer.contains("samsung") || manufacturer.contains("motorola") -> {
-                // Samsung e Motorola seguem majoritariamente o intent padrão do Android; mantemos fallback abaixo.
             }
         }
         candidates += Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION)
@@ -177,12 +181,28 @@ class MainActivity : FlutterActivity() {
         return startFirstAvailable(candidates, "FoxGoBatteryPermission")
     }
 
+    private fun openNotificationSettingsSmart(): Boolean {
+        val packageUri = Uri.parse("package:$packageName")
+        val candidates = mutableListOf<Intent>()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            candidates += Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+            }
+        }
+        candidates += Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, packageUri)
+        return startFirstAvailable(candidates, "FoxGoNotificationPermission")
+    }
+
     private fun openAppLocationSettings(): Boolean {
         val packageUri = Uri.parse("package:$packageName")
-        val candidates = listOf(
-            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, packageUri),
-            Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
-        )
+        val candidates = mutableListOf<Intent>()
+        candidates += Intent("android.settings.APP_PERMISSION_SETTINGS").apply {
+            putExtra("android.provider.extra.APP_PACKAGE", packageName)
+            putExtra("android.intent.extra.PACKAGE_NAME", packageName)
+            data = packageUri
+        }
+        candidates += Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, packageUri)
+        candidates += Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
         return startFirstAvailable(candidates, "FoxGoPermissionFlow")
     }
 

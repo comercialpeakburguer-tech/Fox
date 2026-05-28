@@ -96,6 +96,10 @@ class Images {
   static const String callIcon = 'assets/image/call_icon.png';
   static const String fileIcon = 'assets/image/clip.png';
   static const String coinIcon = 'assets/image/coin_icon.png';
+  static const String dollerIcon = 'assets/image/doller_icon.png';
+  static const String earningReport = 'assets/image/earning_reports.png';
+  static const String noteIcon = 'assets/image/note-icon.png';
+  static const String walletIconSign = 'assets/image/wallet_icon_sign.png';
 
   ///Svg Images
   static const String changePasswordBgImage = 'assets/image/change_password_bg_image.svg';

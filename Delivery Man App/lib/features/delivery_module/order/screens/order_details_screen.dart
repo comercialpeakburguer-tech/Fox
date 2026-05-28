@@ -111,6 +111,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> with WidgetsBin
             OrderModel? controllerOrderModel = orderController.orderModel;
 
             bool restConfModel = Get.find<SplashController>().configModel!.orderConfirmationModel != 'deliveryman';
+            bool deliveryManConfModel = Get.find<SplashController>().configModel!.orderConfirmationModel == 'deliveryman';
 
             bool? parcel, pickedUp, cod, wallet, partialPay, offlinePay, digitalyPaid;
 
@@ -609,86 +610,92 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> with WidgetsBin
                       Text('billing_summary'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault)),
                       SizedBox(height: Dimensions.paddingSizeSmall),
 
-                      !parcel ? Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                        Text('item_price'.tr, style: robotoRegular),
-                        Row(mainAxisSize: MainAxisSize.min, children: [
-                          Text(PriceConverterHelper.convertPrice(itemsPrice), style: robotoRegular),
-                        ]),
-                      ]) : const SizedBox(),
-                      SizedBox(height: !parcel ? 10 : 0),
+                      if(deliveryManConfModel)...[
+                        !parcel ? Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                          Text('item_price'.tr, style: robotoRegular),
+                          Row(mainAxisSize: MainAxisSize.min, children: [
+                            Text(PriceConverterHelper.convertPrice(itemsPrice), style: robotoRegular),
+                          ]),
+                        ]) : const SizedBox(),
+                        SizedBox(height: !parcel ? 10 : 0),
 
-                      Get.find<SplashController>().getModuleConfig(order.moduleType).addOn! ? Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text('addons'.tr, style: robotoRegular),
-                          Text('(+) ${PriceConverterHelper.convertPrice(addOns)}', style: robotoRegular),
-                        ],
-                      ) : const SizedBox(),
+                        Get.find<SplashController>().getModuleConfig(order.moduleType).addOn! ? Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('addons'.tr, style: robotoRegular),
+                            Text('(+) ${PriceConverterHelper.convertPrice(addOns)}', style: robotoRegular),
+                          ],
+                        ) : const SizedBox(),
 
-                      Get.find<SplashController>().getModuleConfig(order.moduleType).addOn! ? Divider(
-                        thickness: 1, color: Theme.of(context).hintColor.withValues(alpha: 0.5),
-                      ) : const SizedBox(),
+                        Get.find<SplashController>().getModuleConfig(order.moduleType).addOn! ? Divider(
+                          thickness: 1, color: Theme.of(context).hintColor.withValues(alpha: 0.5),
+                        ) : const SizedBox(),
+                      ],
 
                       Get.find<SplashController>().getModuleConfig(order.moduleType).addOn! ? Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text('subtotal'.tr, style: robotoMedium),
-                          Text(PriceConverterHelper.convertPrice(subTotal), style: robotoMedium),
+                          Text(deliveryManConfModel ? PriceConverterHelper.convertPrice(subTotal) : PriceConverterHelper.convertPrice(total - dmTips), style: robotoMedium),
                         ],
                       ) : const SizedBox(),
                       SizedBox(height: Get.find<SplashController>().getModuleConfig(order.moduleType).addOn! ? 10 : 0),
 
-                      !parcel ? Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                      !parcel && deliveryManConfModel && discount != 0.0 ? Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                         Text('discount'.tr, style: robotoRegular),
                         Row(mainAxisSize: MainAxisSize.min, children: [
                           Text('(-) ${PriceConverterHelper.convertPrice(discount)}', style: robotoRegular),
                         ]),
                       ]) : const SizedBox(),
-                      SizedBox(height: !parcel ? 10 : 0),
+                      SizedBox(height: !parcel && deliveryManConfModel && discount != 0.0 ? 10 : 0),
 
-                      couponDiscount > 0 ? Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                      deliveryManConfModel && couponDiscount > 0 ? Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                         Text('coupon_discount'.tr, style: robotoRegular),
                         Text(
                           '(-) ${PriceConverterHelper.convertPrice(couponDiscount)}',
                           style: robotoRegular,
                         ),
                       ]) : const SizedBox(),
-                      SizedBox(height: couponDiscount > 0 ? 10 : 0),
+                      SizedBox(height: deliveryManConfModel && couponDiscount > 0 ? 10 : 0),
 
-                      (referrerBonusAmount > 0) ? Row(
+                      (deliveryManConfModel && referrerBonusAmount > 0) ? Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text('referral_discount'.tr, style: robotoRegular),
                           Text('(-) ${PriceConverterHelper.convertPrice(referrerBonusAmount)}', style: robotoRegular),
                         ],
                       ) : const SizedBox(),
-                      SizedBox(height: referrerBonusAmount > 0 ? 10 : 0),
+                      SizedBox(height: deliveryManConfModel && referrerBonusAmount > 0 ? 10 : 0),
 
-                      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                      if(deliveryManConfModel && deliveryCharge != 0.0 ) Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                         Text('delivery_fee'.tr, style: robotoRegular),
                         Text('(+) ${PriceConverterHelper.convertPrice(deliveryCharge)}', style: robotoRegular),
                       ]),
-                      const SizedBox(height: 10),
+                      if(deliveryManConfModel && deliveryCharge != 0.0 ) const SizedBox(height: 10),
 
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text('delivery_man_tips'.tr, style: robotoRegular),
-                          Text('(+) ${PriceConverterHelper.convertPrice(dmTips)}', style: robotoRegular),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
+                      if(dmTips > 0.0) ...[
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('delivery_man_tips'.tr, style: robotoRegular),
+                            Text('(+) ${PriceConverterHelper.convertPrice(dmTips)}', style: robotoRegular),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                      ],
 
-                      (extraPackagingAmount > 0) ? Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text('extra_packaging'.tr, style: robotoRegular),
-                          Text('(+) ${PriceConverterHelper.convertPrice(extraPackagingAmount)}', style: robotoRegular),
-                        ],
-                      ) : const SizedBox(),
-                      SizedBox(height: extraPackagingAmount > 0 ? 10 : 0),
+                      if(deliveryManConfModel) ...[
+                        (extraPackagingAmount > 0) ? Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('extra_packaging'.tr, style: robotoRegular),
+                            Text('(+) ${PriceConverterHelper.convertPrice(extraPackagingAmount)}', style: robotoRegular),
+                          ],
+                        ) : const SizedBox(),
+                        SizedBox(height: extraPackagingAmount > 0 ? 10 : 0),
+                      ],
 
-                      (order.additionalCharge != null && order.additionalCharge! > 0) ? Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                      (deliveryManConfModel && order.additionalCharge != null && order.additionalCharge! > 0) ? Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                         Expanded(
                           child: Text(Get.find<SplashController>().configModel!.additionalChargeName!, style: robotoRegular, maxLines: 1, overflow: TextOverflow.ellipsis),
                         ),
@@ -696,12 +703,12 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> with WidgetsBin
 
                         Text('(+) ${PriceConverterHelper.convertPrice(order.additionalCharge)}', style: robotoRegular, textDirection: TextDirection.ltr),
                       ]) : const SizedBox(),
-                      (order.additionalCharge != null && order.additionalCharge! > 0) ? const SizedBox(height: 10) : const SizedBox(),
+                      (deliveryManConfModel && order.additionalCharge != null && order.additionalCharge! > 0) ? const SizedBox(height: 10) : const SizedBox(),
 
-                      (tax! == 0) || taxIncluded ? const SizedBox() : Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                      (tax! == 0) || taxIncluded ? const SizedBox() : deliveryManConfModel ? Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                         Text('vat_tax'.tr, style: robotoRegular),
                         Text('(+) ${PriceConverterHelper.convertPrice(tax)}', style: robotoRegular),
-                      ]),
+                      ]) : const SizedBox(),
 
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeSmall),

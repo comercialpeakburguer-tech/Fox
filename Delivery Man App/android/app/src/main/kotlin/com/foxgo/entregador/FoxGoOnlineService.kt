@@ -157,6 +157,10 @@ class FoxGoOnlineService : Service() {
             if (shouldSkipByDedupe(orderId)) return
 
             val payload = buildOverlayPayloadFromOrder(order, orderId)
+            Log.i(
+                REFRESH_TAG,
+                "payloadNativo orderId=$orderId module=${payload["moduleType"]} earning=${payload["earning"]} distance=${payload["distance"]} expiresAt=${payload["expiresAt"]} ttl=${payload["ttlSeconds"]}"
+            )
             val action = if (NewCallOverlayService.isShowing) NewCallOverlayService.ACTION_UPDATE else NewCallOverlayService.ACTION_SHOW
             val intent = Intent(this, NewCallOverlayService::class.java).apply {
                 this.action = action
@@ -188,7 +192,7 @@ class FoxGoOnlineService : Service() {
     }
 
     private fun detectOrderId(order: JSONObject): String {
-        return order.optString("id").ifEmpty { order.optString("order_id") }.ifEmpty { order.optString("orderId") }
+        return firstString(order, "id", "order_id", "orderId", "call_id", "callId")
     }
 
     private fun extractOrders(body: String): JSONArray {
@@ -199,28 +203,147 @@ class FoxGoOnlineService : Service() {
             is JSONArray -> root
             is JSONObject -> when (val data = root.opt("data")) {
                 is JSONArray -> data
-                is JSONObject -> data.optJSONArray("orders") ?: JSONArray()
-                else -> JSONArray()
+                is JSONObject -> data.optJSONArray("orders")
+                    ?: data.optJSONArray("latest_orders")
+                    ?: data.optJSONArray("latestOrders")
+                    ?: data.optJSONArray("requests")
+                    ?: JSONArray()
+                else -> root.optJSONArray("orders")
+                    ?: root.optJSONArray("latest_orders")
+                    ?: root.optJSONArray("latestOrders")
+                    ?: JSONArray()
             }
             else -> JSONArray()
         }
     }
 
     private fun buildOverlayPayloadFromOrder(order: JSONObject, orderId: String): Map<String, String> {
-        val moduleType = order.optString("module_type").ifBlank { order.optString("moduleType") }.ifBlank { "latest_orders" }
+        val moduleType = firstString(order, "module_type", "moduleType", "module", "order_type", "orderType").ifBlank { "latest_orders" }
+        val orderType = firstString(order, "order_type", "orderType").ifBlank { moduleType }
+        val paymentMethod = firstString(order, "payment_method", "paymentMethod")
+        val originName = firstString(order, "store_name", "storeName", "store", "restaurant_name", "shop_name", "pickup_name", "sender_name")
+        val pickupAddress = firstString(order, "pickup_address", "pickupAddress", "store_address", "storeAddress", "sender_address")
+            .ifBlank { firstStringObject(order, "store", "address") }
+            .ifBlank { firstStringObject(order, "pickup", "address") }
+        val destinationAddress = firstString(order, "destination_address", "destinationAddress", "delivery_address", "deliveryAddress", "receiver_address")
+            .ifBlank { firstStringObject(order, "delivery_address", "address") }
+            .ifBlank { firstStringObject(order, "deliveryAddress", "address") }
+            .ifBlank { firstStringObject(order, "receiver_details", "address") }
+            .ifBlank { firstStringObject(order, "receiverDetails", "address") }
+        val receiverName = firstString(order, "receiver_name", "receiverName", "customer_name", "customerName")
+            .ifBlank { firstStringObject(order, "receiver_details", "contact_person_name") }
+            .ifBlank { firstStringObject(order, "delivery_address", "contact_person_name") }
+            .ifBlank { firstStringObject(order, "deliveryAddress", "contactPersonName") }
+        val earning = firstString(
+            order,
+            "driver_earning",
+            "driverEarning",
+            "driver_earning_amount",
+            "driverEarningAmount",
+            "dm_earning",
+            "dmEarning",
+            "original_delivery_charge",
+            "originalDeliveryCharge",
+            "delivery_charge",
+            "deliveryCharge",
+            "earning",
+            "amount"
+        )
+        val tips = firstString(order, "dm_tips", "dmTips", "tips", "tip")
+        val distance = firstString(order, "distance", "distance_km", "distanceKm", "total_distance", "totalDistance", "totalDistanceKm")
+        val expiresAt = firstString(order, "expires_at", "expiresAt", "offer_expires_at", "offerExpiresAt", "timeout_at", "timeoutAt")
+        val ttlSeconds = firstString(order, "ttl_seconds", "ttlSeconds", "timeout", "offer_timeout", "offerTimeout")
+        val itemCount = firstString(order, "details_count", "detailsCount", "item_count", "itemCount", "items_count", "itemsCount")
+        val title = when {
+            isRideRaw(moduleType, orderType) -> "Nova corrida"
+            isParcelRaw(moduleType, orderType) -> "Nova encomenda"
+            isPharmacyRaw(moduleType) -> "Nova entrega de farmácia"
+            isMarketRaw(moduleType) -> "Nova entrega de mercado"
+            else -> "Nova chamada"
+        }
+
         return mapOf(
             "callId" to orderId,
             "orderId" to orderId,
+            "order_id" to orderId,
             "type" to "latest_orders",
             "rawType" to moduleType,
             "moduleType" to moduleType,
-            "originName" to order.optString("store_name").ifBlank { order.optString("store") },
-            "pickupAddress" to order.optString("pickup_address"),
-            "destinationAddress" to order.optString("destination_address"),
-            "earning" to order.optString("delivery_charge").ifBlank { order.optString("earning") },
-            "distance" to order.optString("distance"),
-            "paymentMethod" to order.optString("payment_method"),
+            "orderType" to orderType,
+            "title" to title,
+            "originName" to originName,
+            "pickupAddress" to pickupAddress,
+            "destinationAddress" to destinationAddress,
+            "receiverName" to receiverName,
+            "earning" to earning,
+            "driverEarningAmount" to earning,
+            "dmTips" to tips,
+            "distance" to distance,
+            "totalDistanceKm" to distance,
+            "paymentMethod" to paymentMethod,
+            "expiresAt" to expiresAt,
+            "ttlSeconds" to ttlSeconds,
+            "itemsCount" to itemCount,
+            "isRide" to isRideRaw(moduleType, orderType).toString(),
+            "isFood" to isFoodRaw(moduleType, orderType).toString(),
+            "isParcel" to isParcelRaw(moduleType, orderType).toString(),
+            "isMarket" to isMarketRaw(moduleType).toString(),
+            "isPharmacy" to isPharmacyRaw(moduleType).toString(),
         )
+    }
+
+    private fun firstString(json: JSONObject, vararg keys: String): String {
+        for (key in keys) {
+            if (!json.has(key) || json.isNull(key)) continue
+            val raw = json.opt(key)
+            val value = when (raw) {
+                is JSONObject, is JSONArray -> ""
+                else -> raw?.toString().orEmpty()
+            }.trim()
+            if (value.isNotBlank() && value != "null") return value
+        }
+        return ""
+    }
+
+    private fun firstStringObject(json: JSONObject, objectKey: String, valueKey: String): String {
+        val child = json.optJSONObject(objectKey) ?: return ""
+        return firstString(child, valueKey, snakeToCamel(valueKey), camelToSnake(valueKey))
+    }
+
+    private fun snakeToCamel(value: String): String {
+        return value.split("_").filter { it.isNotBlank() }.mapIndexed { index, part ->
+            if (index == 0) part else part.replaceFirstChar { char -> char.uppercase() }
+        }.joinToString("")
+    }
+
+    private fun camelToSnake(value: String): String {
+        return value.replace(Regex("([a-z])([A-Z])"), "$1_$2").lowercase()
+    }
+
+    private fun isRideRaw(moduleType: String, orderType: String): Boolean {
+        val raw = "$moduleType|$orderType".lowercase()
+        return raw.contains("ride") || raw.contains("taxi") || raw.contains("corrida")
+    }
+
+    private fun isParcelRaw(moduleType: String, orderType: String): Boolean {
+        val raw = "$moduleType|$orderType".lowercase()
+        return raw.contains("parcel") || raw.contains("encomenda")
+    }
+
+    private fun isMarketRaw(moduleType: String): Boolean {
+        val raw = moduleType.lowercase()
+        return raw.contains("grocery") || raw.contains("market") || raw.contains("mercado")
+    }
+
+    private fun isPharmacyRaw(moduleType: String): Boolean {
+        val raw = moduleType.lowercase()
+        return raw.contains("pharmacy") || raw.contains("farm")
+    }
+
+    private fun isFoodRaw(moduleType: String, orderType: String): Boolean {
+        val raw = "$moduleType|$orderType".lowercase()
+        if (isParcelRaw(moduleType, orderType) || isRideRaw(moduleType, orderType) || isMarketRaw(moduleType) || isPharmacyRaw(moduleType)) return false
+        return raw.isBlank() || raw.contains("food") || raw.contains("restaurant") || raw.contains("comida") || raw.contains("latest_orders")
     }
 
     override fun onBind(intent: Intent?): IBinder? = null

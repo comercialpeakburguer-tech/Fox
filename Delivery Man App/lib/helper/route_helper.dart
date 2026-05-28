@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:sixam_mart_delivery/features/auth/screens/dm_registration_success_screen.dart';
 import 'package:sixam_mart_delivery/features/disbursement/domain/models/disbursement_method_model.dart';
+import 'package:sixam_mart_delivery/features/earning_reports/screens/earning_report_screen.dart';
 import 'package:sixam_mart_delivery/features/my_account/screens/edit_withdraw_method_screen.dart';
 import 'package:sixam_mart_delivery/features/my_account/screens/my_earning_filter_screen.dart';
 import 'package:sixam_mart_delivery/features/my_account/screens/my_earning_screen.dart';
@@ -56,6 +57,7 @@ class RouteHelper {
   static const String conversationListScreen = '/conversation-list-screen';
   static const String deliveryManRegistration = '/delivery-man-registration';
   static const String disbursement = '/disbursement';
+  static const String earningReport = '/earning-report';
   static const String withdrawMethod = '/withdraw-method';
   static const String addWithdrawMethod = '/add-withdraw-method';
   static const String success = '/success';
@@ -114,6 +116,7 @@ class RouteHelper {
   static String getConversationListRoute() => conversationListScreen;
   static String getDeliverymanRegistrationRoute() => deliveryManRegistration;
   static String getDisbursementRoute() => disbursement;
+  static String getEarningReportRoute() => earningReport;
   static String getWithdrawMethodRoute({bool isFromDashBoard = false}) => '$withdrawMethod?is_from_dashboard=${isFromDashBoard.toString()}';
   static String getAddWithdrawMethodRoute() => addWithdrawMethod;
   static String getSuccessRoute(String status) => '$success?status=$status';
@@ -192,6 +195,7 @@ class RouteHelper {
     GetPage(name: conversationListScreen, page: () => const ConversationScreen()),
     GetPage(name: deliveryManRegistration, page: () => const DmRegistrationScreen()),
     GetPage(name: disbursement, page: () => const DisbursementScreen()),
+    GetPage(name: earningReport, page: () => const EarningReportScreen()),
     GetPage(name: withdrawMethod, page: () => WithdrawMethodScreen(isFromDashboard: Get.parameters['is_from_dashboard'] == 'true')),
     GetPage(name: addWithdrawMethod, page: () => const AddWithDrawMethodScreen()),
     GetPage(name: success, page: () => PaymentSuccessfulWidget(success: Get.parameters['status'] == 'success')),

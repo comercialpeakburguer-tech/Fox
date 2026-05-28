@@ -12,24 +12,17 @@ class DisbursementHelper {
 
     bool showWarning = false;
 
-    Get.find<SplashController>().configModel!.disbursementType == 'automated' && (Get.find<ProfileController>().profileModel!.type! != 'store_wise' && Get.find<ProfileController>().profileModel!.earnings != 0)
-        ? showWarning = true : showWarning = false;
+    final bool automatedDisbursement = Get.find<SplashController>().configModel!.disbursementType == 'automated';
+    final bool eligibleDeliveryMan = Get.find<ProfileController>().profileModel!.type! != 'store_wise'
+        && Get.find<ProfileController>().profileModel!.earnings != 0;
 
-    if(Get.find<SplashController>().configModel!.disbursementType == 'automated' && (Get.find<ProfileController>().profileModel!.type! != 'store_wise' && Get.find<ProfileController>().profileModel!.earnings != 0)){
+    if(automatedDisbursement && eligibleDeliveryMan){
       await Get.find<DisbursementController>().getDisbursementMethodList().then((success) {
         if(success){
-          if(Get.find<DisbursementController>().disbursementMethodBody!.methods!.isNotEmpty) {
-            for (var method in Get.find<DisbursementController>().disbursementMethodBody!.methods!) {
-              if (method.isDefault == true) {
-                showWarning = false;
-                break;
-              } else {
-                showWarning = true;
-              }
-            }
-          } else {
-            showWarning = true;
-          }
+          final methods = Get.find<DisbursementController>().disbursementMethodBody?.methods ?? [];
+          // Fox GO: se já existe qualquer conta Pix/Banco cadastrada, não mostra alerta na home.
+          // A escolha/edição do método padrão fica nas telas de repasses/carteira já existentes.
+          showWarning = methods.isEmpty;
         }
       });
     } else {
@@ -42,7 +35,7 @@ class DisbursementHelper {
           alignment: Alignment.bottomCenter,
           backgroundColor: const Color(0xfffff1f1),
           insetPadding: const EdgeInsets.only(bottom: Dimensions.paddingSizeSmall),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Dimensions.radiusDefault)), //this right here
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Dimensions.radiusDefault)),
           child: WithdrawMethodAttentionDialogWidget(isFromDashboard: fromDashboard),
         ),
       );

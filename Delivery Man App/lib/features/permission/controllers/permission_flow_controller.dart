@@ -83,7 +83,7 @@ class PermissionFlowController extends GetxController implements GetxService {
       critical: true,
       title: 'Localização precisa',
       activeLabel: 'Ativa',
-      inactiveLabel: 'Inativa',
+      inactiveLabel: 'Liberar agora',
       details: 'Usada para encontrar entregas próximas e calcular rotas de entrega.',
     ));
 
@@ -100,7 +100,7 @@ class PermissionFlowController extends GetxController implements GetxService {
       critical: true,
       title: 'Localização o tempo todo',
       activeLabel: backgroundApplicable ? 'Ativa' : 'Não aplicável',
-      inactiveLabel: preciseGranted ? 'Abrir configurações' : 'Pendente',
+      inactiveLabel: preciseGranted ? 'Abrir tela certa' : 'Pendente',
       details: 'Mantém chamadas e rotas de entrega funcionando em segundo plano.',
     ));
 
@@ -118,7 +118,7 @@ class PermissionFlowController extends GetxController implements GetxService {
       critical: true,
       title: 'Notificações',
       activeLabel: notificationApplicable ? 'Ativa' : 'Não aplicável',
-      inactiveLabel: notificationStatus.isPermanentlyDenied ? 'Abrir configurações' : 'Inativa',
+      inactiveLabel: notificationStatus.isPermanentlyDenied ? 'Abrir tela certa' : 'Liberar agora',
       details: 'Avisos de novas chamadas de entrega e status do serviço.',
     ));
 
@@ -134,7 +134,7 @@ class PermissionFlowController extends GetxController implements GetxService {
       critical: true,
       title: 'Aparecer sobre outros apps',
       activeLabel: overlayApplicable ? 'Ativa' : 'Não aplicável',
-      inactiveLabel: 'Inativa',
+      inactiveLabel: 'Abrir tela certa',
       details: 'Ajuda você a não perder chamadas de entrega usando outros aplicativos.',
     ));
 
@@ -150,7 +150,7 @@ class PermissionFlowController extends GetxController implements GetxService {
       critical: true,
       title: 'Otimização de bateria',
       activeLabel: batteryApplicable ? 'Permitida' : 'Não aplicável',
-      inactiveLabel: 'Restrita',
+      inactiveLabel: 'Abrir tela certa',
       details: 'Permite receber chamadas, localização e notificações com o Fox GO em segundo plano.',
     ));
 
@@ -252,12 +252,13 @@ class PermissionFlowController extends GetxController implements GetxService {
 
   Future<void> _requestPreciseLocation() async {
     LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
+    if (permission == LocationPermission.denied || permission == LocationPermission.unableToDetermine) {
       permission = await Geolocator.requestPermission();
     }
-    if (permission == LocationPermission.deniedForever) {
+    final bool preciseGranted = await _isPreciseLocationGranted(permission);
+    if (!preciseGranted) {
       _waitingExternalSettings = true;
-      await Geolocator.openAppSettings();
+      await openAppLocationSettings();
     }
   }
 
@@ -281,7 +282,7 @@ class PermissionFlowController extends GetxController implements GetxService {
     final PermissionStatus status = await Permission.notification.status;
     if (status.isGranted) return;
     final PermissionStatus result = await Permission.notification.request();
-    if (result.isPermanentlyDenied) await openAppSettings();
+    if (!result.isGranted) await openNotificationSettings();
   }
 
   Future<bool> _isPreciseLocationGranted(LocationPermission permission) async {
@@ -363,6 +364,19 @@ class PermissionFlowController extends GetxController implements GetxService {
     } catch (e) {
       _log('Fallback localização settings: $e');
       await Geolocator.openAppSettings();
+    }
+  }
+
+  Future<void> openNotificationSettings() async {
+    try {
+      if (GetPlatform.isAndroid) {
+        await _channel.invokeMethod('openNotificationSettingsSmart');
+      } else {
+        await openAppSettings();
+      }
+    } catch (e) {
+      _log('Fallback notificação settings: $e');
+      await openAppSettings();
     }
   }
 
